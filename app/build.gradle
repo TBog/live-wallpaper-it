@@ -8,8 +8,9 @@ android {
 
     defaultConfig {
         applicationId "rocks.tbog.livewallpaperit"
-        minSdk 19
+        minSdk 21
         targetSdk 34
+        multiDexEnabled true
         versionCode 1
         versionName "0.1"
     }
@@ -21,9 +22,13 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
+
+//    kotlinOptions {
+//        jvmTarget = '11'
+//    }
 }
 
 dependencies {
@@ -33,5 +38,6 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.apps.muzei:muzei-api:3.2.0'
     implementation 'androidx.work:work-runtime:2.8.1'
-    implementation "androidx.preference:preference:1.2.1"
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'com.github.KirkBushman:ARAW:v1.1.0-alpha03'
 }

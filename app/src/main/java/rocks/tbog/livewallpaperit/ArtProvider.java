@@ -5,6 +5,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.work.Constraints;
+import androidx.work.Data;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.OutOfQuotaPolicy;
@@ -28,6 +29,9 @@ public class ArtProvider extends MuzeiArtProvider {
         if (ctx == null)
             return;
         WorkRequest request = new OneTimeWorkRequest.Builder(ArtLoadWorker.class)
+                .setInputData(new Data.Builder()
+                        .putString("clientId", Utils.loadRedditAuth(ctx))
+                        .build())
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setConstraints(new Constraints.Builder()
                         .setRequiredNetworkType(NetworkType.CONNECTED)
