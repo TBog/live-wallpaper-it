@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">LiveWallpaperIt</string>
+    <string name="name_art_provider">LWIt art</string>
+    <string name="desc_art_provider">LiveWallpaperIt art provider</string>
+</resources>
