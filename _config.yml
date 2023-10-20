@@ -1,0 +1,5 @@
+description: Muzei artwork provider
+show_downloads: true
+theme: jekyll-theme-hacker
+github:
+  apk_url: https://github.com/TBog/live-wallpaper-it/releases/latest/download/app-release.apk
