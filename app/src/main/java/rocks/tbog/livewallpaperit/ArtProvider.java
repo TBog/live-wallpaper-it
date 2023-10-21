@@ -19,18 +19,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
 
+import rocks.tbog.livewallpaperit.utils.PrefUtils;
+
 public class ArtProvider extends MuzeiArtProvider {
     private static final String TAG = ArtProvider.class.getSimpleName();
     UUID mRequestID = null;
 
     @Override
-    protected void onLoadRequested(boolean initial) {
+    public void onLoadRequested(boolean initial) {
         Context ctx = getContext();
         if (ctx == null)
             return;
         WorkRequest request = new OneTimeWorkRequest.Builder(ArtLoadWorker.class)
                 .setInputData(new Data.Builder()
-                        .putString("clientId", Utils.loadRedditAuth(ctx))
+                        .putString("clientId", PrefUtils.loadRedditAuth(ctx))
                         .build())
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setConstraints(new Constraints.Builder()
@@ -43,7 +45,7 @@ public class ArtProvider extends MuzeiArtProvider {
 
     @NonNull
     @Override
-    protected InputStream openFile(@NonNull Artwork artwork) throws IOException {
+    public InputStream openFile(@NonNull Artwork artwork) throws IOException {
         Log.d(TAG, "openFile " + artwork.getToken());
         return super.openFile(artwork);
     }

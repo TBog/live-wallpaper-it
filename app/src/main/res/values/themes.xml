@@ -3,7 +3,29 @@
     <style name="Base.Theme.LiveWallpaperIt" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+
+        <item name="actionModeStyle">@style/ActionModeStyle</item>
     </style>
 
-    <style name="Theme.LiveWallpaperIt" parent="Base.Theme.LiveWallpaperIt" />
+    <style name="Theme.LiveWallpaperIt" parent="Base.Theme.LiveWallpaperIt">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <!--
+        Settings
+    -->
+    <style name="SettingsTheme" parent="Base.Theme.LiveWallpaperIt">
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+
+        <item name="android:background">@null</item>
+        <item name="background">@null</item>
+        <item name="windowActionBar">true</item>
+        <item name="windowNoTitle">false</item>
+
+        <item name="android:listPreferredItemHeight">64dp</item>
+        <item name="android:listPreferredItemHeightSmall">48dp</item>
+        <item name="android:listPreferredItemHeightLarge">80dp</item>
+    </style>
 </resources>

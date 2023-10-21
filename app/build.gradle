@@ -6,6 +6,10 @@ android {
     namespace 'rocks.tbog.livewallpaperit'
     compileSdk 34
 
+    buildFeatures {
+        buildConfig true
+    }
+
     defaultConfig {
         applicationId "rocks.tbog.livewallpaperit"
         minSdk 21
@@ -13,6 +17,11 @@ android {
         multiDexEnabled true
         versionCode 1
         versionName "0.1"
+
+        def lwiAuthorityValue = "rocks.tbog.livewallpaperit"
+        manifestPlaceholders = [lwiAuthority: lwiAuthorityValue]
+        buildConfigField "String", "LWI_AUTHORITY", "\"${lwiAuthorityValue}\""
+        buildConfigField "String", "MUZEI_PACKAGE_NAME", "\"net.nurik.roman.muzei\""
     }
 
     buildTypes {
@@ -21,6 +30,26 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    flavorDimensions = ["store"]
+    productFlavors {
+        playstore {
+            dimension "store"
+            buildConfigField 'boolean', 'SHOW_PRIVACY_POLICY', 'true'
+            buildConfigField 'boolean', 'SHOW_RATE_APP', 'true'
+        }
+        fdroid {
+            dimension "store"
+            buildConfigField 'boolean', 'SHOW_PRIVACY_POLICY', 'false'
+            buildConfigField 'boolean', 'SHOW_RATE_APP', 'true'
+        }
+        github {
+            dimension "store"
+            buildConfigField 'boolean', 'SHOW_PRIVACY_POLICY', 'false'
+            buildConfigField 'boolean', 'SHOW_RATE_APP', 'false'
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
@@ -36,7 +65,8 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.10.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'com.google.android.apps.muzei:muzei-api:3.2.0'
+    implementation 'com.google.android.apps.muzei:muzei-api:3.4.1'
+    implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
     implementation 'androidx.work:work-runtime:2.8.1'
     implementation 'androidx.preference:preference:1.2.1'
     implementation 'com.github.KirkBushman:ARAW:v1.1.0-alpha03'

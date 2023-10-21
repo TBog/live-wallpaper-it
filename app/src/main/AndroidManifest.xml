@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -15,6 +15,7 @@
         android:theme="@style/Theme.LiveWallpaperIt"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+
         <activity
             android:name=".LWIActivity"
             android:exported="true">
@@ -25,16 +26,43 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".preference.SettingsActivity"
+            android:allowTaskReparenting="true"
+            android:exported="true"
+            android:label="@string/settings_name"
+            android:launchMode="singleTask"
+            android:parentActivityName=".LWIActivity"
+            android:screenOrientation="user"
+            android:theme="@style/SettingsTheme">
+            <!-- android:taskAffinity=".SettingsActivity"> -->
+            <!-- Parent activity meta-data to support API level 4+ -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".LWIActivity" />
+            <intent-filter>
+                <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
+                <action android:name="com.sec.android.intent.action.SEC_APPLICATION_SETTINGS" />
+
+                <category android:name="android.intent.category.PREFERENCE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <provider
-            android:authorities=".ArtProvider"
+            android:name="rocks.tbog.livewallpaperit.ArtProvider"
+            android:authorities="${lwiAuthority}"
+            android:description="@string/desc_art_provider"
             android:exported="true"
             android:label="@string/name_art_provider"
-            android:description="@string/desc_art_provider"
-            android:name=".ArtProvider"
             android:permission="com.google.android.apps.muzei.api.ACCESS_PROVIDER">
             <intent-filter>
-                <action android:name="com.google.android.apps.muzei.api.MuzeiArtProvider"/>
+                <action android:name="com.google.android.apps.muzei.api.MuzeiArtProvider" />
             </intent-filter>
+            <!-- Application modules using this library should implement this class -->
+            <meta-data
+                android:name="settingsActivity"
+                android:value="rocks.tbog.livewallpaperit.SettingsActivity" />
         </provider>
 
     </application>
