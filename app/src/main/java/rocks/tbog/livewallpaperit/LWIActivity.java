@@ -8,14 +8,15 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.ComponentActivity;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.StringRes;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.work.Constraints;
 import androidx.work.Data;
@@ -36,13 +37,14 @@ import rocks.tbog.livewallpaperit.preference.SettingsActivity;
 import rocks.tbog.livewallpaperit.utils.PrefUtils;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
 
-public class LWIActivity extends ComponentActivity {
+public class LWIActivity extends AppCompatActivity {
     private static final String TAG = LWIActivity.class.getSimpleName();
     private LWIViewModel mModel;
     private UUID mVerifyRequestID;
     TextInputLayout mInputLayout;
     MaterialButton mButtonVerify;
     MaterialButton mButtonActivate;
+    MaterialButton mButtonSources;
     ImageButton mButtonSettings;
     CircularProgressIndicator mProgressVerify;
 
@@ -58,6 +60,7 @@ public class LWIActivity extends ComponentActivity {
         mModel = new ViewModelProvider(this).get(LWIViewModel.class);
         mInputLayout = findViewById(R.id.input_client_id);
         mButtonVerify = findViewById(R.id.btn_verify);
+        mButtonSources = findViewById(R.id.btn_edit_source);
         mProgressVerify = findViewById(R.id.verify_progress);
         mButtonActivate = findViewById(R.id.btn_ok);
         mButtonSettings = findViewById(R.id.btn_settings);
@@ -80,11 +83,24 @@ public class LWIActivity extends ComponentActivity {
                 mModel.setRedditAuth(s.toString().trim());
             }
         });
+        clientId.setOnEditorActionListener((view, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                if (mButtonVerify.isEnabled()) {
+                    return mButtonVerify.performClick();
+                }
+            }
+            return false;
+        });
+
+        mButtonSources.setOnClickListener(this::onClickSources);
+
+        boolean authVerified = PrefUtils.isRedditAuthVerified(getApplicationContext());
 
         mButtonVerify.setOnClickListener(this::onClickVerify);
-        mButtonVerify.setEnabled(!PrefUtils.isRedditAuthVerified(getApplicationContext()));
+        mButtonVerify.setEnabled(!authVerified);
 
         mButtonActivate.setOnClickListener(this::onClickActivate);
+        mButtonActivate.setEnabled(authVerified);
 
         mButtonSettings.setOnClickListener(this::onClickSettings);
 
@@ -94,6 +110,7 @@ public class LWIActivity extends ComponentActivity {
                 workManager.cancelWorkById(mVerifyRequestID);
             } else {
                 mButtonVerify.setEnabled(true);
+                mButtonActivate.setEnabled(false);
             }
             mModel.setRedditAuthVerified(LWIViewModel.RedditAuthState.AUTH_NOT_DONE);
         });
@@ -109,6 +126,7 @@ public class LWIActivity extends ComponentActivity {
                 mInputLayout.setError(null);
             } else if (LWIViewModel.RedditAuthState.AUTH_VALID.equals(state)) {
                 PrefUtils.setRedditAuth(getApplicationContext(), mModel.getRedditAuth().getValue());
+                mButtonActivate.setEnabled(true);
             } else if (LWIViewModel.RedditAuthState.AUTH_FAILED.equals(state)) {
                 mInputLayout.setError(getText(R.string.error_clientId_verify));
                 mButtonActivate.setEnabled(false);
@@ -144,6 +162,11 @@ public class LWIActivity extends ComponentActivity {
 
     private void onClickSettings(View view) {
         Intent intent = new Intent(this, SettingsActivity.class);
+        ViewUtils.launchIntent(view, intent);
+    }
+
+    private void onClickSources(View view) {
+        Intent intent = new Intent(this, SourcesActivity.class);
         ViewUtils.launchIntent(view, intent);
     }
 
@@ -183,8 +206,9 @@ public class LWIActivity extends ComponentActivity {
                         mModel.setRedditAuthVerified(LWIViewModel.RedditAuthState.AUTH_VALID);
                     } else {
                         mModel.setRedditAuthVerified(LWIViewModel.RedditAuthState.AUTH_FAILED);
+                        mButtonVerify.setEnabled(true);
+                        mButtonActivate.setEnabled(false);
                     }
-                    mButtonVerify.setEnabled(true);
                     mVerifyRequestID = null;
                     return;
                 case ENQUEUED:
@@ -197,6 +221,7 @@ public class LWIActivity extends ComponentActivity {
                     //fallthrough
                 case CANCELLED:
                     mButtonVerify.setEnabled(true);
+                    mButtonActivate.setEnabled(false);
                     mVerifyRequestID = null;
                     break;
             }

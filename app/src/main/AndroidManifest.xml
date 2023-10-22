@@ -27,6 +27,20 @@
         </activity>
 
         <activity
+            android:name=".SourcesActivity"
+            android:allowTaskReparenting="true"
+            android:exported="true"
+            android:label="@string/sources_name"
+            android:launchMode="singleTask"
+            android:parentActivityName=".LWIActivity"
+            android:screenOrientation="user">
+            <!-- Parent activity meta-data to support API level 4+ -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".LWIActivity" />
+        </activity>
+
+        <activity
             android:name=".preference.SettingsActivity"
             android:allowTaskReparenting="true"
             android:exported="true"

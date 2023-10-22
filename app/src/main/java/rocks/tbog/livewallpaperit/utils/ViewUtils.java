@@ -51,10 +51,7 @@ public class ViewUtils {
         return null;
     }
 
-    public static void launchIntent(@NonNull View view, @NonNull Intent intent) {
-        Activity activity = getActivity(view);
-        if (activity == null)
-            return;
+    public static void launchIntent(@NonNull Activity activity, @Nullable View view, @NonNull Intent intent) {
         setIntentSourceBounds(intent, view);
         Bundle startActivityOptions = makeStartActivityOptions(view);
         try {
@@ -62,6 +59,13 @@ public class ViewUtils {
         } catch (ActivityNotFoundException e) {
             Log.w(TAG, "startActivity failed", e);
         }
+    }
+
+    public static void launchIntent(@NonNull View view, @NonNull Intent intent) {
+        Activity activity = getActivity(view);
+        if (activity == null)
+            return;
+        launchIntent(activity, view, intent);
     }
 
     public static void setIntentSourceBounds(@NonNull Intent intent, @Nullable View v) {

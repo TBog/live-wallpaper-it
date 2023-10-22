@@ -35,8 +35,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/label_client_id"
+            android:imeOptions="actionDone"
             android:importantForAutofill="no"
-            android:inputType="textAutoCorrect" />
+            android:inputType="textAutoCorrect"
+            android:singleLine="true" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -47,7 +49,7 @@
         android:layout_margin="8dp"
         android:text="@string/btn_verify"
         app:layout_constraintBottom_toTopOf="@id/btn_ok"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btn_edit_source"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/input_client_id" />
 
@@ -66,6 +68,17 @@
         app:layout_constraintStart_toStartOf="@id/btn_verify"
         app:layout_constraintTop_toTopOf="@id/btn_verify"
         tools:visibility="visible" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_edit_source"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginHorizontal="8dp"
+        android:text="@string/btn_edit_source"
+        app:layout_constraintBottom_toBottomOf="@id/btn_verify"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/btn_verify"
+        app:layout_constraintTop_toTopOf="@id/btn_verify" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_ok"

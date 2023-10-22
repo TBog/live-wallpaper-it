@@ -20,8 +20,9 @@ import androidx.preference.PreferenceScreen;
 import java.util.ArrayList;
 
 import rocks.tbog.livewallpaperit.R;
+import rocks.tbog.livewallpaperit.TitleActivity;
 
-public class SettingsActivity extends AppCompatActivity implements PreferenceFragmentCompat.OnPreferenceStartScreenCallback {
+public class SettingsActivity extends TitleActivity implements PreferenceFragmentCompat.OnPreferenceStartScreenCallback {
 
     private final static String INTENT_EXTRA_BACK_STACK_TAGS = "backStackTagList";
 
@@ -72,21 +73,6 @@ public class SettingsActivity extends AppCompatActivity implements PreferenceFra
         ft.replace(R.id.settings_container, fragment, key);
         ft.addToBackStack(key);
         ft.commit();
-    }
-
-    @Override
-    protected void onTitleChanged(CharSequence title, int color) {
-        super.onTitleChanged(title, color);
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            if (color != 0 && !(title instanceof Spannable)) {
-                SpannableString ss = new SpannableString(title);
-                ss.setSpan(new ForegroundColorSpan(color), 0, title.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-                actionBar.setTitle(ss);
-            } else {
-                actionBar.setTitle(title);
-            }
-        }
     }
 
     @Override

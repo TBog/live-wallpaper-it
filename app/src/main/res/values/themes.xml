@@ -1,4 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <!-- Base application theme. -->
     <style name="Base.Theme.LiveWallpaperIt" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
@@ -8,8 +8,18 @@
     </style>
 
     <style name="Theme.LiveWallpaperIt" parent="Base.Theme.LiveWallpaperIt">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
+<!--        <item name="actionBarPopupTheme">@style/Theme.PopupOverlay</item>-->
+<!--        <item name="actionBarTheme">@style/Theme.PopupOverlay</item>-->
+    </style>
+
+    <style name="Theme.PopupOverlay" parent="ThemeOverlay.AppCompat.DayNight">
+        <item name="iconTint">?attr/colorButtonNormal</item>
+        <!-- toolbar back arrow and 3dot color -->
+        <item name="android:textColorSecondary">?attr/colorButtonNormal</item>
+        <!-- toolbar title color -->
+        <item name="android:textColorPrimary">?attr/colorButtonNormal</item>
+        <!-- options menu -->
+        <item name="popupTheme">@style/ThemeOverlay.AppCompat.DayNight</item>
     </style>
 
     <!--

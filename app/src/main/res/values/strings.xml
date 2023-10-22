@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">LiveWallpaperIt</string>
     <string name="settings_name">LWIt settings</string>
+    <string name="sources_name">Subreddits</string>
+
     <string name="name_art_provider">LWIt art</string>
     <string name="desc_art_provider">LiveWallpaperIt art provider</string>
     <string name="label_client_id">Client ID or App ID</string>
@@ -15,4 +17,8 @@
     <string name="app_version_summary">%1$s - %2$s</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="rate_the_app">Rate the app</string>
+    <string name="btn_edit_source">Edit sources</string>
+    <string name="action_add">Add subreddit</string>
+    <string name="action_remove">Remove subreddit</string>
+    <string name="action_settings">Settings</string>
 </resources>

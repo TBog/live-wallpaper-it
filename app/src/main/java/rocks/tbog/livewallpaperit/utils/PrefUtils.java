@@ -31,7 +31,7 @@ public class PrefUtils {
                 textBuilder.append((char) c);
             }
         } catch (IOException e) {
-            Log.e(TAG, "reddit_auth");
+            Log.w(TAG, "reddit_auth");
             return "";
         }
         int pos = textBuilder.lastIndexOf("\"");
