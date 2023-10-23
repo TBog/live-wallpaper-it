@@ -36,6 +36,7 @@ import java.util.UUID;
 import rocks.tbog.livewallpaperit.preference.SettingsActivity;
 import rocks.tbog.livewallpaperit.utils.PrefUtils;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
+import rocks.tbog.livewallpaperit.work.VerifyClientIdWorker;
 
 public class LWIActivity extends AppCompatActivity {
     private static final String TAG = LWIActivity.class.getSimpleName();

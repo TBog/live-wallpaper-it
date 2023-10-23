@@ -1,4 +1,4 @@
-package rocks.tbog.livewallpaperit;
+package rocks.tbog.livewallpaperit.work;
 
 import android.content.Context;
 import android.text.TextUtils;

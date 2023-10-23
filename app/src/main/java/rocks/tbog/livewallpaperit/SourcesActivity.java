@@ -62,7 +62,7 @@ public class SourcesActivity extends AppCompatActivity {
         final ArrayList<String> list = new ArrayList<>();
         AsyncUtils.runAsync(getLifecycle(), task -> {
             SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-            Set<String> sources = pref.getStringSet("subreddit_sources", Collections.emptySet());
+            Set<String> sources = pref.getStringSet(ArtProvider.PREF_SOURCES_SET, Collections.emptySet());
             list.addAll(sources);
             Collections.sort(list, String::compareToIgnoreCase);
         }, task -> {
@@ -109,7 +109,7 @@ public class SourcesActivity extends AppCompatActivity {
             subredditSet.add(source.subreddit);
 
         mPreference.edit()
-                .putStringSet("subreddit_sources", subredditSet)
+                .putStringSet(ArtProvider.PREF_SOURCES_SET, subredditSet)
                 .apply();
     }
 

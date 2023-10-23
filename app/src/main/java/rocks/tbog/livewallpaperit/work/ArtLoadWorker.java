@@ -1,4 +1,4 @@
-package rocks.tbog.livewallpaperit;
+package rocks.tbog.livewallpaperit.work;
 
 import android.content.Context;
 import android.net.Uri;
@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -30,6 +31,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import rocks.tbog.livewallpaperit.ArtProvider;
+
 public class ArtLoadWorker extends Worker {
     private static final String TAG = ArtLoadWorker.class.getSimpleName();
 
@@ -42,11 +45,16 @@ public class ArtLoadWorker extends Worker {
     public Result doWork() {
         Context ctx = getApplicationContext();
 
+        String subreddit = getInputData().getString("subreddit");
+        if (TextUtils.isEmpty(subreddit)) {
+            Log.e(TAG, "subreddit=`" + subreddit + "`");
+            return Result.failure();
+        }
         String clientId = getInputData().getString("clientId");
         if (TextUtils.isEmpty(clientId))
             return Result.failure();
 
-        var helper = new AuthUserlessHelper(ctx, clientId, "DO_NOT_TRACK_THIS_DEVICE", true, true);
+        var helper = new AuthUserlessHelper(ctx, clientId, "DO_NOT_TRACK_THIS_DEVICE", false, true);
         if (!helper.shouldLogin()) {
             // use saved one
             Log.i(TAG, String.valueOf(helper));
@@ -62,10 +70,11 @@ public class ArtLoadWorker extends Worker {
 
         ProviderClient providerClient = ProviderContract.getProviderClient(ctx, ArtProvider.class);
 
-        SubmissionsFetcher submissionsFetcher = client.getSubredditsClient().createSubmissionsFetcher("AnimeWallpapers", SubmissionsSorting.NEW, TimePeriod.ALL_TIME, 10);//Fetcher.MAX_LIMIT);
+        SubmissionsFetcher submissionsFetcher = client.getSubredditsClient().createSubmissionsFetcher(subreddit, SubmissionsSorting.NEW, TimePeriod.ALL_TIME, 10);//Fetcher.MAX_LIMIT);
         List<Submission> submissions = submissionsFetcher.fetchNext();
         if (submissions == null)
             submissions = Collections.emptyList();
+        int artworkSubmittedCount = getInputData().getInt("artworkSubmittedCount", 0);
         for (Submission submission : submissions) {
             boolean artworkSubmitted = false;
             SubmissionPreview preview = submission.getPreview();
@@ -83,6 +92,7 @@ public class ArtLoadWorker extends Worker {
 
                 Log.d(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
                 providerClient.addArtwork(artwork);
+                artworkSubmittedCount += 1;
                 artworkSubmitted = true;
             }
 
@@ -98,6 +108,7 @@ public class ArtLoadWorker extends Worker {
 
                 Log.d(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
                 providerClient.addArtwork(artwork);
+                artworkSubmittedCount += 1;
                 artworkSubmitted = true;
             }
 
@@ -137,10 +148,14 @@ public class ArtLoadWorker extends Worker {
 
                 Log.d(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
                 providerClient.addArtwork(artwork);
-                artworkSubmitted = true;
+                artworkSubmittedCount += 1;
             }
         }
 
-        return Result.success();
+        Log.i(TAG, "artworkSubmittedCount=" + artworkSubmittedCount);
+        return Result.success(new Data.Builder()
+                .putString("clientId", clientId)
+                .putInt("artworkSubmittedCount", artworkSubmittedCount)
+                .build());
     }
 }
