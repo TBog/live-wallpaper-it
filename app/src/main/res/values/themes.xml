@@ -8,8 +8,8 @@
     </style>
 
     <style name="Theme.LiveWallpaperIt" parent="Base.Theme.LiveWallpaperIt">
-<!--        <item name="actionBarPopupTheme">@style/Theme.PopupOverlay</item>-->
-<!--        <item name="actionBarTheme">@style/Theme.PopupOverlay</item>-->
+        <!--        <item name="actionBarPopupTheme">@style/Theme.PopupOverlay</item>-->
+        <!--        <item name="actionBarTheme">@style/Theme.PopupOverlay</item>-->
     </style>
 
     <style name="Theme.PopupOverlay" parent="ThemeOverlay.AppCompat.DayNight">
@@ -20,6 +20,19 @@
         <item name="android:textColorPrimary">?attr/colorButtonNormal</item>
         <!-- options menu -->
         <item name="popupTheme">@style/ThemeOverlay.AppCompat.DayNight</item>
+    </style>
+
+    <style name="TitleDialogTheme" parent="Theme.MaterialComponents.Dialog.Alert">
+        <item name="android:windowNoTitle">false</item>
+        <item name="android:colorBackground">@android:color/transparent</item>
+        <item name="android:windowFrame">@null</item>
+<!--        <item name="android:windowTitleStyle">@style/GradientWindowTitle</item>-->
+<!--        <item name="android:windowBackground">@drawable/dialog_background</item>-->
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowSoftInputMode">stateUnspecified|adjustPan</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowActionModeOverlay">true</item>
     </style>
 
     <!--

@@ -21,4 +21,6 @@
     <string name="action_add">Add subreddit</string>
     <string name="action_remove">Remove subreddit</string>
     <string name="action_settings">Settings</string>
+    <string name="title_add_subreddit">Add image source</string>
+    <string name="hint_add_subreddit">subreddit name</string>
 </resources>

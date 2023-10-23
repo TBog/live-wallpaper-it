@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder> extends RecyclerView.Adapter<VH> {
@@ -86,6 +87,14 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
             return null;
         }
         return entry;
+    }
+
+    public void getItems(Collection<T> outItems) {
+        outItems.addAll(mItemList);
+    }
+
+    public List<T> getItems() {
+        return Collections.unmodifiableList(mItemList);
     }
 
     public void removeItem(T result) {

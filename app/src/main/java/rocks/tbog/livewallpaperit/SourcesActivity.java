@@ -9,7 +9,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
@@ -17,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.collection.ArraySet;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -26,11 +26,13 @@ import java.util.Collections;
 import java.util.Set;
 
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
+import rocks.tbog.livewallpaperit.dialog.DialogHelper;
 import rocks.tbog.livewallpaperit.preference.SettingsActivity;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
 
 public class SourcesActivity extends AppCompatActivity {
     SourceAdapter mAdapter = new SourceAdapter();
+    SharedPreferences mPreference;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -40,8 +42,8 @@ public class SourcesActivity extends AppCompatActivity {
         topToolbar.setTitle(R.string.sources_name);
         setSupportActionBar(topToolbar);
 
-        mAdapter.addItem(new Source("test"));
         mAdapter.setHasStableIds(true);
+        mPreference = PreferenceManager.getDefaultSharedPreferences(this);
 
         RecyclerView recyclerView = findViewById(R.id.source_list);
         recyclerView.setHasFixedSize(true);
@@ -86,11 +88,29 @@ public class SourcesActivity extends AppCompatActivity {
             ViewUtils.launchIntent(this, null, intent);
             return true;
         } else if (itemId == R.id.action_add) {
-            mAdapter.addItem(new Source("rename me " + mAdapter.getItemCount()));
-            return true;
+            return openAddSourceDialog();
         }
         // The user's action isn't recognized. Invoke the superclass to handle it.
         return super.onOptionsItemSelected(item);
+    }
+
+    public boolean openAddSourceDialog() {
+        DialogHelper.makeRenameDialog(this, "", (dialog, name) -> addSource(name))
+                .setTitle(R.string.title_add_subreddit)
+                .setHint(R.string.hint_add_subreddit)
+                .show(getSupportFragmentManager());
+        return true;
+    }
+
+    public void addSource(String name) {
+        mAdapter.addItem(new Source(name));
+        ArraySet<String> subredditSet = new ArraySet<>();
+        for (Source source : mAdapter.getItems())
+            subredditSet.add(source.subreddit);
+
+        mPreference.edit()
+                .putStringSet("subreddit_sources", subredditSet)
+                .apply();
     }
 
     public static class Source {
