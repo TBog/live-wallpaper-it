@@ -27,5 +27,5 @@
     <string name="action_share_description" type="id">Share name and link</string>
     <string name="action_delete" type="id">Delete</string>
     <string name="action_delete_description" type="id">Delete and add to ignore list</string>
-    <string name="share_title_and_link">My Android wallpaper today is \'%1$s\' from reddit.com by %2$s.\\n\\n%3$s</string>
+    <string name="share_title_and_link">My Android wallpaper today is \'%1$s\' from reddit.com by %2$s.\n\n%3$s</string>
 </resources>

@@ -37,6 +37,7 @@ import rocks.tbog.livewallpaperit.preference.SettingsActivity;
 import rocks.tbog.livewallpaperit.utils.PrefUtils;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
 import rocks.tbog.livewallpaperit.work.VerifyClientIdWorker;
+import rocks.tbog.livewallpaperit.work.WorkerUtils;
 
 public class LWIActivity extends AppCompatActivity {
     private static final String TAG = LWIActivity.class.getSimpleName();
@@ -188,7 +189,7 @@ public class LWIActivity extends AppCompatActivity {
         //String clientId = mModel.getClientId().getValue();
         WorkRequest request = new OneTimeWorkRequest.Builder(VerifyClientIdWorker.class)
                 .setInputData(new Data.Builder()
-                        .putString("clientId", mModel.getRedditAuth().getValue())
+                        .putString(WorkerUtils.DATA_CLIENT_ID, mModel.getRedditAuth().getValue())
                         .build())
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setConstraints(new Constraints.Builder()
@@ -201,7 +202,7 @@ public class LWIActivity extends AppCompatActivity {
             Log.d(TAG, "work " + workInfo.getId() + " state " + workInfo.getState());
             switch (workInfo.getState()) {
                 case SUCCEEDED:
-                    String workerClientId = workInfo.getOutputData().getString("clientId");
+                    String workerClientId = workInfo.getOutputData().getString(WorkerUtils.DATA_CLIENT_ID);
                     String modelClientId = mModel.getRedditAuth().getValue();
                     if (TextUtils.equals(workerClientId, modelClientId)) {
                         mModel.setRedditAuthVerified(LWIViewModel.RedditAuthState.AUTH_VALID);

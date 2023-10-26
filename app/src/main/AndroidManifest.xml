@@ -77,7 +77,7 @@
             <!-- Application modules using this library should implement this class -->
             <meta-data
                 android:name="settingsActivity"
-                android:value="rocks.tbog.livewallpaperit.SettingsActivity" />
+                android:value="rocks.tbog.livewallpaperit.preference.SettingsActivity" />
         </provider>
 
         <receiver

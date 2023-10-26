@@ -27,29 +27,31 @@ public class LoginWorker extends Worker {
     @Override
     public Result doWork() {
         Context ctx = getApplicationContext();
-        String clientId = getInputData().getString("clientId");
+        String clientId = getInputData().getString(WorkerUtils.DATA_CLIENT_ID);
         if (TextUtils.isEmpty(clientId))
-            return Result.failure();
+            return Result.failure(new Data.Builder().putString(WorkerUtils.FAIL_REASON, "empty clientId").build());
 
         var helper = new AuthUserlessHelper(ctx, clientId, "DO_NOT_TRACK_THIS_DEVICE", false, true);
-        if (!helper.shouldLogin()) {
-            // use saved one
-            Log.i(TAG, String.valueOf(helper));
-        } else {
-            // you must authenticate
-            Log.i(TAG, "you must authenticate");
-        }
 
         // obtain a client
         RedditClient client = helper.getRedditClient();
         if (client == null)
-            return Result.failure();
+            return Result.failure(new Data.Builder().putString(WorkerUtils.FAIL_REASON, "getRedditClient=null").build());
+
+        if (helper.shouldLogin()) {
+            // you must authenticate
+            Log.e(TAG, "you must authenticate. Probably wrong clientId.");
+            return Result.failure(new Data.Builder().putString(WorkerUtils.FAIL_REASON, "auth required, probably wrong clientId").build());
+        } else {
+            // use saved one
+            Log.v(TAG, "hasSavedBearer=" + helper.hasSavedBearer());
+        }
 
         List<String> list = DBHelper.getIgnoreTokenList(ctx);
 
         return Result.success(new Data.Builder()
-                .putString("clientId", clientId)
-                .putStringArray("ignoreTokenList", list.toArray(new String[0]))
+                .putAll(getInputData())
+                .putStringArray(WorkerUtils.DATA_IGNORE_TOKEN_LIST, list.toArray(new String[0]))
                 .build());
     }
 

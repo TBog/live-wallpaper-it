@@ -39,7 +39,7 @@ public class ArtLoadWorker extends Worker {
     private static final int LOAD_COUNT = 10;
     private List<String> mIgnoreTokenList = Collections.emptyList();
     private int mArtworkSubmitCount = 0;
-    private int mNoArtworkCount = 0;
+    private int mArtworkNotFoundCount = 0;
 
     public ArtLoadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -50,39 +50,26 @@ public class ArtLoadWorker extends Worker {
     public Result doWork() {
         Context ctx = getApplicationContext();
 
-        mArtworkSubmitCount = getInputData().getInt("artworkSubmitCount", 0);
-        mNoArtworkCount = getInputData().getInt("noArtworkCount", 0);
-        String[] ignoreTokens = getInputData().getStringArray("ignoreTokenList");
+        String[] ignoreTokens = getInputData().getStringArray(WorkerUtils.DATA_IGNORE_TOKEN_LIST);
         if (ignoreTokens != null) {
             mIgnoreTokenList = Arrays.asList(ignoreTokens);
-            StringBuilder dbg = new StringBuilder("ignore list: ");
-            for (String token : mIgnoreTokenList)
-                dbg.append(token).append(" ");
-            Log.d(TAG, dbg.toString());
         }
 
-        String subreddit = getInputData().getString("subreddit");
+        String subreddit = getInputData().getString(WorkerUtils.DATA_SUBREDDIT);
         if (TextUtils.isEmpty(subreddit)) {
             Log.e(TAG, "subreddit=`" + subreddit + "`");
-            return Result.failure();
+            return Result.failure(new Data.Builder().putString(WorkerUtils.FAIL_REASON, "empty subreddit").build());
         }
-        String clientId = getInputData().getString("clientId");
-        if (TextUtils.isEmpty(clientId))
-            return Result.failure();
+        String clientId = getInputData().getString(WorkerUtils.DATA_CLIENT_ID);
+        if (TextUtils.isEmpty(clientId)) {
+            return Result.failure(new Data.Builder().putString(WorkerUtils.FAIL_REASON, "empty clientId").build());
+        }
 
         var helper = new AuthUserlessHelper(ctx, clientId, "DO_NOT_TRACK_THIS_DEVICE", false, true);
-        if (!helper.shouldLogin()) {
-            // use saved one
-            Log.i(TAG, String.valueOf(helper));
-        } else {
-            // you must authenticate
-            Log.i(TAG, "you must authenticate");
-        }
-
         // obtain a client
         RedditClient client = helper.getRedditClient();
         if (client == null)
-            return Result.failure();
+            return Result.failure(new Data.Builder().putString(WorkerUtils.FAIL_REASON, "getRedditClient=null").build());
 
         ProviderClient providerClient = ProviderContract.getProviderClient(ctx, ArtProvider.class);
 
@@ -94,17 +81,17 @@ public class ArtLoadWorker extends Worker {
             }
 
             if (mArtworkSubmitCount < LOAD_COUNT && submissionsFetcher.hasNext()) {
+                Log.v(TAG, "fetchNext; artworkSubmitCount=" + mArtworkSubmitCount);
                 submissions = submissionsFetcher.fetchNext();
             } else {
                 submissions = null;
             }
         }
 
-        Log.i(TAG, "artworkSubmitCount=" + mArtworkSubmitCount + " noArtworkCount=" + mNoArtworkCount);
+        Log.i(TAG, "artworkSubmitCount=" + mArtworkSubmitCount + " artworkNotFoundCount=" + mArtworkNotFoundCount);
         return Result.success(new Data.Builder()
-                .putString("clientId", clientId)
-                .putInt("artworkSubmitCount", mArtworkSubmitCount)
-                .putInt("noArtworkCount", mNoArtworkCount)
+                .putInt(WorkerUtils.DATA_ARTWORK_SUBMIT_COUNT, mArtworkSubmitCount)
+                .putInt(WorkerUtils.DATA_ARTWORK_NOT_FOUND_COUNT, mArtworkNotFoundCount)
                 .build());
     }
 
@@ -123,7 +110,7 @@ public class ArtLoadWorker extends Worker {
                     .title(submission.getTitle())
                     .build();
 
-            Log.d(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
+            Log.v(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
             artworkFound = true;
             if (!mIgnoreTokenList.contains(artwork.getToken())) {
                 mArtworkSubmitCount += 1;
@@ -141,7 +128,7 @@ public class ArtLoadWorker extends Worker {
                     .title(submission.getTitle())
                     .build();
 
-            Log.d(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
+            Log.v(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
             artworkFound = true;
             if (!mIgnoreTokenList.contains(artwork.getToken())) {
                 mArtworkSubmitCount += 1;
@@ -183,7 +170,7 @@ public class ArtLoadWorker extends Worker {
                     .title(submission.getTitle())
                     .build();
 
-            Log.d(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
+            Log.v(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
             artworkFound = true;
             if (!mIgnoreTokenList.contains(artwork.getToken())) {
                 mArtworkSubmitCount += 1;
@@ -191,7 +178,7 @@ public class ArtLoadWorker extends Worker {
             }
         }
         if (!artworkFound) {
-            mNoArtworkCount += 1;
+            mArtworkNotFoundCount += 1;
         }
     }
 }

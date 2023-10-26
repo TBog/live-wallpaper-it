@@ -3,6 +3,7 @@ package rocks.tbog.livewallpaperit;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.RemoteActionCompat;
@@ -29,12 +30,22 @@ public class CommandUtils {
                         artwork.getTitle(),
                         artwork.getAttribution(),
                         artwork.getWebUri()));
+
+        // we need Intent.filterEquals to differentiate between artworks
+        int requestCode = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            intent.setIdentifier(artwork.getToken());
+        } else {
+            requestCode = (int) artwork.getId();
+        }
+
+        // create an action with a unique PendingIntent
         RemoteActionCompat action = new RemoteActionCompat(
                 IconCompat.createWithResource(ctx, R.drawable.ic_share_24),
                 ctx.getString(R.string.action_share),
                 ctx.getString(R.string.action_share_description),
                 PendingIntent.getActivity(ctx,
-                        (int) artwork.getId(),
+                        requestCode,
                         Intent.createChooser(intent, null)
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE)
@@ -47,11 +58,21 @@ public class CommandUtils {
         Intent intent = new Intent(ctx, DeleteArtworkReceiver.class)
                 .putExtra(DeleteArtworkReceiver.ARTWORK_ID, String.valueOf(artwork.getId()))
                 .putExtra(DeleteArtworkReceiver.ARTWORK_TOKEN, artwork.getToken());
+
+        // we need Intent.filterEquals to differentiate between artworks
+        int requestCode = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            intent.setIdentifier(artwork.getToken());
+        } else {
+            requestCode = (int) artwork.getId();
+        }
+
+        // create an action with a unique PendingIntent
         RemoteActionCompat action = new RemoteActionCompat(
                 IconCompat.createWithResource(ctx, R.drawable.ic_delete_24),
                 ctx.getString(R.string.action_delete),
                 ctx.getString(R.string.action_delete_description),
-                PendingIntent.getBroadcast(ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT)
+                PendingIntent.getBroadcast(ctx, requestCode, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT)
         );
         action.setShouldShowIcon(false);
         return action;

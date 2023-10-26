@@ -34,29 +34,14 @@ public class DeleteArtworkReceiver extends BroadcastReceiver {
 
         final ContentResolver content = context.getContentResolver();
         final Uri contentUri = ProviderContract.getProviderClient(context, ArtProvider.class).getContentUri();
-
         final String whereFilter = ProviderContract.Artwork._ID + " = ? AND " + ProviderContract.Artwork.TOKEN + " = ?";
         final String[] whereArgs = new String[]{artworkId, artworkToken};
-
-//        ArrayList<ContentProviderOperation> operations = new ArrayList<>();
-//        operations.add(ContentProviderOperation
-//                .newDelete(contentUri)
-//                .withSelection(whereFilter, whereArgs)
-//                .build());
-//
-//        ContentProviderResult[] results = null;
-//        try {
-//            results = content.applyBatch(BuildConfig.LWI_AUTHORITY, operations);
-//        } catch (Exception e) {
-//            Log.e(TAG, "delete operation", e);
-//        }
-//        if (results != null && results.length > 0) {
-//            Log.d(TAG, "result[0]=" + results[0]);
-//        }
 
         int count = content.delete(contentUri, whereFilter, whereArgs);
         Log.d(TAG, "delete count=" + count);
 
-        DBHelper.insertIgnoreToken(context, artworkToken);
+        if (DBHelper.insertIgnoreToken(context, artworkToken)) {
+            Log.d(TAG, "ignored " + artworkToken);
+        }
     }
 }
