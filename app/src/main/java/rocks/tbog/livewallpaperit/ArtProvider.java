@@ -1,9 +1,12 @@
 package rocks.tbog.livewallpaperit;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.RemoteActionCompat;
 import androidx.preference.PreferenceManager;
 import androidx.work.Constraints;
 import androidx.work.Data;
@@ -19,16 +22,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.UUID;
+import java.util.List;
 
+import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.utils.PrefUtils;
 import rocks.tbog.livewallpaperit.work.ArtLoadWorker;
 import rocks.tbog.livewallpaperit.work.LoginWorker;
 
 public class ArtProvider extends MuzeiArtProvider {
+
     private static final String TAG = ArtProvider.class.getSimpleName();
     public static final String PREF_SOURCES_SET = "subreddit_sources";
-    UUID mRequestID = null;
 
     @Override
     public void onLoadRequested(boolean initial) {
@@ -57,7 +61,17 @@ public class ArtProvider extends MuzeiArtProvider {
                     .build());
         }
         workQueue.then(subredditWorkList).enqueue();
-        mRequestID = request.getId();
+    }
+
+    @NonNull
+    @Override
+    public List<RemoteActionCompat> getCommandActions(@NonNull Artwork artwork) {
+        List<RemoteActionCompat> commands = super.getCommandActions(artwork);
+        Context ctx = getContext();
+        if (ctx != null) {
+            commands.addAll(CommandUtils.artworkCommandActions(ctx, artwork));
+        }
+        return commands;
     }
 
     @NonNull
@@ -65,5 +79,25 @@ public class ArtProvider extends MuzeiArtProvider {
     public InputStream openFile(@NonNull Artwork artwork) throws IOException {
         Log.d(TAG, "openFile " + artwork.getToken());
         return super.openFile(artwork);
+    }
+
+    @Nullable
+    @Override
+    public PendingIntent getArtworkInfo(@NonNull Artwork artwork) {
+        Log.d(TAG, "getArtworkInfo " + artwork.getToken());
+        return super.getArtworkInfo(artwork);
+    }
+
+    @Override
+    public void onInvalidArtwork(@NonNull Artwork artwork) {
+        Log.d(TAG, "onInvalidArtwork " + artwork.getToken());
+        // add to ignore list
+        Context ctx = getContext();
+        String token = artwork.getToken();
+        if (ctx != null && token != null) {
+            DBHelper.insertIgnoreToken(ctx, token);
+        }
+
+        super.onInvalidArtwork(artwork);
     }
 }

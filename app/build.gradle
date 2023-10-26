@@ -19,7 +19,7 @@ android {
         versionName "0.1"
 
         def lwiAuthorityValue = "rocks.tbog.livewallpaperit"
-        manifestPlaceholders = [lwiAuthority: lwiAuthorityValue]
+        manifestPlaceholders["lwiAuthority"] = lwiAuthorityValue
         buildConfigField "String", "LWI_AUTHORITY", "\"${lwiAuthorityValue}\""
         buildConfigField "String", "MUZEI_PACKAGE_NAME", "\"net.nurik.roman.muzei\""
     }

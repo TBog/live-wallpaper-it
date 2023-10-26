@@ -27,6 +27,7 @@ import com.kirkbushman.araw.models.commons.SubmissionPreview;
 import com.kirkbushman.araw.models.enums.SubmissionsSorting;
 import com.kirkbushman.araw.models.enums.TimePeriod;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,10 @@ import rocks.tbog.livewallpaperit.ArtProvider;
 
 public class ArtLoadWorker extends Worker {
     private static final String TAG = ArtLoadWorker.class.getSimpleName();
+    private static final int LOAD_COUNT = 10;
+    private List<String> mIgnoreTokenList = Collections.emptyList();
+    private int mArtworkSubmitCount = 0;
+    private int mNoArtworkCount = 0;
 
     public ArtLoadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -44,6 +49,17 @@ public class ArtLoadWorker extends Worker {
     @Override
     public Result doWork() {
         Context ctx = getApplicationContext();
+
+        mArtworkSubmitCount = getInputData().getInt("artworkSubmitCount", 0);
+        mNoArtworkCount = getInputData().getInt("noArtworkCount", 0);
+        String[] ignoreTokens = getInputData().getStringArray("ignoreTokenList");
+        if (ignoreTokens != null) {
+            mIgnoreTokenList = Arrays.asList(ignoreTokens);
+            StringBuilder dbg = new StringBuilder("ignore list: ");
+            for (String token : mIgnoreTokenList)
+                dbg.append(token).append(" ");
+            Log.d(TAG, dbg.toString());
+        }
 
         String subreddit = getInputData().getString("subreddit");
         if (TextUtils.isEmpty(subreddit)) {
@@ -70,92 +86,112 @@ public class ArtLoadWorker extends Worker {
 
         ProviderClient providerClient = ProviderContract.getProviderClient(ctx, ArtProvider.class);
 
-        SubmissionsFetcher submissionsFetcher = client.getSubredditsClient().createSubmissionsFetcher(subreddit, SubmissionsSorting.NEW, TimePeriod.ALL_TIME, 10);//Fetcher.MAX_LIMIT);
+        SubmissionsFetcher submissionsFetcher = client.getSubredditsClient().createSubmissionsFetcher(subreddit, SubmissionsSorting.NEW, TimePeriod.ALL_TIME, LOAD_COUNT);//Fetcher.MAX_LIMIT);
         List<Submission> submissions = submissionsFetcher.fetchNext();
-        if (submissions == null)
-            submissions = Collections.emptyList();
-        int artworkSubmittedCount = getInputData().getInt("artworkSubmittedCount", 0);
-        for (Submission submission : submissions) {
-            boolean artworkSubmitted = false;
-            SubmissionPreview preview = submission.getPreview();
-            Images[] imagesArray = preview != null ? preview.getImages() : new Images[0];
-            for (Images images : imagesArray) {
-                ImageDetail imageDetail = images.getSource();
-                Artwork artwork = new Artwork.Builder()
-                        .persistentUri(Uri.parse(imageDetail.getUrl()))
-                        .webUri(Uri.parse("https://www.reddit.com" + submission.getPermalink()))
-                        .token(submission.getId())
-                        .attribution(submission.getAuthor())
-                        .byline(submission.getLinkFlairText())
-                        .title(submission.getTitle())
-                        .build();
-
-                Log.d(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
-                providerClient.addArtwork(artwork);
-                artworkSubmittedCount += 1;
-                artworkSubmitted = true;
+        while (submissions != null) {
+            for (Submission submission : submissions) {
+                processSubmission(submission, providerClient);
             }
 
-            if (!artworkSubmitted && submission.isRedditMediaDomain()) {
-                Artwork artwork = new Artwork.Builder()
-                        .persistentUri(Uri.parse(submission.getUrl()))
-                        .webUri(Uri.parse("https://www.reddit.com" + submission.getPermalink()))
-                        .token(submission.getId())
-                        .attribution(submission.getAuthor())
-                        .byline(submission.getLinkFlairText())
-                        .title(submission.getTitle())
-                        .build();
-
-                Log.d(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
-                providerClient.addArtwork(artwork);
-                artworkSubmittedCount += 1;
-                artworkSubmitted = true;
-            }
-
-            if (artworkSubmitted)
-                continue;
-
-            GalleryData galleryData = submission.getGalleryData();
-            if (galleryData == null) {
-                Log.d(TAG, "galleryData == null");
-                continue;
-            }
-            Map<String, GalleryMedia> mediaMetadata = submission.getMediaMetadata();
-            if (mediaMetadata == null) {
-                Log.d(TAG, "mediaMetadata == null");
-                continue;
-            }
-
-            List<GalleryMediaItem> mediaItems = galleryData.getItems();
-            for (GalleryMediaItem item : mediaItems) {
-                Log.d(TAG, "mediaId: " + item.getMediaId());
-
-                GalleryMedia media = mediaMetadata.get(item.getMediaId());
-                if (media == null || !"Image".equalsIgnoreCase(media.getE()))
-                    continue;
-                GalleryImageData imageData = media.getS();
-                if (imageData == null || TextUtils.isEmpty(imageData.getU()))
-                    continue;
-
-                Artwork artwork = new Artwork.Builder()
-                        .persistentUri(Uri.parse(imageData.getU()))
-                        .webUri(Uri.parse("https://www.reddit.com" + submission.getPermalink()))
-                        .token(media.getId())
-                        .attribution(submission.getAuthor())
-                        .byline(submission.getLinkFlairText())
-                        .title(submission.getTitle())
-                        .build();
-
-                Log.d(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
-                providerClient.addArtwork(artwork);
-                artworkSubmittedCount += 1;
+            if (mArtworkSubmitCount < LOAD_COUNT && submissionsFetcher.hasNext()) {
+                submissions = submissionsFetcher.fetchNext();
+            } else {
+                submissions = null;
             }
         }
 
-        Log.i(TAG, "artworkSubmittedCount=" + artworkSubmittedCount);
+        Log.i(TAG, "artworkSubmitCount=" + mArtworkSubmitCount + " noArtworkCount=" + mNoArtworkCount);
         return Result.success(new Data.Builder()
                 .putString("clientId", clientId)
-                .putInt("artworkSubmittedCount", artworkSubmittedCount)
+                .putInt("artworkSubmitCount", mArtworkSubmitCount)
+                .putInt("noArtworkCount", mNoArtworkCount)
                 .build());
+    }
+
+    private void processSubmission(Submission submission, ProviderClient providerClient) {
+        boolean artworkFound = false;
+        SubmissionPreview preview = submission.getPreview();
+        Images[] imagesArray = preview != null ? preview.getImages() : new Images[0];
+        for (Images images : imagesArray) {
+            ImageDetail imageDetail = images.getSource();
+            Artwork artwork = new Artwork.Builder()
+                    .persistentUri(Uri.parse(imageDetail.getUrl()))
+                    .webUri(Uri.parse("https://www.reddit.com" + submission.getPermalink()))
+                    .token(submission.getId())
+                    .attribution(submission.getAuthor())
+                    .byline(submission.getLinkFlairText())
+                    .title(submission.getTitle())
+                    .build();
+
+            Log.d(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
+            artworkFound = true;
+            if (!mIgnoreTokenList.contains(artwork.getToken())) {
+                mArtworkSubmitCount += 1;
+                providerClient.addArtwork(artwork);
+            }
+        }
+
+        if (!artworkFound && submission.isRedditMediaDomain()) {
+            Artwork artwork = new Artwork.Builder()
+                    .persistentUri(Uri.parse(submission.getUrl()))
+                    .webUri(Uri.parse("https://www.reddit.com" + submission.getPermalink()))
+                    .token(submission.getId())
+                    .attribution(submission.getAuthor())
+                    .byline(submission.getLinkFlairText())
+                    .title(submission.getTitle())
+                    .build();
+
+            Log.d(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
+            artworkFound = true;
+            if (!mIgnoreTokenList.contains(artwork.getToken())) {
+                mArtworkSubmitCount += 1;
+                providerClient.addArtwork(artwork);
+            }
+        }
+
+        if (artworkFound)
+            return;
+
+        GalleryData galleryData = submission.getGalleryData();
+        if (galleryData == null) {
+            Log.d(TAG, "galleryData == null");
+            return;
+        }
+        Map<String, GalleryMedia> mediaMetadata = submission.getMediaMetadata();
+        if (mediaMetadata == null) {
+            Log.d(TAG, "mediaMetadata == null");
+            return;
+        }
+
+        List<GalleryMediaItem> mediaItems = galleryData.getItems();
+        for (GalleryMediaItem item : mediaItems) {
+            Log.d(TAG, "mediaId: " + item.getMediaId());
+
+            GalleryMedia media = mediaMetadata.get(item.getMediaId());
+            if (media == null || !"Image".equalsIgnoreCase(media.getE()))
+                continue;
+            GalleryImageData imageData = media.getS();
+            if (imageData == null || TextUtils.isEmpty(imageData.getU()))
+                continue;
+
+            Artwork artwork = new Artwork.Builder()
+                    .persistentUri(Uri.parse(imageData.getU()))
+                    .webUri(Uri.parse("https://www.reddit.com" + submission.getPermalink()))
+                    .token(media.getId())
+                    .attribution(submission.getAuthor())
+                    .byline(submission.getLinkFlairText())
+                    .title(submission.getTitle())
+                    .build();
+
+            Log.d(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
+            artworkFound = true;
+            if (!mIgnoreTokenList.contains(artwork.getToken())) {
+                mArtworkSubmitCount += 1;
+                providerClient.addArtwork(artwork);
+            }
+        }
+        if (!artworkFound) {
+            mNoArtworkCount += 1;
+        }
     }
 }

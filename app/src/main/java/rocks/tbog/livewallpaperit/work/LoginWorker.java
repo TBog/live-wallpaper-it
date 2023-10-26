@@ -12,6 +12,10 @@ import androidx.work.WorkerParameters;
 import com.kirkbushman.araw.RedditClient;
 import com.kirkbushman.araw.helpers.AuthUserlessHelper;
 
+import java.util.List;
+
+import rocks.tbog.livewallpaperit.data.DBHelper;
+
 public class LoginWorker extends Worker {
     private static final String TAG = LoginWorker.class.getSimpleName();
 
@@ -27,7 +31,7 @@ public class LoginWorker extends Worker {
         if (TextUtils.isEmpty(clientId))
             return Result.failure();
 
-        var helper = new AuthUserlessHelper(ctx, clientId, "DO_NOT_TRACK_THIS_DEVICE", true, true);
+        var helper = new AuthUserlessHelper(ctx, clientId, "DO_NOT_TRACK_THIS_DEVICE", false, true);
         if (!helper.shouldLogin()) {
             // use saved one
             Log.i(TAG, String.valueOf(helper));
@@ -41,7 +45,12 @@ public class LoginWorker extends Worker {
         if (client == null)
             return Result.failure();
 
-        return Result.success(new Data.Builder().putString("clientId", clientId).build());
+        List<String> list = DBHelper.getIgnoreTokenList(ctx);
+
+        return Result.success(new Data.Builder()
+                .putString("clientId", clientId)
+                .putStringArray("ignoreTokenList", list.toArray(new String[0]))
+                .build());
     }
 
 }
