@@ -3,12 +3,10 @@ package rocks.tbog.livewallpaperit.preference;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
-
 import rocks.tbog.livewallpaperit.BuildConfig;
 import rocks.tbog.livewallpaperit.R;
 

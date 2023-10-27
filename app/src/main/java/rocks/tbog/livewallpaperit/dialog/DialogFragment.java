@@ -14,12 +14,10 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
-
 import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import rocks.tbog.livewallpaperit.R;
 
 public abstract class DialogFragment<Output> extends androidx.fragment.app.DialogFragment {
@@ -31,7 +29,9 @@ public abstract class DialogFragment<Output> extends androidx.fragment.app.Dialo
     private OnButtonClickListener<Output> mOnNegativeClickListener = null;
 
     public enum Button {
-        POSITIVE, NEGATIVE, NEUTRAL
+        POSITIVE,
+        NEGATIVE,
+        NEUTRAL
     }
 
     @LayoutRes
@@ -71,8 +71,7 @@ public abstract class DialogFragment<Output> extends androidx.fragment.app.Dialo
 
     public DialogFragment<Output> putArgString(@Nullable String key, @Nullable String value) {
         Bundle args = getArguments();
-        if (args == null)
-            args = new Bundle();
+        if (args == null) args = new Bundle();
         args.putString(key, value);
         setArguments(args);
         return this;
@@ -80,8 +79,7 @@ public abstract class DialogFragment<Output> extends androidx.fragment.app.Dialo
 
     public DialogFragment<Output> putArgLong(@Nullable String key, long value) {
         Bundle args = getArguments();
-        if (args == null)
-            args = new Bundle();
+        if (args == null) args = new Bundle();
         args.putLong(key, value);
         setArguments(args);
         return this;
@@ -89,8 +87,7 @@ public abstract class DialogFragment<Output> extends androidx.fragment.app.Dialo
 
     public DialogFragment<Output> putArgInt(@Nullable String key, int value) {
         Bundle args = getArguments();
-        if (args == null)
-            args = new Bundle();
+        if (args == null) args = new Bundle();
         args.putInt(key, value);
         setArguments(args);
         return this;
@@ -98,30 +95,25 @@ public abstract class DialogFragment<Output> extends androidx.fragment.app.Dialo
 
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
-        if (mOnDismissListener != null)
-            mOnDismissListener.onDismiss(this);
+        if (mOnDismissListener != null) mOnDismissListener.onDismiss(this);
         super.onDismiss(dialog);
     }
 
     public void onConfirm(@Nullable Output output) {
-        if (mOnConfirmListener != null)
-            mOnConfirmListener.onConfirm(output);
+        if (mOnConfirmListener != null) mOnConfirmListener.onConfirm(output);
     }
 
     public void onButtonClick(@NonNull Button button) {
         switch (button) {
             case POSITIVE:
-                if (mOnPositiveClickListener != null)
-                    mOnPositiveClickListener.onButtonClick(this, button);
+                if (mOnPositiveClickListener != null) mOnPositiveClickListener.onButtonClick(this, button);
                 break;
             case NEGATIVE:
-                if (mOnNegativeClickListener != null)
-                    mOnNegativeClickListener.onButtonClick(this, button);
+                if (mOnNegativeClickListener != null) mOnNegativeClickListener.onButtonClick(this, button);
                 break;
             case NEUTRAL:
             default:
-                if (mOnNeutralClickListener != null)
-                    mOnNeutralClickListener.onButtonClick(this, button);
+                if (mOnNeutralClickListener != null) mOnNeutralClickListener.onButtonClick(this, button);
                 break;
         }
         dismiss();
@@ -129,44 +121,45 @@ public abstract class DialogFragment<Output> extends androidx.fragment.app.Dialo
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
-        //Log.i(TAG, "---> onCreate <---");
+        // Log.i(TAG, "---> onCreate <---");
         super.onCreate(savedInstanceState);
-//        int theme = UITheme.getDialogTheme(requireContext());
-//        if (theme == UITheme.ID_NULL)
-//            theme = R.style.NoTitleDialogTheme;
+        //        int theme = UITheme.getDialogTheme(requireContext());
+        //        if (theme == UITheme.ID_NULL)
+        //            theme = R.style.NoTitleDialogTheme;
         setStyle(DialogFragment.STYLE_NO_FRAME, R.style.TitleDialogTheme);
-        //Log.i(TAG, "theme=" + getTheme());
-        //Log.i(TAG, "context=" + getContext());
+        // Log.i(TAG, "theme=" + getTheme());
+        // Log.i(TAG, "context=" + getContext());
     }
 
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        //Log.i(TAG, "---> onCreateDialog <---");
+        // Log.i(TAG, "---> onCreateDialog <---");
         Context themeWrapper = new ContextThemeWrapper(requireContext(), getTheme());
         TypedValue outValue = new TypedValue();
         themeWrapper.getTheme().resolveAttribute(com.google.android.material.R.attr.alertDialogTheme, outValue, true);
         int dialogStyle = outValue.resourceId;
         DialogWrapper dialog = new DialogWrapper(themeWrapper, dialogStyle);
-        //Log.i(TAG, "dialog=" + dialog);
+        // Log.i(TAG, "dialog=" + dialog);
         Log.i(TAG, "dialog.context=" + dialog.getContext());
         return dialog;
     }
 
     @NonNull
     public View inflateLayoutRes(@NonNull LayoutInflater inflater, @Nullable ViewGroup container) {
-        //Log.i(TAG, "context=" + getContext());
-        //Log.i(TAG, "dialog.context=" + dialog.getContext());
+        // Log.i(TAG, "context=" + getContext());
+        // Log.i(TAG, "dialog.context=" + dialog.getContext());
         Log.i(TAG, "inflater.context=" + inflater.getContext());
         return inflater.inflate(layoutRes(), container, false);
     }
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        //Log.i(TAG, "---> onCreateView <---");
+    public View onCreateView(
+            @NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        // Log.i(TAG, "---> onCreateView <---");
         Dialog dialog = requireDialog();
-        //Log.i(TAG, "dialog=" + dialog);
+        // Log.i(TAG, "dialog=" + dialog);
 
         Window window = dialog.getWindow();
         if (window != null) {
@@ -188,7 +181,12 @@ public abstract class DialogFragment<Output> extends androidx.fragment.app.Dialo
     }
 
     protected void setupDefaultButtonOkCancel(Context context) {
-        Bundle args = getArguments() != null ? getArguments() : new Bundle();
+        Bundle args;
+        if (getArguments() != null) {
+            args = getArguments();
+        } else {
+            args = new Bundle();
+        }
         if (!isStateSaved()) {
             args.putCharSequence("btnPositiveText", context.getText(android.R.string.ok));
             args.putCharSequence("btnNegativeText", context.getText(android.R.string.cancel));
@@ -197,7 +195,12 @@ public abstract class DialogFragment<Output> extends androidx.fragment.app.Dialo
     }
 
     protected void setupDefaultButtonOk(Context context) {
-        Bundle args = getArguments() != null ? getArguments() : new Bundle();
+        Bundle args;
+        if (getArguments() != null) {
+            args = getArguments();
+        } else {
+            args = new Bundle();
+        }
         if (!isStateSaved()) {
             args.putCharSequence("btnPositiveText", context.getText(android.R.string.ok));
             setArguments(args);
@@ -206,14 +209,12 @@ public abstract class DialogFragment<Output> extends androidx.fragment.app.Dialo
 
     private void createButtonBar(View view, LayoutInflater inflater) {
         Bundle args = getArguments();
-        if (args == null)
-            return;
+        if (args == null) return;
 
         CharSequence btnPositiveText = args.getCharSequence("btnPositiveText", "");
         CharSequence btnNegativeText = args.getCharSequence("btnNegativeText", "");
         CharSequence btnNeutralText = args.getCharSequence("btnNeutralText", "");
-        if (btnPositiveText.length() == 0 && btnNegativeText.length() == 0 && btnNeutralText.length() == 0)
-            return;
+        if (btnPositiveText.length() == 0 && btnNegativeText.length() == 0 && btnNeutralText.length() == 0) return;
 
         View buttonPanel = resolvePanel(view, inflater);
         if (buttonPanel == null) {
@@ -244,8 +245,7 @@ public abstract class DialogFragment<Output> extends androidx.fragment.app.Dialo
         if (btnNeutralText.length() == 0) {
             button3.setVisibility(View.GONE);
             View spacer = buttonPanel.findViewById(R.id.spacer);
-            if (spacer != null)
-                spacer.setVisibility(View.GONE);
+            if (spacer != null) spacer.setVisibility(View.GONE);
         } else {
             button3.setVisibility(View.VISIBLE);
             button3.setText(btnNeutralText);
@@ -256,8 +256,7 @@ public abstract class DialogFragment<Output> extends androidx.fragment.app.Dialo
     @Nullable
     private ViewGroup resolvePanel(@NonNull View view, @NonNull LayoutInflater inflater) {
         View buttonPanel = view.findViewById(R.id.buttonPanel);
-        if (buttonPanel instanceof ViewGroup)
-            return (ViewGroup) buttonPanel;
+        if (buttonPanel instanceof ViewGroup) return (ViewGroup) buttonPanel;
         if (view instanceof ViewGroup) {
             buttonPanel = inflater.inflate(R.layout.ok_cancel_button_bar, (ViewGroup) view, false);
             ((ViewGroup) view).addView(buttonPanel);

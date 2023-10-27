@@ -12,7 +12,6 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.StringRes;
@@ -25,14 +24,11 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
-
 import com.google.android.apps.muzei.api.MuzeiContract;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
-
 import java.util.UUID;
-
 import rocks.tbog.livewallpaperit.preference.SettingsActivity;
 import rocks.tbog.livewallpaperit.utils.PrefUtils;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
@@ -50,9 +46,8 @@ public class LWIActivity extends AppCompatActivity {
     ImageButton mButtonSettings;
     CircularProgressIndicator mProgressVerify;
 
-    private final ActivityResultLauncher<Intent> redirectLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            activityResult -> finish());
+    private final ActivityResultLauncher<Intent> redirectLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), activityResult -> finish());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,7 +122,8 @@ public class LWIActivity extends AppCompatActivity {
             if (LWIViewModel.RedditAuthState.AUTH_NOT_DONE.equals(state)) {
                 mInputLayout.setError(null);
             } else if (LWIViewModel.RedditAuthState.AUTH_VALID.equals(state)) {
-                PrefUtils.setRedditAuth(getApplicationContext(), mModel.getRedditAuth().getValue());
+                PrefUtils.setRedditAuth(
+                        getApplicationContext(), mModel.getRedditAuth().getValue());
                 mButtonActivate.setEnabled(true);
             } else if (LWIViewModel.RedditAuthState.AUTH_FAILED.equals(state)) {
                 mInputLayout.setError(getText(R.string.error_clientId_verify));
@@ -153,12 +149,14 @@ public class LWIActivity extends AppCompatActivity {
             return;
         }
         // Muzei isn't installed, so try to open the Play Store so that users can install Muzei
-        var playStoreIntent = new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://play.google.com/store/apps/details?id=" + BuildConfig.MUZEI_PACKAGE_NAME));
+        var playStoreIntent = new Intent(Intent.ACTION_VIEW)
+                .setData(Uri.parse("https://play.google.com/store/apps/details?id=" + BuildConfig.MUZEI_PACKAGE_NAME));
         if (tryStartIntent(playStoreIntent, R.string.toast_muzei_missing_error)) {
             return;
         }
         // Only if all Intents failed show a 'everything failed' Toast
-        Toast.makeText(this, R.string.toast_play_store_missing_error, Toast.LENGTH_LONG).show();
+        Toast.makeText(this, R.string.toast_play_store_missing_error, Toast.LENGTH_LONG)
+                .show();
         finish();
     }
 
@@ -186,10 +184,12 @@ public class LWIActivity extends AppCompatActivity {
 
     private void onClickVerify(View v) {
         v.setEnabled(false);
-        //String clientId = mModel.getClientId().getValue();
+        // String clientId = mModel.getClientId().getValue();
         WorkRequest request = new OneTimeWorkRequest.Builder(VerifyClientIdWorker.class)
                 .setInputData(new Data.Builder()
-                        .putString(WorkerUtils.DATA_CLIENT_ID, mModel.getRedditAuth().getValue())
+                        .putString(
+                                WorkerUtils.DATA_CLIENT_ID,
+                                mModel.getRedditAuth().getValue())
                         .build())
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setConstraints(new Constraints.Builder()
@@ -220,7 +220,7 @@ public class LWIActivity extends AppCompatActivity {
                     break;
                 case FAILED:
                     mModel.setRedditAuthVerified(LWIViewModel.RedditAuthState.AUTH_FAILED);
-                    //fallthrough
+                    // fallthrough
                 case CANCELLED:
                     mButtonVerify.setEnabled(true);
                     mButtonActivate.setEnabled(false);

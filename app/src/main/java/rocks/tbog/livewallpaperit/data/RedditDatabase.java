@@ -7,8 +7,8 @@ import android.provider.BaseColumns;
 import android.util.Log;
 
 public class RedditDatabase extends SQLiteOpenHelper {
-    private final static String DB_NAME = "reddit.s3db";
-    private final static int DB_VERSION = 1;
+    private static final String DB_NAME = "reddit.s3db";
+    private static final int DB_VERSION = 1;
     private static final String TAG = "DB";
     static final String TABLE_IGNORE = "ignore_artwork";
     static final String ARTWORK_TOKEN = "token";

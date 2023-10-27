@@ -6,9 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
-
 import com.google.android.apps.muzei.api.provider.ProviderContract;
-
 import rocks.tbog.livewallpaperit.data.DBHelper;
 
 public class DeleteArtworkReceiver extends BroadcastReceiver {
@@ -33,9 +31,10 @@ public class DeleteArtworkReceiver extends BroadcastReceiver {
         Log.d(TAG, "delete " + artworkToken);
 
         final ContentResolver content = context.getContentResolver();
-        final Uri contentUri = ProviderContract.getProviderClient(context, ArtProvider.class).getContentUri();
+        final Uri contentUri =
+                ProviderContract.getProviderClient(context, ArtProvider.class).getContentUri();
         final String whereFilter = ProviderContract.Artwork._ID + " = ? AND " + ProviderContract.Artwork.TOKEN + " = ?";
-        final String[] whereArgs = new String[]{artworkId, artworkToken};
+        final String[] whereArgs = new String[] {artworkId, artworkToken};
 
         int count = content.delete(contentUri, whereFilter, whereArgs);
         Log.d(TAG, "delete count=" + count);

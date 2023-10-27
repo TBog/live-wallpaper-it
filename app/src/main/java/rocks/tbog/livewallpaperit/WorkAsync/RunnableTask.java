@@ -3,7 +3,6 @@ package rocks.tbog.livewallpaperit.WorkAsync;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Lifecycle;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
@@ -15,7 +14,10 @@ public final class RunnableTask extends FutureTask<RunnableTask> {
         cancel(false);
     }
 
-    protected RunnableTask(@NonNull TaskRunner.AsyncRunnable worker, @Nullable TaskRunner.AsyncRunnable main, @Nullable Lifecycle lifecycle) {
+    protected RunnableTask(
+            @NonNull TaskRunner.AsyncRunnable worker,
+            @Nullable TaskRunner.AsyncRunnable main,
+            @Nullable Lifecycle lifecycle) {
         this(new BackgroundWorker(worker));
         whenDone = main;
         this.lifecycle = lifecycle;

@@ -4,12 +4,10 @@ import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
-
 import com.google.android.apps.muzei.api.provider.Artwork;
 import com.google.android.apps.muzei.api.provider.ProviderClient;
 import com.google.android.apps.muzei.api.provider.ProviderContract;
@@ -26,12 +24,10 @@ import com.kirkbushman.araw.models.commons.Images;
 import com.kirkbushman.araw.models.commons.SubmissionPreview;
 import com.kirkbushman.araw.models.enums.SubmissionsSorting;
 import com.kirkbushman.araw.models.enums.TimePeriod;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 import rocks.tbog.livewallpaperit.ArtProvider;
 
 public class ArtLoadWorker extends Worker {
@@ -58,22 +54,30 @@ public class ArtLoadWorker extends Worker {
         String subreddit = getInputData().getString(WorkerUtils.DATA_SUBREDDIT);
         if (TextUtils.isEmpty(subreddit)) {
             Log.e(TAG, "subreddit=`" + subreddit + "`");
-            return Result.failure(new Data.Builder().putString(WorkerUtils.FAIL_REASON, "empty subreddit").build());
+            return Result.failure(new Data.Builder()
+                    .putString(WorkerUtils.FAIL_REASON, "empty subreddit")
+                    .build());
         }
         String clientId = getInputData().getString(WorkerUtils.DATA_CLIENT_ID);
         if (TextUtils.isEmpty(clientId)) {
-            return Result.failure(new Data.Builder().putString(WorkerUtils.FAIL_REASON, "empty clientId").build());
+            return Result.failure(new Data.Builder()
+                    .putString(WorkerUtils.FAIL_REASON, "empty clientId")
+                    .build());
         }
 
         var helper = new AuthUserlessHelper(ctx, clientId, "DO_NOT_TRACK_THIS_DEVICE", false, true);
         // obtain a client
         RedditClient client = helper.getRedditClient();
         if (client == null)
-            return Result.failure(new Data.Builder().putString(WorkerUtils.FAIL_REASON, "getRedditClient=null").build());
+            return Result.failure(new Data.Builder()
+                    .putString(WorkerUtils.FAIL_REASON, "getRedditClient=null")
+                    .build());
 
         ProviderClient providerClient = ProviderContract.getProviderClient(ctx, ArtProvider.class);
 
-        SubmissionsFetcher submissionsFetcher = client.getSubredditsClient().createSubmissionsFetcher(subreddit, SubmissionsSorting.NEW, TimePeriod.ALL_TIME, LOAD_COUNT);//Fetcher.MAX_LIMIT);
+        SubmissionsFetcher submissionsFetcher = client.getSubredditsClient()
+                .createSubmissionsFetcher(
+                        subreddit, SubmissionsSorting.NEW, TimePeriod.ALL_TIME, LOAD_COUNT); // Fetcher.MAX_LIMIT);
         List<Submission> submissions = submissionsFetcher.fetchNext();
         while (submissions != null) {
             for (Submission submission : submissions) {
@@ -98,7 +102,12 @@ public class ArtLoadWorker extends Worker {
     private void processSubmission(Submission submission, ProviderClient providerClient) {
         boolean artworkFound = false;
         SubmissionPreview preview = submission.getPreview();
-        Images[] imagesArray = preview != null ? preview.getImages() : new Images[0];
+        Images[] imagesArray;
+        if (preview != null) {
+            imagesArray = preview.getImages();
+        } else {
+            imagesArray = new Images[0];
+        }
         for (Images images : imagesArray) {
             ImageDetail imageDetail = images.getSource();
             Artwork artwork = new Artwork.Builder()
@@ -136,8 +145,7 @@ public class ArtLoadWorker extends Worker {
             }
         }
 
-        if (artworkFound)
-            return;
+        if (artworkFound) return;
 
         GalleryData galleryData = submission.getGalleryData();
         if (galleryData == null) {
@@ -155,11 +163,9 @@ public class ArtLoadWorker extends Worker {
             Log.d(TAG, "mediaId: " + item.getMediaId());
 
             GalleryMedia media = mediaMetadata.get(item.getMediaId());
-            if (media == null || !"Image".equalsIgnoreCase(media.getE()))
-                continue;
+            if (media == null || !"Image".equalsIgnoreCase(media.getE())) continue;
             GalleryImageData imageData = media.getS();
-            if (imageData == null || TextUtils.isEmpty(imageData.getU()))
-                continue;
+            if (imageData == null || TextUtils.isEmpty(imageData.getU())) continue;
 
             Artwork artwork = new Artwork.Builder()
                     .persistentUri(Uri.parse(imageData.getU()))
