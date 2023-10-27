@@ -29,17 +29,18 @@ jobs:
     - name: Check spotless
       run: ./gradlew spotlessCheck --no-configuration-cache
 
-    - name: Build debug with github flavor
-      run: ./gradlew assembleGithubDebug
+    - name: Build all build type and flavor permutations
+      run: ./gradlew assemble
 
-    - name: Upload build outputs (APKs)
+    - name: Upload github debug apk
       uses: actions/upload-artifact@v3
       with:
-        name: APKs
-        path: '**/build/outputs/apk/**/*.apk'
+        name: github-debug
+        path: '**/build/outputs/apk/**/*github*debug*.apk'
+        if-no-files-found: error
 
   apk:
-    name: APK
+    name: APK artifact
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -47,10 +48,7 @@ jobs:
       uses: actions/download-artifact@v3
       id: download
       with:
-        name: APKs
+        name: github-debug
 
-    - name: Display structure of downloaded files
-      run: ls -R
-
-    - name: 'Echo download path'
-      run: echo ${{steps.download.outputs.download-path}}
+    # - name: Display structure of downloaded files
+    #   run: ls -R
