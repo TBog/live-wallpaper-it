@@ -1,0 +1,41 @@
+apply plugin: 'com.diffplug.spotless'
+
+spotless {
+    java {
+        target 'src/*/java/**/*.java'
+        toggleOffOn()
+        cleanthat()
+                .addMutator("SafeAndConsensual")
+                .addMutator("SafeButNotConsensual")
+                .addMutator("SafeButControversial")
+                .excludeMutator("LocalVariableTypeInference")
+                .excludeMutator("UseUnderscoresInNumericLiterals")
+                .excludeMutator("RemoveExplicitCallToSuper")
+                .excludeMutator("LoopIntRangeToIntStreamForEach")
+        removeUnusedImports()
+        palantirJavaFormat()
+        indentWithSpaces()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    kotlin {
+        target '**/*.kt'
+        ktlint()
+        trimTrailingWhitespace()
+        indentWithSpaces()
+        endWithNewline()
+    }
+    format 'misc', {
+        target '**/*.gradle', '**/*.md', '**/.gitignore'
+        indentWithSpaces()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    format 'xml', {
+        target '**/*.xml'
+        indentWithSpaces()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}

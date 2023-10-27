@@ -2,6 +2,8 @@ plugins {
     id 'com.android.application'
 }
 
+apply from: "$project.rootDir/spotless.gradle"
+
 android {
     namespace 'rocks.tbog.livewallpaperit'
     compileSdk 34
