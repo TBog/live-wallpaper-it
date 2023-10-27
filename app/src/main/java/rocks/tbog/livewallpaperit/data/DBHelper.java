@@ -5,9 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
 import androidx.annotation.NonNull;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,7 +26,8 @@ public class DBHelper {
         ContentValues values = new ContentValues();
         values.put(RedditDatabase.ARTWORK_TOKEN, token);
 
-        return -1 != db.insertWithOnConflict(RedditDatabase.TABLE_IGNORE, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        return -1
+                != db.insertWithOnConflict(RedditDatabase.TABLE_IGNORE, null, values, SQLiteDatabase.CONFLICT_REPLACE);
     }
 
     @NonNull
@@ -36,9 +35,14 @@ public class DBHelper {
         SQLiteDatabase db = getDatabase(context);
 
         ArrayList<String> records = null;
-        try (Cursor cursor = db.query(RedditDatabase.TABLE_IGNORE,
-                new String[]{RedditDatabase.ARTWORK_TOKEN},
-                null, null, null, null, null)) {
+        try (Cursor cursor = db.query(
+                RedditDatabase.TABLE_IGNORE,
+                new String[] {RedditDatabase.ARTWORK_TOKEN},
+                null,
+                null,
+                null,
+                null,
+                null)) {
             if (cursor != null) {
                 cursor.moveToFirst();
                 records = new ArrayList<>(cursor.getCount());
@@ -48,6 +52,10 @@ public class DBHelper {
                 }
             }
         }
-        return records == null ? Collections.emptyList() : records;
+        if (records == null) {
+            return Collections.emptyList();
+        } else {
+            return records;
+        }
     }
 }

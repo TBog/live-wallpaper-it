@@ -1,10 +1,8 @@
 package rocks.tbog.livewallpaperit.WorkAsync;
 
 import android.util.Log;
-
 import androidx.annotation.MainThread;
 import androidx.annotation.WorkerThread;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -23,8 +21,7 @@ public abstract class AsyncTask<In, Out> extends FutureTask<Out> {
     }
 
     @MainThread
-    protected void onPreExecute() {
-    }
+    protected void onPreExecute() {}
 
     @WorkerThread
     protected abstract Out doInBackground(In input);
@@ -32,8 +29,7 @@ public abstract class AsyncTask<In, Out> extends FutureTask<Out> {
     @Override
     protected void done() {
         TaskRunner.runOnUiThread(() -> {
-            if (isCancelled())
-                onCancelled();
+            if (isCancelled()) onCancelled();
             else {
                 Out result = null;
                 try {
@@ -47,12 +43,10 @@ public abstract class AsyncTask<In, Out> extends FutureTask<Out> {
     }
 
     @MainThread
-    protected void onPostExecute(Out output) {
-    }
+    protected void onPostExecute(Out output) {}
 
     @MainThread
-    protected void onCancelled() {
-    }
+    protected void onCancelled() {}
 
     private static class BackgroundWorker<In, Out> implements Callable<Out> {
         private AsyncTask<In, Out> task = null;

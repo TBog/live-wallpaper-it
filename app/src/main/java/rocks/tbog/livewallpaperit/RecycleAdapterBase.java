@@ -3,11 +3,9 @@ package rocks.tbog.livewallpaperit;
 import android.annotation.SuppressLint;
 import android.util.Log;
 import android.view.View;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -18,8 +16,10 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
 
     @NonNull
     protected final List<T> mItemList;
+
     @Nullable
     private OnClickListener<T> mOnClickListener = null;
+
     @Nullable
     private OnLongClickListener<T> mOnLongClickListener = null;
 
@@ -35,37 +35,32 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
         mOnLongClickListener = listener;
     }
 
-//    @Override
-//    public int getItemViewType(int position) {
-//        final T entry = getItem(position);
-//        if (entry == null)
-//            return -1; // this is invalid and will throw later on
-//        return ResultHelper.getItemViewType(entry, mDrawFlags);
-//    }
+    //    @Override
+    //    public int getItemViewType(int position) {
+    //        final T entry = getItem(position);
+    //        if (entry == null)
+    //            return -1; // this is invalid and will throw later on
+    //        return ResultHelper.getItemViewType(entry, mDrawFlags);
+    //    }
 
     @Override
     public long getItemId(int position) {
         final T entry = getItem(position);
-        if (entry == null)
-            return -1;
+        if (entry == null) return -1;
         return entry.hashCode();
     }
 
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
         final T entry = getItem(position);
-        if (entry == null)
-            return;
+        if (entry == null) return;
 
-        if (mOnClickListener != null)
-            holder.setOnClickListener(v -> mOnClickListener.onClick(entry, v));
-        else
-            holder.setOnClickListener(null);
+        if (mOnClickListener != null) holder.setOnClickListener(v -> mOnClickListener.onClick(entry, v));
+        else holder.setOnClickListener(null);
 
         if (mOnLongClickListener != null)
             holder.setOnLongClickListener(v -> mOnLongClickListener.onLongClick(entry, v));
-        else
-            holder.setOnLongClickListener(null);
+        else holder.setOnLongClickListener(null);
 
         onBindViewHolder(holder, entry);
     }
@@ -128,9 +123,8 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
 
     public void notifyItemChanged(T result) {
         int position = mItemList.indexOf(result);
-        //Log.d(TAG, "notifyItemChanged #" + position + " id=" + result.id);
-        if (position >= 0)
-            notifyItemChanged(position);
+        // Log.d(TAG, "notifyItemChanged #" + position + " id=" + result.id);
+        if (position >= 0) notifyItemChanged(position);
     }
 
     public static class Holder extends RecyclerView.ViewHolder {
@@ -139,22 +133,20 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
             super(itemView);
             itemView.setTag(this);
 
-//            // we set background selector here to do it only once
-//            int touchColor = UIColors.getResultListRipple(itemView.getContext());
-//            Drawable selectorBackground = CustomizeUI.getSelectorDrawable(itemView, touchColor, false);
-//            itemView.setBackground(selectorBackground);
+            //            // we set background selector here to do it only once
+            //            int touchColor = UIColors.getResultListRipple(itemView.getContext());
+            //            Drawable selectorBackground = CustomizeUI.getSelectorDrawable(itemView, touchColor, false);
+            //            itemView.setBackground(selectorBackground);
         }
 
         public void setOnClickListener(@Nullable View.OnClickListener listener) {
             itemView.setOnClickListener(listener);
-            if (listener == null)
-                itemView.setClickable(false);
+            if (listener == null) itemView.setClickable(false);
         }
 
         public void setOnLongClickListener(@Nullable View.OnLongClickListener listener) {
             itemView.setOnLongClickListener(listener);
-            if (listener == null)
-                itemView.setLongClickable(false);
+            if (listener == null) itemView.setLongClickable(false);
         }
     }
 

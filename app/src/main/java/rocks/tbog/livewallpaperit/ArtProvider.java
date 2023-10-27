@@ -5,7 +5,6 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.RemoteActionCompat;
@@ -19,17 +18,14 @@ import androidx.work.OutOfQuotaPolicy;
 import androidx.work.OverwritingInputMerger;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
-
 import com.google.android.apps.muzei.api.provider.Artwork;
 import com.google.android.apps.muzei.api.provider.MuzeiArtProvider;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.utils.PrefUtils;
 import rocks.tbog.livewallpaperit.work.ArtLoadWorker;
@@ -56,8 +52,7 @@ public class ArtProvider extends MuzeiArtProvider {
     @Override
     public void onLoadRequested(boolean initial) {
         Context ctx = getContext();
-        if (ctx == null)
-            return;
+        if (ctx == null) return;
         final OneTimeWorkRequest setupWork = new OneTimeWorkRequest.Builder(LoginWorker.class)
                 .setInputMerger(OverwritingInputMerger.class)
                 .setInputData(new Data.Builder()
@@ -71,10 +66,10 @@ public class ArtProvider extends MuzeiArtProvider {
         var workManager = WorkManager.getInstance(ctx);
         var workQueue = workManager.beginWith(setupWork);
         final ArrayList<OneTimeWorkRequest> subredditWorkList = new ArrayList<>();
-        var sourcesSet = PreferenceManager.getDefaultSharedPreferences(ctx).getStringSet(PREF_SOURCES_SET, Collections.emptySet());
+        var sourcesSet = PreferenceManager.getDefaultSharedPreferences(ctx)
+                .getStringSet(PREF_SOURCES_SET, Collections.emptySet());
         for (String subreddit : sourcesSet) {
-            subredditWorkList.add(new OneTimeWorkRequest
-                    .Builder(ArtLoadWorker.class)
+            subredditWorkList.add(new OneTimeWorkRequest.Builder(ArtLoadWorker.class)
                     .setInputData(new Data.Builder()
                             .putString(WorkerUtils.DATA_SUBREDDIT, subreddit)
                             .build())

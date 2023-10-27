@@ -4,10 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.text.TextUtils;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,7 +23,8 @@ public class PrefUtils {
         }
 
         StringBuilder textBuilder = new StringBuilder();
-        try (Reader reader = new BufferedReader(new InputStreamReader(context.getAssets().open("reddit_auth.txt")))) {
+        try (Reader reader =
+                new BufferedReader(new InputStreamReader(context.getAssets().open("reddit_auth.txt")))) {
             int c;
             while ((c = reader.read()) != -1) {
                 textBuilder.append((char) c);
@@ -39,7 +38,8 @@ public class PrefUtils {
     }
 
     public static void setRedditAuth(Context context, String clientId) {
-        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        SharedPreferences.Editor editor =
+                PreferenceManager.getDefaultSharedPreferences(context).edit();
         editor.putString("RedditAuth", clientId);
         editor.putBoolean("RedditAuth-verified", true);
         editor.apply();

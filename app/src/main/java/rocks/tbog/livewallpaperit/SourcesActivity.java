@@ -11,7 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,11 +19,9 @@ import androidx.collection.ArraySet;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
-
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
 import rocks.tbog.livewallpaperit.dialog.DialogHelper;
 import rocks.tbog.livewallpaperit.preference.SettingsActivity;
@@ -60,19 +57,20 @@ public class SourcesActivity extends AppCompatActivity {
 
     private void loadSources() {
         final ArrayList<String> list = new ArrayList<>();
-        AsyncUtils.runAsync(getLifecycle(), task -> {
-            SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-            Set<String> sources = pref.getStringSet(ArtProvider.PREF_SOURCES_SET, Collections.emptySet());
-            list.addAll(sources);
-            Collections.sort(list, String::compareToIgnoreCase);
-        }, task -> {
-            if (task.isCancelled())
-                return;
-            for (String subreddit : list) {
-                mAdapter.addItem(new Source(subreddit));
-            }
-        });
-
+        AsyncUtils.runAsync(
+                getLifecycle(),
+                task -> {
+                    SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+                    Set<String> sources = pref.getStringSet(ArtProvider.PREF_SOURCES_SET, Collections.emptySet());
+                    list.addAll(sources);
+                    Collections.sort(list, String::compareToIgnoreCase);
+                },
+                task -> {
+                    if (task.isCancelled()) return;
+                    for (String subreddit : list) {
+                        mAdapter.addItem(new Source(subreddit));
+                    }
+                });
     }
 
     @Override
@@ -105,10 +103,10 @@ public class SourcesActivity extends AppCompatActivity {
     public void addSource(String name) {
         mAdapter.addItem(new Source(name));
         ArraySet<String> subredditSet = new ArraySet<>();
-        for (Source source : mAdapter.getItems())
-            subredditSet.add(source.subreddit);
+        for (Source source : mAdapter.getItems()) subredditSet.add(source.subreddit);
 
-        mPreference.edit()
+        mPreference
+                .edit()
                 .putStringSet(ArtProvider.PREF_SOURCES_SET, subredditSet)
                 .apply();
     }

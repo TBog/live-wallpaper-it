@@ -13,16 +13,13 @@ import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentManager;
-
 import com.google.android.material.textfield.TextInputLayout;
-
 import rocks.tbog.livewallpaperit.R;
 
 public class EditTextDialog extends DialogFragment<CharSequence> {
@@ -39,7 +36,8 @@ public class EditTextDialog extends DialogFragment<CharSequence> {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(
+            @NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         // make sure we use the dialog context
         LayoutInflater dialogInflater = inflater.cloneInContext(requireDialog().getContext());
         return super.onCreateView(dialogInflater, container, savedInstanceState);
@@ -58,7 +56,7 @@ public class EditTextDialog extends DialogFragment<CharSequence> {
         CharSequence initialText = args.getCharSequence("initialText", "");
         CharSequence titleText = args.getCharSequence("titleText", "");
         CharSequence hintText = args.getCharSequence("hintText", "");
-        //hint
+        // hint
         if (hintText.length() != 0) {
             TextInputLayout textInputLayout = view.findViewById(android.R.id.hint);
             textInputLayout.setHintEnabled(true);
@@ -108,15 +106,13 @@ public class EditTextDialog extends DialogFragment<CharSequence> {
                 if (hasFocus) {
                     dlg.setOnWindowFocusChanged(null);
                     View view = dlg.getCurrentFocus();
-                    if (view == null)
-                        view = dlg.findViewById(android.R.id.content);
+                    if (view == null) view = dlg.findViewById(android.R.id.content);
                     Window window = dlg.getWindow();
                     if (window == null || view == null) {
                         Log.e(TAG, "failed to show keyboard, dialog=" + dlg + " view=" + view);
                         return;
                     }
-                    WindowCompat.getInsetsController(window, view)
-                            .show(WindowInsetsCompat.Type.ime());
+                    WindowCompat.getInsetsController(window, view).show(WindowInsetsCompat.Type.ime());
                 }
             });
         }
@@ -160,27 +156,26 @@ public class EditTextDialog extends DialogFragment<CharSequence> {
             return this;
         }
 
-        public Builder setPositiveButton(@StringRes int btnTextId, OnButtonClickListener<CharSequence> onClickListener) {
+        public Builder setPositiveButton(
+                @StringRes int btnTextId, OnButtonClickListener<CharSequence> onClickListener) {
             mArgs.putCharSequence("btnPositiveText", mContext.getText(btnTextId));
             mClickPositive = onClickListener;
-            if (mDialog != null)
-                mDialog.setOnPositiveClickListener(mClickPositive);
+            if (mDialog != null) mDialog.setOnPositiveClickListener(mClickPositive);
             return this;
         }
 
-        public Builder setNegativeButton(@StringRes int btnTextId, OnButtonClickListener<CharSequence> onClickListener) {
+        public Builder setNegativeButton(
+                @StringRes int btnTextId, OnButtonClickListener<CharSequence> onClickListener) {
             mArgs.putCharSequence("btnNegativeText", mContext.getText(btnTextId));
             mClickNegative = onClickListener;
-            if (mDialog != null)
-                mDialog.setOnNegativeClickListener(mClickNegative);
+            if (mDialog != null) mDialog.setOnNegativeClickListener(mClickNegative);
             return this;
         }
 
         public Builder setNeutralButton(@StringRes int btnTextId, OnButtonClickListener<CharSequence> onClickListener) {
             mArgs.putCharSequence("btnNeutralText", mContext.getText(btnTextId));
             mClickNeutral = onClickListener;
-            if (mDialog != null)
-                mDialog.setOnNeutralClickListener(mClickNeutral);
+            if (mDialog != null) mDialog.setOnNeutralClickListener(mClickNeutral);
             return this;
         }
 

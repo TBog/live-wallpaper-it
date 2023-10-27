@@ -3,17 +3,13 @@ package rocks.tbog.livewallpaperit.work;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
-
 import com.kirkbushman.araw.RedditClient;
 import com.kirkbushman.araw.helpers.AuthUserlessHelper;
-
 import java.util.List;
-
 import rocks.tbog.livewallpaperit.data.DBHelper;
 
 public class LoginWorker extends Worker {
@@ -29,19 +25,25 @@ public class LoginWorker extends Worker {
         Context ctx = getApplicationContext();
         String clientId = getInputData().getString(WorkerUtils.DATA_CLIENT_ID);
         if (TextUtils.isEmpty(clientId))
-            return Result.failure(new Data.Builder().putString(WorkerUtils.FAIL_REASON, "empty clientId").build());
+            return Result.failure(new Data.Builder()
+                    .putString(WorkerUtils.FAIL_REASON, "empty clientId")
+                    .build());
 
         var helper = new AuthUserlessHelper(ctx, clientId, "DO_NOT_TRACK_THIS_DEVICE", false, true);
 
         // obtain a client
         RedditClient client = helper.getRedditClient();
         if (client == null)
-            return Result.failure(new Data.Builder().putString(WorkerUtils.FAIL_REASON, "getRedditClient=null").build());
+            return Result.failure(new Data.Builder()
+                    .putString(WorkerUtils.FAIL_REASON, "getRedditClient=null")
+                    .build());
 
         if (helper.shouldLogin()) {
             // you must authenticate
             Log.e(TAG, "you must authenticate. Probably wrong clientId.");
-            return Result.failure(new Data.Builder().putString(WorkerUtils.FAIL_REASON, "auth required, probably wrong clientId").build());
+            return Result.failure(new Data.Builder()
+                    .putString(WorkerUtils.FAIL_REASON, "auth required, probably wrong clientId")
+                    .build());
         } else {
             // use saved one
             Log.v(TAG, "hasSavedBearer=" + helper.hasSavedBearer());
@@ -54,5 +56,4 @@ public class LoginWorker extends Worker {
                 .putStringArray(WorkerUtils.DATA_IGNORE_TOKEN_LIST, list.toArray(new String[0]))
                 .build());
     }
-
 }

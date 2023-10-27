@@ -1,7 +1,6 @@
 package rocks.tbog.livewallpaperit.dialog;
 
 import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDialog;
@@ -33,7 +32,6 @@ public class DialogWrapper extends AppCompatDialog {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (mOnWindowFocusChanged != null)
-            mOnWindowFocusChanged.onWindowFocusChanged(this, hasFocus);
+        if (mOnWindowFocusChanged != null) mOnWindowFocusChanged.onWindowFocusChanged(this, hasFocus);
     }
 }

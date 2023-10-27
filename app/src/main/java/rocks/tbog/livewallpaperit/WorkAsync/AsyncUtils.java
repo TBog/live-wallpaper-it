@@ -1,11 +1,9 @@
 package rocks.tbog.livewallpaperit.WorkAsync;
 
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Lifecycle;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
@@ -29,8 +27,12 @@ public class AsyncUtils {
 
     static {
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
-                CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>(), sThreadFactory);
+                CORE_POOL_SIZE,
+                MAXIMUM_POOL_SIZE,
+                KEEP_ALIVE_SECONDS,
+                TimeUnit.SECONDS,
+                new SynchronousQueue<Runnable>(),
+                sThreadFactory);
         threadPoolExecutor.setRejectedExecutionHandler((runnable, executor) -> {
             Log.w(TAG, "task rejected");
             if (!executor.isShutdown()) {
@@ -39,13 +41,18 @@ public class AsyncUtils {
         });
         EXECUTOR_RUN_ASYNC = threadPoolExecutor;
     }
-    public static RunnableTask runAsync(@NonNull Lifecycle lifecycle, @NonNull TaskRunner.AsyncRunnable background, @NonNull TaskRunner.AsyncRunnable after) {
+
+    public static RunnableTask runAsync(
+            @NonNull Lifecycle lifecycle,
+            @NonNull TaskRunner.AsyncRunnable background,
+            @NonNull TaskRunner.AsyncRunnable after) {
         RunnableTask task = TaskRunner.newTask(lifecycle, background, after);
         TaskRunner.runOnUiThread(() -> EXECUTOR_RUN_ASYNC.execute(task));
         return task;
     }
 
-    public static RunnableTask runAsync(@NonNull TaskRunner.AsyncRunnable background, @Nullable TaskRunner.AsyncRunnable after) {
+    public static RunnableTask runAsync(
+            @NonNull TaskRunner.AsyncRunnable background, @Nullable TaskRunner.AsyncRunnable after) {
         RunnableTask task = TaskRunner.newTask(background, after);
         TaskRunner.runOnUiThread(() -> EXECUTOR_RUN_ASYNC.execute(task));
         return task;
