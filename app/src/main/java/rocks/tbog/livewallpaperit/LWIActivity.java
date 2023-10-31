@@ -30,7 +30,7 @@ import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
 import java.util.UUID;
 import rocks.tbog.livewallpaperit.preference.SettingsActivity;
-import rocks.tbog.livewallpaperit.utils.PrefUtils;
+import rocks.tbog.livewallpaperit.utils.DataUtils;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
 import rocks.tbog.livewallpaperit.work.VerifyClientIdWorker;
 import rocks.tbog.livewallpaperit.work.WorkerUtils;
@@ -63,7 +63,7 @@ public class LWIActivity extends AppCompatActivity {
         mButtonSettings = findViewById(R.id.btn_settings);
 
         TextView clientId = findViewById(R.id.client_id);
-        clientId.setText(PrefUtils.loadRedditAuth(getApplicationContext()));
+        clientId.setText(DataUtils.loadRedditAuth(getApplicationContext()));
         clientId.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -91,7 +91,7 @@ public class LWIActivity extends AppCompatActivity {
 
         mButtonSources.setOnClickListener(this::onClickSources);
 
-        boolean authVerified = PrefUtils.isRedditAuthVerified(getApplicationContext());
+        boolean authVerified = DataUtils.isRedditAuthVerified(getApplicationContext());
 
         mButtonVerify.setOnClickListener(this::onClickVerify);
         mButtonVerify.setEnabled(!authVerified);
@@ -122,7 +122,7 @@ public class LWIActivity extends AppCompatActivity {
             if (LWIViewModel.RedditAuthState.AUTH_NOT_DONE.equals(state)) {
                 mInputLayout.setError(null);
             } else if (LWIViewModel.RedditAuthState.AUTH_VALID.equals(state)) {
-                PrefUtils.setRedditAuth(
+                DataUtils.setRedditAuth(
                         getApplicationContext(), mModel.getRedditAuth().getValue());
                 mButtonActivate.setEnabled(true);
             } else if (LWIViewModel.RedditAuthState.AUTH_FAILED.equals(state)) {

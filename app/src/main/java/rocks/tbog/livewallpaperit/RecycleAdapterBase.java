@@ -5,7 +5,9 @@ import android.util.Log;
 import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -103,6 +105,11 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
         mItemList.add(item);
     }
 
+    public void addItems(Collection<T> list) {
+        notifyItemRangeInserted(mItemList.size(), list.size());
+        mItemList.addAll(list);
+    }
+
     public void clear() {
         final int itemCount = mItemList.size();
         mItemList.clear();
@@ -115,7 +122,7 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    public void updateItems(Collection<? extends T> results) {
+    public void setItems(Collection<? extends T> results) {
         this.mItemList.clear();
         this.mItemList.addAll(results);
         notifyDataSetChanged();

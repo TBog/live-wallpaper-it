@@ -4,10 +4,12 @@ import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
+
 import com.google.android.apps.muzei.api.provider.Artwork;
 import com.google.android.apps.muzei.api.provider.ProviderClient;
 import com.google.android.apps.muzei.api.provider.ProviderContract;
@@ -24,11 +26,14 @@ import com.kirkbushman.araw.models.commons.Images;
 import com.kirkbushman.araw.models.commons.SubmissionPreview;
 import com.kirkbushman.araw.models.enums.SubmissionsSorting;
 import com.kirkbushman.araw.models.enums.TimePeriod;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
 import rocks.tbog.livewallpaperit.ArtProvider;
+import rocks.tbog.livewallpaperit.Source;
 
 public class ArtLoadWorker extends Worker {
     private static final String TAG = ArtLoadWorker.class.getSimpleName();
@@ -51,9 +56,15 @@ public class ArtLoadWorker extends Worker {
             mIgnoreTokenList = Arrays.asList(ignoreTokens);
         }
 
-        String subreddit = getInputData().getString(WorkerUtils.DATA_SUBREDDIT);
-        if (TextUtils.isEmpty(subreddit)) {
-            Log.e(TAG, "subreddit=`" + subreddit + "`");
+        Source source = Source.fromByteArray(getInputData().getByteArray(WorkerUtils.DATA_SOURCE));
+        if (source == null) {
+            Log.e(TAG, "source=`null`");
+            return Result.failure(new Data.Builder()
+                    .putString(WorkerUtils.FAIL_REASON, "null source")
+                    .build());
+        }
+        if (TextUtils.isEmpty(source.subreddit)) {
+            Log.e(TAG, "subreddit=`" + source.subreddit + "`");
             return Result.failure(new Data.Builder()
                     .putString(WorkerUtils.FAIL_REASON, "empty subreddit")
                     .build());
@@ -77,7 +88,7 @@ public class ArtLoadWorker extends Worker {
 
         SubmissionsFetcher submissionsFetcher = client.getSubredditsClient()
                 .createSubmissionsFetcher(
-                        subreddit, SubmissionsSorting.NEW, TimePeriod.ALL_TIME, LOAD_COUNT); // Fetcher.MAX_LIMIT);
+                        source.subreddit, SubmissionsSorting.NEW, TimePeriod.ALL_TIME, LOAD_COUNT); // Fetcher.MAX_LIMIT);
         List<Submission> submissions = submissionsFetcher.fetchNext();
         while (submissions != null) {
             for (Submission submission : submissions) {

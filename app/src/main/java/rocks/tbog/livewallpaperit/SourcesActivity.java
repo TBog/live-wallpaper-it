@@ -1,75 +1,123 @@
 package rocks.tbog.livewallpaperit;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
+import android.widget.Button;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.collection.ArraySet;
+import androidx.constraintlayout.motion.widget.MotionLayout;
+import androidx.lifecycle.Observer;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.divider.MaterialDividerItemDecoration;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Set;
+
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
+import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.dialog.DialogHelper;
 import rocks.tbog.livewallpaperit.preference.SettingsActivity;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
 
 public class SourcesActivity extends AppCompatActivity {
-    SourceAdapter mAdapter = new SourceAdapter();
-    SharedPreferences mPreference;
+
+    SourceAdapter mAdapter;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sources);
-        Toolbar topToolbar = (Toolbar) findViewById(R.id.top_toolbar);
+        Toolbar topToolbar = findViewById(R.id.top_toolbar);
         topToolbar.setTitle(R.string.sources_name);
         setSupportActionBar(topToolbar);
 
+        mAdapter = new SourceAdapter(
+                source -> DBHelper.updateSource(getApplicationContext(), source),
+                source -> DBHelper.removeSource(getApplicationContext(), source));
         mAdapter.setHasStableIds(true);
-        mPreference = PreferenceManager.getDefaultSharedPreferences(this);
+
+        loadSourcesFromPreferences();
 
         RecyclerView recyclerView = findViewById(R.id.source_list);
         recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(mAdapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
-
-        loadSources();
+        var layout = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
+        recyclerView.setLayoutManager(layout);
+        var decoration = new MaterialDividerItemDecoration(recyclerView.getContext(), layout.getOrientation());
+        recyclerView.addItemDecoration(decoration);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        loadSources();
     }
 
-    private void loadSources() {
-        final ArrayList<String> list = new ArrayList<>();
+    /**
+     * First version stored subreddits in the preferences, load from there then delete
+     */
+    protected void loadSourcesFromPreferences() {
+        final var sourcesSet = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
+                .getStringSet(ArtProvider.PREF_SOURCES_SET, Collections.emptySet());
+        if (sourcesSet.isEmpty()) return;
+        final ArrayList<Source> list = new ArrayList<>();
         AsyncUtils.runAsync(
                 getLifecycle(),
                 task -> {
-                    SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-                    Set<String> sources = pref.getStringSet(ArtProvider.PREF_SOURCES_SET, Collections.emptySet());
-                    list.addAll(sources);
-                    Collections.sort(list, String::compareToIgnoreCase);
+                    list.addAll(DBHelper.loadSources(getApplicationContext()));
+                    for (String subreddit : sourcesSet) {
+                        Source source = new Source(subreddit);
+                        if (DBHelper.insertSource(getApplicationContext(), source)) {
+                            list.add(source);
+                        }
+                    }
+                    Collections.sort(list, (o1, o2) -> o1.subreddit.compareToIgnoreCase(o2.subreddit));
                 },
                 task -> {
                     if (task.isCancelled()) return;
-                    for (String subreddit : list) {
-                        mAdapter.addItem(new Source(subreddit));
-                    }
+                    mAdapter.setItems(list);
+                    PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
+                            .edit()
+                            .remove(ArtProvider.PREF_SOURCES_SET)
+                            .apply();
+                });
+    }
+
+    private void loadSources() {
+        final ArrayList<Source> list = new ArrayList<>();
+        AsyncUtils.runAsync(
+                getLifecycle(),
+                task -> {
+                    list.addAll(DBHelper.loadSources(getApplicationContext()));
+                    Collections.sort(list, (o1, o2) -> {
+                        /*final Source o1 = o1ld.getValue();
+                        final Source o2 = o2ld.getValue();
+                        if (o1 == o2) return 0;
+                        else if (o1 == null) return -1;
+                        else if (o2 == null) return 1;
+                        else*/ return o1.subreddit.compareToIgnoreCase(o2.subreddit);
+                    });
+                },
+                task -> {
+                    if (task.isCancelled()) return;
+                    mAdapter.setItems(list);
                 });
     }
 
@@ -101,46 +149,161 @@ public class SourcesActivity extends AppCompatActivity {
     }
 
     public void addSource(String name) {
-        mAdapter.addItem(new Source(name));
-        ArraySet<String> subredditSet = new ArraySet<>();
-        for (Source source : mAdapter.getItems()) subredditSet.add(source.subreddit);
-
-        mPreference
-                .edit()
-                .putStringSet(ArtProvider.PREF_SOURCES_SET, subredditSet)
-                .apply();
+        String subreddit = name.trim();
+        if (TextUtils.isEmpty(subreddit)) return;
+        final Source source = new Source(subreddit);
+        AsyncUtils.runAsync(
+                getLifecycle(),
+                task -> {
+                    if (!DBHelper.insertSource(getApplicationContext(), source)) {
+                        task.cancel();
+                    }
+                },
+                task -> {
+                    if (task.isCancelled()) return;
+                    mAdapter.addItem(source);
+                });
     }
 
-    public static class Source {
-        public String subreddit;
+    public static class SourceAdapter extends RecycleAdapterBase<Source, SourceHolder> {
+        private final Observer<Source> mSourceChangedObserver;
+        private final Observer<Source> mSourceRemovedObserver;
+        private final TextChangedWatcher mUpvotePercentageWatcher = new TextChangedWatcher() {
+            @Override
+            public void onIntChanged(@NonNull Source source, int newValue) {
+                if (newValue != source.minUpvotePercentage) {
+                    source.minUpvotePercentage = newValue;
+                    mSourceChangedObserver.onChanged(source);
+                }
+            }
+        };
+        private final TextChangedWatcher mScoreWatcher = new TextChangedWatcher() {
+            @Override
+            public void onIntChanged(@NonNull Source source, int newValue) {
+                if (newValue != source.minScore) {
+                    source.minScore = newValue;
+                    mSourceChangedObserver.onChanged(source);
+                }
+            }
+        };
+        private final TextChangedWatcher mCommentsWatcher = new TextChangedWatcher() {
+            @Override
+            public void onIntChanged(@NonNull Source source, int newValue) {
+                if (newValue != source.minComments) {
+                    source.minComments = newValue;
+                    mSourceChangedObserver.onChanged(source);
+                }
+            }
+        };
 
-        public Source(String subreddit) {
-            this.subreddit = subreddit;
-        }
-    }
-
-    public static class SourceAdapter extends RecycleAdapterBase<Source, RecycleAdapterBase.Holder> {
-        public SourceAdapter() {
+        public SourceAdapter(Observer<Source> changeObserver, Observer<Source> removeObserver) {
             super(new ArrayList<>());
+            mSourceChangedObserver = changeObserver;
+            mSourceRemovedObserver = removeObserver;
         }
 
         @NonNull
         @Override
-        public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        public SourceHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             final Context context = parent.getContext();
 
             LayoutInflater inflater = LayoutInflater.from(context);
             View itemView = inflater.inflate(R.layout.source_item, parent, false);
 
-            return new RecycleAdapterBase.Holder(itemView);
+            return new SourceHolder(itemView);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull Holder holder, Source source) {
-            TextView textView = holder.itemView.findViewById(android.R.id.text1);
-            textView.setText(source.subreddit);
-            ImageButton button1 = holder.itemView.findViewById(android.R.id.button1);
-            button1.setOnClickListener(v -> removeItem(source));
+        public void onBindViewHolder(
+                @NonNull SourceHolder holder, @SuppressLint("RecyclerView") @NonNull Source source) {
+            holder.subredditName.setText(source.subreddit);
+
+            // minUpvotePercentage
+            holder.minUpvotePercentage.removeTextChangedListener(mUpvotePercentageWatcher);
+            holder.minUpvotePercentage.setText(intToString(source.minUpvotePercentage));
+            mUpvotePercentageWatcher.mSource = source;
+            holder.minUpvotePercentage.addTextChangedListener(mUpvotePercentageWatcher);
+
+            // minScore
+            holder.minScore.removeTextChangedListener(mScoreWatcher);
+            holder.minScore.setText(intToString(source.minScore));
+            mScoreWatcher.mSource = source;
+            holder.minScore.addTextChangedListener(mScoreWatcher);
+
+            // minComments
+            holder.minComments.removeTextChangedListener(mCommentsWatcher);
+            holder.minComments.setText(intToString(source.minComments));
+            mCommentsWatcher.mSource = source;
+            holder.minComments.addTextChangedListener(mCommentsWatcher);
+
+            // remove button
+            holder.buttonRemove.setOnClickListener(v -> {
+                mSourceRemovedObserver.onChanged(source);
+                removeItem(source);
+            });
+        }
+
+        private static String intToString(int value) {
+            if (value <= 0) return "";
+            return Integer.toString(value);
+        }
+    }
+
+    public abstract static class TextChangedWatcher implements TextWatcher {
+        @Nullable
+        public Source mSource = null;
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            if (mSource == null) return;
+            try {
+                int newValue = Integer.parseInt(s.toString());
+                onIntChanged(mSource, newValue);
+            } catch (Exception ignored) {
+            }
+        }
+
+        abstract void onIntChanged(@NonNull Source source, int newValue);
+    }
+
+    public static class SourceHolder extends RecycleAdapterBase.Holder {
+        TextView subredditName;
+        Button buttonRemove;
+        TextView minUpvotePercentage;
+        TextView minScore;
+        TextView minComments;
+
+        public SourceHolder(@NonNull View itemView) {
+            super(itemView);
+
+            subredditName = itemView.findViewById(R.id.subreddit_name);
+            buttonRemove = itemView.findViewById(R.id.button_remove);
+            minUpvotePercentage = itemView.findViewById(R.id.min_upvote_percent);
+            minScore = itemView.findViewById(R.id.min_score);
+            minComments = itemView.findViewById(R.id.min_comments);
+
+            final MotionLayout parent = (MotionLayout) itemView;
+            minUpvotePercentage.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    parent.transitionToState(R.id.expanded_min_upvote_percent);
+                }
+            });
+            minScore.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    parent.transitionToState(R.id.expanded_min_score);
+                }
+            });
+            minComments.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    parent.transitionToState(R.id.expanded_min_comments);
+                }
+            });
         }
     }
 }

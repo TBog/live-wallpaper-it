@@ -1,31 +1,139 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.motion.widget.MotionLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="8dp"
+    app:layoutDescription="@xml/source_item_scene"
     tools:showIn="@layout/activity_sources">
 
     <TextView
-        android:id="@android:id/text1"
-        android:layout_width="wrap_content"
+        android:id="@+id/subreddit_name"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="start|center_vertical"
+        app:layout_constraintBottom_toTopOf="@id/barrier_top"
+        app:layout_constraintEnd_toStartOf="@id/button_remove"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         tools:text="@tools:sample/full_names" />
 
-    <View
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-    <ImageButton
-        android:id="@android:id/button1"
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_remove"
+        style="@style/Widget.Material3.Button.IconButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end|center_vertical"
         android:contentDescription="@string/action_remove"
-        app:srcCompat="@drawable/ic_remove_24" />
+        app:icon="@drawable/ic_remove_48"
+        app:layout_constraintBottom_toTopOf="@id/barrier_top"
+        app:layout_constraintEnd_toStartOf="@id/barrier_end"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_remove_48" />
 
-</LinearLayout>
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier_top"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:barrierDirection="bottom"
+        app:constraint_referenced_ids="subreddit_name, button_remove" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/wrap_min_upvote_percent"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/wrap_min_score"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/barrier_top">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/min_upvote_percent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/label_upvote_percent"
+            android:imeOptions="actionDone"
+            android:importantForAutofill="no"
+            android:inputType="textAutoCorrect"
+            android:singleLine="true" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/wrap_min_score"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/wrap_min_comments"
+        app:layout_constraintStart_toEndOf="@id/wrap_min_upvote_percent"
+        app:layout_constraintTop_toBottomOf="@id/barrier_top">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/min_score"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/label_min_score"
+            android:imeOptions="actionDone"
+            android:importantForAutofill="no"
+            android:inputType="textAutoCorrect"
+            android:singleLine="true" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/wrap_min_comments"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/barrier_end"
+        app:layout_constraintStart_toEndOf="@id/wrap_min_score"
+        app:layout_constraintTop_toBottomOf="@id/barrier_top">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/min_comments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/label_min_comments"
+            android:imeOptions="actionDone"
+            android:importantForAutofill="no"
+            android:inputType="textAutoCorrect"
+            android:singleLine="true" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier_end"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:barrierDirection="start"
+        app:constraint_referenced_ids="button_up, button_down" />
+
+    <ImageButton
+        android:id="@+id/button_up"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/action_remove"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/button_down"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="spread"
+        app:srcCompat="@drawable/ic_arrow_up_24" />
+
+    <ImageButton
+        android:id="@+id/button_down"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/action_remove"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/button_up"
+        app:srcCompat="@drawable/ic_arrow_down_24" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/group_un_down"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:constraint_referenced_ids="button_up,button_down" />
+
+</androidx.constraintlayout.motion.widget.MotionLayout>

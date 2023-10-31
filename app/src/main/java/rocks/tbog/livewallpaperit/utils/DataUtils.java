@@ -11,8 +11,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-public class PrefUtils {
-    private static final String TAG = PrefUtils.class.getSimpleName();
+import rocks.tbog.livewallpaperit.Source;
+
+public class DataUtils {
+    private static final String TAG = DataUtils.class.getSimpleName();
 
     @NonNull
     public static String loadRedditAuth(@NonNull Context context) {

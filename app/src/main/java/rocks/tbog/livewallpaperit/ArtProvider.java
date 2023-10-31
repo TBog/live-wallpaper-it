@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import rocks.tbog.livewallpaperit.data.DBHelper;
-import rocks.tbog.livewallpaperit.utils.PrefUtils;
+import rocks.tbog.livewallpaperit.utils.DataUtils;
 import rocks.tbog.livewallpaperit.work.ArtLoadWorker;
 import rocks.tbog.livewallpaperit.work.LoginWorker;
 import rocks.tbog.livewallpaperit.work.WorkerUtils;
@@ -56,7 +56,7 @@ public class ArtProvider extends MuzeiArtProvider {
         final OneTimeWorkRequest setupWork = new OneTimeWorkRequest.Builder(LoginWorker.class)
                 .setInputMerger(OverwritingInputMerger.class)
                 .setInputData(new Data.Builder()
-                        .putString(WorkerUtils.DATA_CLIENT_ID, PrefUtils.loadRedditAuth(ctx))
+                        .putString(WorkerUtils.DATA_CLIENT_ID, DataUtils.loadRedditAuth(ctx))
                         .build())
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setConstraints(new Constraints.Builder()
@@ -66,12 +66,11 @@ public class ArtProvider extends MuzeiArtProvider {
         var workManager = WorkManager.getInstance(ctx);
         var workQueue = workManager.beginWith(setupWork);
         final ArrayList<OneTimeWorkRequest> subredditWorkList = new ArrayList<>();
-        var sourcesSet = PreferenceManager.getDefaultSharedPreferences(ctx)
-                .getStringSet(PREF_SOURCES_SET, Collections.emptySet());
-        for (String subreddit : sourcesSet) {
+        var sources = DBHelper.loadSources(ctx);
+        for (Source source : sources) {
             subredditWorkList.add(new OneTimeWorkRequest.Builder(ArtLoadWorker.class)
                     .setInputData(new Data.Builder()
-                            .putString(WorkerUtils.DATA_SUBREDDIT, subreddit)
+                            .putByteArray(WorkerUtils.DATA_SOURCE, Source.toByteArray(source))
                             .build())
                     .build());
         }
