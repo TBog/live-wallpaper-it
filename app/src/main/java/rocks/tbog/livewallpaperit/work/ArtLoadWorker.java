@@ -4,12 +4,10 @@ import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
-
 import com.google.android.apps.muzei.api.provider.Artwork;
 import com.google.android.apps.muzei.api.provider.ProviderClient;
 import com.google.android.apps.muzei.api.provider.ProviderContract;
@@ -26,12 +24,10 @@ import com.kirkbushman.araw.models.commons.Images;
 import com.kirkbushman.araw.models.commons.SubmissionPreview;
 import com.kirkbushman.araw.models.enums.SubmissionsSorting;
 import com.kirkbushman.araw.models.enums.TimePeriod;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 import rocks.tbog.livewallpaperit.ArtProvider;
 import rocks.tbog.livewallpaperit.Source;
 
@@ -41,6 +37,15 @@ public class ArtLoadWorker extends Worker {
     private List<String> mIgnoreTokenList = Collections.emptyList();
     private int mArtworkSubmitCount = 0;
     private int mArtworkNotFoundCount = 0;
+
+    private Filter mFilter = null;
+
+    private static class Filter {
+        public int minUpvotePercentage = 0;
+        public int minScore = 0;
+        public int minComments = 0;
+        public boolean allowNSFW = true;
+    }
 
     public ArtLoadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -84,11 +89,19 @@ public class ArtLoadWorker extends Worker {
                     .putString(WorkerUtils.FAIL_REASON, "getRedditClient=null")
                     .build());
 
+        mFilter = new Filter();
+        mFilter.minUpvotePercentage = source.minUpvotePercentage;
+        mFilter.minScore = source.minScore;
+        mFilter.minComments = source.minComments;
         ProviderClient providerClient = ProviderContract.getProviderClient(ctx, ArtProvider.class);
 
         SubmissionsFetcher submissionsFetcher = client.getSubredditsClient()
                 .createSubmissionsFetcher(
-                        source.subreddit, SubmissionsSorting.NEW, TimePeriod.ALL_TIME, LOAD_COUNT); // Fetcher.MAX_LIMIT);
+                        source.subreddit,
+                        SubmissionsSorting.NEW,
+                        TimePeriod.ALL_TIME,
+                        LOAD_COUNT); // Fetcher.MAX_LIMIT);
+        Log.d(TAG, "fetch " + submissionsFetcher.getSubreddit());
         List<Submission> submissions = submissionsFetcher.fetchNext();
         while (submissions != null) {
             for (Submission submission : submissions) {
@@ -96,7 +109,10 @@ public class ArtLoadWorker extends Worker {
             }
 
             if (mArtworkSubmitCount < LOAD_COUNT && submissionsFetcher.hasNext()) {
-                Log.v(TAG, "fetchNext; artworkSubmitCount=" + mArtworkSubmitCount);
+                Log.d(
+                        TAG,
+                        "fetchNext " + submissionsFetcher.getSubreddit() + "; artworkSubmitCount="
+                                + mArtworkSubmitCount);
                 submissions = submissionsFetcher.fetchNext();
             } else {
                 submissions = null;
@@ -111,6 +127,43 @@ public class ArtLoadWorker extends Worker {
     }
 
     private void processSubmission(Submission submission, ProviderClient providerClient) {
+        if (mFilter != null) {
+            if (mFilter.minUpvotePercentage > 0) {
+                Float upvoteRatio = submission.getUpvoteRatio();
+                if (upvoteRatio == null) upvoteRatio = 0f;
+                int upvotePercent = (int) (upvoteRatio * 100f);
+                if (upvotePercent < mFilter.minUpvotePercentage) {
+                    Log.v(
+                            TAG,
+                            "upvote " + upvotePercent + "%<" + mFilter.minUpvotePercentage + "% skipping "
+                                    + submission.getPermalink());
+                    return;
+                }
+            }
+            if (mFilter.minScore > 0) {
+                int score = submission.getScore();
+                if (score < mFilter.minScore) {
+                    Log.v(TAG, "score " + score + "<" + mFilter.minScore + " skipping " + submission.getPermalink());
+                    return;
+                }
+            }
+            if (mFilter.minComments > 0) {
+                int numComments = submission.getNumComments();
+                if (numComments < mFilter.minComments) {
+                    Log.v(
+                            TAG,
+                            "numComments " + numComments + "<" + mFilter.minComments + " skipping "
+                                    + submission.getPermalink());
+                    return;
+                }
+            }
+            if (!mFilter.allowNSFW) {
+                if (submission.getOver18()) {
+                    Log.v(TAG, "NSFW not allowed skipping " + submission.getPermalink());
+                    return;
+                }
+            }
+        }
         boolean artworkFound = false;
         SubmissionPreview preview = submission.getPreview();
         Images[] imagesArray;
@@ -121,39 +174,37 @@ public class ArtLoadWorker extends Worker {
         }
         for (Images images : imagesArray) {
             ImageDetail imageDetail = images.getSource();
+            String byline = submission.getLinkFlairText();
+            if (TextUtils.isEmpty(byline)) byline = submission.getSubredditNamePrefixed();
             Artwork artwork = new Artwork.Builder()
                     .persistentUri(Uri.parse(imageDetail.getUrl()))
                     .webUri(Uri.parse("https://www.reddit.com" + submission.getPermalink()))
                     .token(submission.getId())
                     .attribution(submission.getAuthor())
-                    .byline(submission.getLinkFlairText())
+                    .byline(byline)
                     .title(submission.getTitle())
                     .build();
 
-            Log.v(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
+            Log.v(TAG, "(image)addArtwork " + artwork.getToken() + " `" + artwork.getTitle() + "`");
             artworkFound = true;
-            if (!mIgnoreTokenList.contains(artwork.getToken())) {
-                mArtworkSubmitCount += 1;
-                providerClient.addArtwork(artwork);
-            }
+            addArtwork(artwork, providerClient);
         }
 
         if (!artworkFound && submission.isRedditMediaDomain()) {
+            String byline = submission.getLinkFlairText();
+            if (TextUtils.isEmpty(byline)) byline = submission.getSubredditNamePrefixed();
             Artwork artwork = new Artwork.Builder()
                     .persistentUri(Uri.parse(submission.getUrl()))
                     .webUri(Uri.parse("https://www.reddit.com" + submission.getPermalink()))
                     .token(submission.getId())
                     .attribution(submission.getAuthor())
-                    .byline(submission.getLinkFlairText())
+                    .byline(byline)
                     .title(submission.getTitle())
                     .build();
 
-            Log.v(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
+            Log.v(TAG, "(media)addArtwork " + artwork.getToken() + " `" + artwork.getTitle() + "`");
             artworkFound = true;
-            if (!mIgnoreTokenList.contains(artwork.getToken())) {
-                mArtworkSubmitCount += 1;
-                providerClient.addArtwork(artwork);
-            }
+            addArtwork(artwork, providerClient);
         }
 
         if (artworkFound) return;
@@ -171,8 +222,6 @@ public class ArtLoadWorker extends Worker {
 
         List<GalleryMediaItem> mediaItems = galleryData.getItems();
         for (GalleryMediaItem item : mediaItems) {
-            Log.d(TAG, "mediaId: " + item.getMediaId());
-
             GalleryMedia media = mediaMetadata.get(item.getMediaId());
             if (media == null || !"Image".equalsIgnoreCase(media.getE())) continue;
             GalleryImageData imageData = media.getS();
@@ -187,15 +236,19 @@ public class ArtLoadWorker extends Worker {
                     .title(submission.getTitle())
                     .build();
 
-            Log.v(TAG, "addArtwork " + artwork.getToken() + " " + artwork.getTitle());
+            Log.v(TAG, "(gallery)addArtwork " + artwork.getToken() + " `" + artwork.getTitle() + "`");
             artworkFound = true;
-            if (!mIgnoreTokenList.contains(artwork.getToken())) {
-                mArtworkSubmitCount += 1;
-                providerClient.addArtwork(artwork);
-            }
+            addArtwork(artwork, providerClient);
         }
         if (!artworkFound) {
             mArtworkNotFoundCount += 1;
+        }
+    }
+
+    private void addArtwork(Artwork artwork, ProviderClient providerClient) {
+        if (!mIgnoreTokenList.contains(artwork.getToken())) {
+            mArtworkSubmitCount += 1;
+            providerClient.addArtwork(artwork);
         }
     }
 }

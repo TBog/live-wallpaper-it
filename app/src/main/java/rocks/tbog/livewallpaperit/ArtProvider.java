@@ -4,12 +4,13 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.RemoteActionCompat;
 import androidx.lifecycle.Observer;
-import androidx.preference.PreferenceManager;
 import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.NetworkType;
@@ -23,7 +24,6 @@ import com.google.android.apps.muzei.api.provider.MuzeiArtProvider;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import rocks.tbog.livewallpaperit.data.DBHelper;
@@ -39,6 +39,13 @@ public class ArtProvider extends MuzeiArtProvider {
 
     final Observer<WorkInfo> debugLogWork = workInfo -> {
         Log.d(TAG, "work " + workInfo.getId() + " state " + workInfo.getState());
+        if (workInfo.getState() == WorkInfo.State.FAILED) {
+            String reason = workInfo.getOutputData().getString(WorkerUtils.FAIL_REASON);
+            if (!TextUtils.isEmpty(reason)) {
+                Toast.makeText(ArtProvider.this.getContext(), reason, Toast.LENGTH_SHORT)
+                        .show();
+            }
+        }
         if (workInfo.getState() != WorkInfo.State.BLOCKED) {
             Map<String, Object> map = workInfo.getOutputData().getKeyValueMap();
             for (Map.Entry<String, Object> entry : map.entrySet()) {

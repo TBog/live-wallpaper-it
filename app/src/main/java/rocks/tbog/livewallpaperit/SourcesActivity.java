@@ -14,7 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,12 +23,9 @@ import androidx.lifecycle.Observer;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.google.android.material.divider.MaterialDividerItemDecoration;
-
 import java.util.ArrayList;
 import java.util.Collections;
-
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
 import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.dialog.DialogHelper;
@@ -106,14 +102,7 @@ public class SourcesActivity extends AppCompatActivity {
                 getLifecycle(),
                 task -> {
                     list.addAll(DBHelper.loadSources(getApplicationContext()));
-                    Collections.sort(list, (o1, o2) -> {
-                        /*final Source o1 = o1ld.getValue();
-                        final Source o2 = o2ld.getValue();
-                        if (o1 == o2) return 0;
-                        else if (o1 == null) return -1;
-                        else if (o2 == null) return 1;
-                        else*/ return o1.subreddit.compareToIgnoreCase(o2.subreddit);
-                    });
+                    Collections.sort(list, (o1, o2) -> o1.subreddit.compareToIgnoreCase(o2.subreddit));
                 },
                 task -> {
                     if (task.isCancelled()) return;
@@ -168,33 +157,6 @@ public class SourcesActivity extends AppCompatActivity {
     public static class SourceAdapter extends RecycleAdapterBase<Source, SourceHolder> {
         private final Observer<Source> mSourceChangedObserver;
         private final Observer<Source> mSourceRemovedObserver;
-        private final TextChangedWatcher mUpvotePercentageWatcher = new TextChangedWatcher() {
-            @Override
-            public void onIntChanged(@NonNull Source source, int newValue) {
-                if (newValue != source.minUpvotePercentage) {
-                    source.minUpvotePercentage = newValue;
-                    mSourceChangedObserver.onChanged(source);
-                }
-            }
-        };
-        private final TextChangedWatcher mScoreWatcher = new TextChangedWatcher() {
-            @Override
-            public void onIntChanged(@NonNull Source source, int newValue) {
-                if (newValue != source.minScore) {
-                    source.minScore = newValue;
-                    mSourceChangedObserver.onChanged(source);
-                }
-            }
-        };
-        private final TextChangedWatcher mCommentsWatcher = new TextChangedWatcher() {
-            @Override
-            public void onIntChanged(@NonNull Source source, int newValue) {
-                if (newValue != source.minComments) {
-                    source.minComments = newValue;
-                    mSourceChangedObserver.onChanged(source);
-                }
-            }
-        };
 
         public SourceAdapter(Observer<Source> changeObserver, Observer<Source> removeObserver) {
             super(new ArrayList<>());
@@ -216,25 +178,24 @@ public class SourcesActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(
                 @NonNull SourceHolder holder, @SuppressLint("RecyclerView") @NonNull Source source) {
+            holder.bind(source, mSourceChangedObserver);
+
             holder.subredditName.setText(source.subreddit);
 
             // minUpvotePercentage
-            holder.minUpvotePercentage.removeTextChangedListener(mUpvotePercentageWatcher);
+            holder.minUpvotePercentage.removeTextChangedListener(holder.mUpvotePercentageWatcher);
             holder.minUpvotePercentage.setText(intToString(source.minUpvotePercentage));
-            mUpvotePercentageWatcher.mSource = source;
-            holder.minUpvotePercentage.addTextChangedListener(mUpvotePercentageWatcher);
+            holder.minUpvotePercentage.addTextChangedListener(holder.mUpvotePercentageWatcher);
 
             // minScore
-            holder.minScore.removeTextChangedListener(mScoreWatcher);
+            holder.minScore.removeTextChangedListener(holder.mScoreWatcher);
             holder.minScore.setText(intToString(source.minScore));
-            mScoreWatcher.mSource = source;
-            holder.minScore.addTextChangedListener(mScoreWatcher);
+            holder.minScore.addTextChangedListener(holder.mScoreWatcher);
 
             // minComments
-            holder.minComments.removeTextChangedListener(mCommentsWatcher);
+            holder.minComments.removeTextChangedListener(holder.mCommentsWatcher);
             holder.minComments.setText(intToString(source.minComments));
-            mCommentsWatcher.mSource = source;
-            holder.minComments.addTextChangedListener(mCommentsWatcher);
+            holder.minComments.addTextChangedListener(holder.mCommentsWatcher);
 
             // remove button
             holder.buttonRemove.setOnClickListener(v -> {
@@ -273,11 +234,42 @@ public class SourcesActivity extends AppCompatActivity {
     }
 
     public static class SourceHolder extends RecycleAdapterBase.Holder {
-        TextView subredditName;
-        Button buttonRemove;
-        TextView minUpvotePercentage;
-        TextView minScore;
-        TextView minComments;
+        private static final String TAG = SourceHolder.class.getSimpleName();
+        private final TextView subredditName;
+        private final Button buttonRemove;
+        private final TextView minUpvotePercentage;
+        private final TextView minScore;
+        private final TextView minComments;
+
+        public Observer<Source> mSourceChangedObserver;
+
+        private final TextChangedWatcher mUpvotePercentageWatcher = new TextChangedWatcher() {
+            @Override
+            public void onIntChanged(@NonNull Source source, int newValue) {
+                if (newValue != source.minUpvotePercentage) {
+                    source.minUpvotePercentage = newValue;
+                    mSourceChangedObserver.onChanged(source);
+                }
+            }
+        };
+        private final TextChangedWatcher mScoreWatcher = new TextChangedWatcher() {
+            @Override
+            public void onIntChanged(@NonNull Source source, int newValue) {
+                if (newValue != source.minScore) {
+                    source.minScore = newValue;
+                    mSourceChangedObserver.onChanged(source);
+                }
+            }
+        };
+        private final TextChangedWatcher mCommentsWatcher = new TextChangedWatcher() {
+            @Override
+            public void onIntChanged(@NonNull Source source, int newValue) {
+                if (newValue != source.minComments) {
+                    source.minComments = newValue;
+                    mSourceChangedObserver.onChanged(source);
+                }
+            }
+        };
 
         public SourceHolder(@NonNull View itemView) {
             super(itemView);
@@ -304,6 +296,13 @@ public class SourcesActivity extends AppCompatActivity {
                     parent.transitionToState(R.id.expanded_min_comments);
                 }
             });
+        }
+
+        public void bind(Source source, Observer<Source> sourceChangedObserver) {
+            mSourceChangedObserver = sourceChangedObserver;
+            mUpvotePercentageWatcher.mSource = source;
+            mScoreWatcher.mSource = source;
+            mCommentsWatcher.mSource = source;
         }
     }
 }
