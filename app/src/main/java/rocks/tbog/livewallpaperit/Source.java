@@ -47,6 +47,7 @@ public class Source implements Serializable {
             oos.writeObject(source);
             oos.close();
         } catch (Exception ignored) {
+            // ignored
         }
         return outputStream.toByteArray();
     }

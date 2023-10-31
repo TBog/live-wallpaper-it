@@ -141,6 +141,7 @@ public class SourcesActivity extends AppCompatActivity {
         String subreddit = name.trim();
         if (TextUtils.isEmpty(subreddit)) return;
         final Source source = new Source(subreddit);
+        source.minUpvotePercentage = 50;
         AsyncUtils.runAsync(
                 getLifecycle(),
                 task -> {
@@ -227,6 +228,7 @@ public class SourcesActivity extends AppCompatActivity {
                 int newValue = Integer.parseInt(s.toString());
                 onIntChanged(mSource, newValue);
             } catch (Exception ignored) {
+                // ignore invalid text
             }
         }
 
@@ -234,7 +236,6 @@ public class SourcesActivity extends AppCompatActivity {
     }
 
     public static class SourceHolder extends RecycleAdapterBase.Holder {
-        private static final String TAG = SourceHolder.class.getSimpleName();
         private final TextView subredditName;
         private final Button buttonRemove;
         private final TextView minUpvotePercentage;
