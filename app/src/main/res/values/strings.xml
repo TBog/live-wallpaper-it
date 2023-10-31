@@ -2,6 +2,7 @@
     <string name="app_name">LiveWallpaperIt</string>
     <string name="settings_name">LWIt settings</string>
     <string name="sources_name">Subreddits</string>
+    <string name="sources_summary">Update subreddits and filters</string>
 
     <string name="name_art_provider">LWIt art</string>
     <string name="desc_art_provider">LiveWallpaperIt art provider</string>
