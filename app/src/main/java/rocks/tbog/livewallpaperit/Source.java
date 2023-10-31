@@ -2,7 +2,6 @@ package rocks.tbog.livewallpaperit;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;

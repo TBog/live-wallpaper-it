@@ -11,8 +11,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-import rocks.tbog.livewallpaperit.Source;
-
 public class DataUtils {
     private static final String TAG = DataUtils.class.getSimpleName();
 

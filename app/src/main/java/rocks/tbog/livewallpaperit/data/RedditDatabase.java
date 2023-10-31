@@ -5,7 +5,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 
 public class RedditDatabase extends SQLiteOpenHelper {
