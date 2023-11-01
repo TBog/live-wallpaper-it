@@ -15,9 +15,21 @@
             android:targetPackage="rocks.tbog.livewallpaperit" />
     </Preference>
 
+    <rocks.tbog.livewallpaperit.preference.BroadcastPreference
+        android:summary="@string/clear_cache_summary"
+        android:title="@string/clear_cache">
+        <intent
+            android:targetClass="rocks.tbog.livewallpaperit.DeleteArtworkReceiver"
+            android:targetPackage="rocks.tbog.livewallpaperit">
+            <extra
+                android:name="delete.artwork.action"
+                android:value="clear_cache" />
+        </intent>
+    </rocks.tbog.livewallpaperit.preference.BroadcastPreference>
+
     <SwitchPreference
-        android:key="allow-nsfw"
         android:defaultValue="false"
+        android:key="allow-nsfw"
         android:title="@string/allow_nsfw" />
 
     <Preference

@@ -33,4 +33,6 @@
     <string name="label_min_comments">comments</string>
     <string name="label_min_score">score</string>
     <string name="allow_nsfw">Allow NSFW</string>
+    <string name="clear_cache">Clear cache</string>
+    <string name="clear_cache_summary">Delete downloaded artworks</string>
 </resources>

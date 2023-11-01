@@ -55,6 +55,7 @@ public class CommandUtils {
 
     private static RemoteActionCompat obtainActionDelete(Context ctx, Artwork artwork) {
         Intent intent = new Intent(ctx, DeleteArtworkReceiver.class)
+                .putExtra(DeleteArtworkReceiver.ACTION, DeleteArtworkReceiver.ACTION_DELETE)
                 .putExtra(DeleteArtworkReceiver.ARTWORK_ID, String.valueOf(artwork.getId()))
                 .putExtra(DeleteArtworkReceiver.ARTWORK_TOKEN, artwork.getToken());
 
