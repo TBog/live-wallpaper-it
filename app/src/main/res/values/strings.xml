@@ -32,4 +32,5 @@
     <string name="label_upvote_percent">upvote percentage</string>
     <string name="label_min_comments">comments</string>
     <string name="label_min_score">score</string>
+    <string name="allow_nsfw">Allow NSFW</string>
 </resources>

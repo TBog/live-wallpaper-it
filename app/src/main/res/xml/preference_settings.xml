@@ -15,6 +15,11 @@
             android:targetPackage="rocks.tbog.livewallpaperit" />
     </Preference>
 
+    <SwitchPreference
+        android:key="allow-nsfw"
+        android:defaultValue="false"
+        android:title="@string/allow_nsfw" />
+
     <Preference
         android:key="rate-app"
         android:title="@string/rate_the_app">

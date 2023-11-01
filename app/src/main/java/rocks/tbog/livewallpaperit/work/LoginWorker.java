@@ -4,6 +4,7 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -49,11 +50,14 @@ public class LoginWorker extends Worker {
             Log.v(TAG, "hasSavedBearer=" + helper.hasSavedBearer());
         }
 
+        boolean allowNSFW = PreferenceManager.getDefaultSharedPreferences(ctx).getBoolean("allow-nsfw", false);
+
         List<String> list = DBHelper.getIgnoreTokenList(ctx);
 
         return Result.success(new Data.Builder()
                 .putAll(getInputData())
                 .putStringArray(WorkerUtils.DATA_IGNORE_TOKEN_LIST, list.toArray(new String[0]))
+                .putBoolean(WorkerUtils.DATA_ALLOW_NSFW, allowNSFW)
                 .build());
     }
 }

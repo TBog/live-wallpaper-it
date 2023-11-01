@@ -93,6 +93,7 @@ public class ArtLoadWorker extends Worker {
         mFilter.minUpvotePercentage = source.minUpvotePercentage;
         mFilter.minScore = source.minScore;
         mFilter.minComments = source.minComments;
+        mFilter.allowNSFW = getInputData().getBoolean(WorkerUtils.DATA_ALLOW_NSFW, false);
         ProviderClient providerClient = ProviderContract.getProviderClient(ctx, ArtProvider.class);
 
         SubmissionsFetcher submissionsFetcher = client.getSubredditsClient()
