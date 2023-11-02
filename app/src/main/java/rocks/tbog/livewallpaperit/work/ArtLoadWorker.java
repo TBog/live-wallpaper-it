@@ -12,6 +12,7 @@ import com.google.android.apps.muzei.api.provider.Artwork;
 import com.google.android.apps.muzei.api.provider.ProviderClient;
 import com.google.android.apps.muzei.api.provider.ProviderContract;
 import com.kirkbushman.araw.RedditClient;
+import com.kirkbushman.araw.fetcher.Fetcher;
 import com.kirkbushman.araw.fetcher.SubmissionsFetcher;
 import com.kirkbushman.araw.helpers.AuthUserlessHelper;
 import com.kirkbushman.araw.models.GalleryData;
@@ -33,7 +34,8 @@ import rocks.tbog.livewallpaperit.Source;
 
 public class ArtLoadWorker extends Worker {
     private static final String TAG = ArtLoadWorker.class.getSimpleName();
-    private static final int LOAD_COUNT = 10;
+    private static final int FETCH_AMOUNT = 100;
+    private static final int MAX_FETCHES = 5;
     private List<String> mIgnoreTokenList = Collections.emptyList();
     private int mArtworkSubmitCount = 0;
     private int mArtworkNotFoundCount = 0;
@@ -94,6 +96,9 @@ public class ArtLoadWorker extends Worker {
         mFilter.minScore = source.minScore;
         mFilter.minComments = source.minComments;
         mFilter.allowNSFW = getInputData().getBoolean(WorkerUtils.DATA_ALLOW_NSFW, false);
+
+        final int desiredArtworkCount = getInputData().getInt(WorkerUtils.DATA_DESIRED_ARTWORK_COUNT, 10);
+
         ProviderClient providerClient = ProviderContract.getProviderClient(ctx, ArtProvider.class);
 
         SubmissionsFetcher submissionsFetcher = client.getSubredditsClient()
@@ -101,22 +106,31 @@ public class ArtLoadWorker extends Worker {
                         source.subreddit,
                         SubmissionsSorting.NEW,
                         TimePeriod.ALL_TIME,
-                        LOAD_COUNT); // Fetcher.MAX_LIMIT);
+                        Math.min(FETCH_AMOUNT, Fetcher.MAX_LIMIT));
         Log.d(TAG, "fetch " + submissionsFetcher.getSubreddit());
         List<Submission> submissions = submissionsFetcher.fetchNext();
-        while (submissions != null) {
+        for (int fetchIndex = 1; fetchIndex < MAX_FETCHES; fetchIndex += 1) {
+            if (submissions == null) break;
+
             for (Submission submission : submissions) {
                 processSubmission(submission, providerClient);
+                if (mArtworkSubmitCount >= desiredArtworkCount) {
+                    Log.v(
+                            TAG,
+                            "stop; desiredArtworkCount=" + desiredArtworkCount + " artworkSubmitCount="
+                                    + mArtworkSubmitCount);
+                    break;
+                }
             }
 
-            if (mArtworkSubmitCount < LOAD_COUNT && submissionsFetcher.hasNext()) {
+            if (mArtworkSubmitCount < desiredArtworkCount && submissionsFetcher.hasNext()) {
                 Log.d(
                         TAG,
-                        "fetchNext " + submissionsFetcher.getSubreddit() + "; artworkSubmitCount="
+                        "#" + fetchIndex + " fetchNext " + submissionsFetcher.getSubreddit() + "; artworkSubmitCount="
                                 + mArtworkSubmitCount);
                 submissions = submissionsFetcher.fetchNext();
             } else {
-                submissions = null;
+                break;
             }
         }
 

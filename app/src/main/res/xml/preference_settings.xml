@@ -15,6 +15,12 @@
             android:targetPackage="rocks.tbog.livewallpaperit" />
     </Preference>
 
+    <rocks.tbog.livewallpaperit.preference.CustomDialogPreference
+        android:defaultValue="5"
+        android:dialogLayout="@layout/number_picker"
+        android:key="desired-artwork-count"
+        android:title="Images from each source" />
+
     <rocks.tbog.livewallpaperit.preference.BroadcastPreference
         android:summary="@string/clear_cache_summary"
         android:title="@string/clear_cache">

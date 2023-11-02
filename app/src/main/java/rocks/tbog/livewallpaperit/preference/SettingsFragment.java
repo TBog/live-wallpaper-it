@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import rocks.tbog.livewallpaperit.BuildConfig;
@@ -14,6 +16,37 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
     private static final String TAG = SettingsFragment.class.getSimpleName();
     public static final String FRAGMENT_TAG = SettingsFragment.class.getName();
+    private static final String DIALOG_FRAGMENT_TAG = "androidx.preference.PreferenceFragment.DIALOG";
+
+    @Override
+    public void onDisplayPreferenceDialog(@NonNull Preference preference) {
+        String key = preference.getKey();
+        DialogFragment dialogFragment;
+        if (preference instanceof CustomDialogPreference) {
+            // Create a new instance of CustomDialog with the key of the related Preference
+            Log.d(TAG, "onDisplayPreferenceDialog " + key);
+            dialogFragment = NumberPickerDialog.newInstance(key);
+        } else {
+            Log.i(TAG, "Preference \"" + key + "\" has no custom dialog defined");
+            dialogFragment = null;
+        }
+
+        // If it was one of our custom Preferences, show its dialog
+        if (dialogFragment != null) {
+            final FragmentManager fm = this.getParentFragmentManager();
+            // check if dialog is already showing
+            if (fm.findFragmentByTag(DIALOG_FRAGMENT_TAG) != null) {
+                Log.e(TAG, "dialog is already showing");
+                return;
+            }
+            dialogFragment.setTargetFragment(this, 0);
+            dialogFragment.show(fm, DIALOG_FRAGMENT_TAG);
+        }
+        // Could not be handled here. Try with the super method.
+        else {
+            super.onDisplayPreferenceDialog(preference);
+        }
+    }
 
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {

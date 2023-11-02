@@ -29,7 +29,7 @@ import java.util.Map;
 import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.utils.DataUtils;
 import rocks.tbog.livewallpaperit.work.ArtLoadWorker;
-import rocks.tbog.livewallpaperit.work.LoginWorker;
+import rocks.tbog.livewallpaperit.work.SetupWorker;
 import rocks.tbog.livewallpaperit.work.WorkerUtils;
 
 public class ArtProvider extends MuzeiArtProvider {
@@ -60,7 +60,7 @@ public class ArtProvider extends MuzeiArtProvider {
     public void onLoadRequested(boolean initial) {
         Context ctx = getContext();
         if (ctx == null) return;
-        final OneTimeWorkRequest setupWork = new OneTimeWorkRequest.Builder(LoginWorker.class)
+        final OneTimeWorkRequest setupWork = new OneTimeWorkRequest.Builder(SetupWorker.class)
                 .setInputMerger(OverwritingInputMerger.class)
                 .setInputData(new Data.Builder()
                         .putString(WorkerUtils.DATA_CLIENT_ID, DataUtils.loadRedditAuth(ctx))
