@@ -31,3 +31,8 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Android Studio output
+app/github/
+app/fdroid/
+app/playstore/
