@@ -1,0 +1,4 @@
+* change icon (still placeholder)
+* add filters for subreddits
+* add global NSFW toggle
+* add "clear cache" (remove all stored images)
