@@ -7,11 +7,13 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -304,6 +306,30 @@ public class SourcesActivity extends AppCompatActivity {
             mUpvotePercentageWatcher.mSource = source;
             mScoreWatcher.mSource = source;
             mCommentsWatcher.mSource = source;
+
+            final MotionLayout parent = (MotionLayout) itemView;
+            final View.OnKeyListener blurOnEnter = (view, keyCode, event) -> {
+                if ((event == null || event.getAction() == KeyEvent.ACTION_DOWN) && keyCode == KeyEvent.KEYCODE_ENTER) {
+                    view.clearFocus();
+                    parent.transitionToState(R.id.base_state);
+                }
+                return false;
+            };
+
+            final TextView.OnEditorActionListener blurOnDone = (view, actionId, event) -> {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    view.clearFocus();
+                    parent.transitionToState(R.id.base_state);
+                }
+                return false;
+            };
+
+            minUpvotePercentage.setOnKeyListener(blurOnEnter);
+            minUpvotePercentage.setOnEditorActionListener(blurOnDone);
+            minScore.setOnKeyListener(blurOnEnter);
+            minScore.setOnEditorActionListener(blurOnDone);
+            minComments.setOnKeyListener(blurOnEnter);
+            minComments.setOnEditorActionListener(blurOnDone);
         }
     }
 }
