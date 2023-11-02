@@ -14,25 +14,25 @@ public class CustomDialogPreference extends androidx.preference.DialogPreference
 
     public CustomDialogPreference(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-        Init();
+        setSummaryProvider();
     }
 
     public CustomDialogPreference(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        Init();
+        setSummaryProvider();
     }
 
     public CustomDialogPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
-        Init();
+        setSummaryProvider();
     }
 
     public CustomDialogPreference(Context context) {
         super(context);
-        Init();
+        setSummaryProvider();
     }
 
-    private void Init() {
+    private void setSummaryProvider() {
         setSummaryProvider(new CustomDialogSummaryProvider());
     }
 
