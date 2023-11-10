@@ -3,18 +3,27 @@ package rocks.tbog.livewallpaperit;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
+
 import androidx.annotation.NonNull;
 import androidx.core.app.RemoteActionCompat;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.drawable.IconCompat;
+
 import com.google.android.apps.muzei.api.provider.Artwork;
+
+import java.io.File;
 import java.util.ArrayList;
 
 public class CommandUtils {
+    private static final String TAG = CommandUtils.class.getSimpleName();
+
     public static ArrayList<RemoteActionCompat> artworkCommandActions(@NonNull Context ctx, @NonNull Artwork artwork) {
         ArrayList<RemoteActionCompat> commandActions = new ArrayList<>();
 
         commandActions.add(obtainActionShareTitleAndLink(ctx, artwork));
+        commandActions.add(obtainActionShareImage(ctx, artwork));
         commandActions.add(obtainActionDelete(ctx, artwork));
 
         return commandActions;
@@ -48,6 +57,46 @@ public class CommandUtils {
                         ctx,
                         requestCode,
                         Intent.createChooser(intent, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        action.setShouldShowIcon(true);
+        return action;
+    }
+
+    private static RemoteActionCompat obtainActionShareImage(Context context, Artwork artwork) {
+        //        String authority = BuildConfig.LWI_AUTHORITY;
+        //        try {
+        //            authority = context.getPackageManager()
+        //                    .getProviderInfo(new ComponentName(context, ArtProvider.class), 0)
+        //                    .authority;
+        //        } catch (PackageManager.NameNotFoundException e) {
+        //            Log.w(TAG, "can't get authority", e);
+        //        }
+        File cacheDir = new File(context.getCacheDir(), "muzei_" + BuildConfig.LWI_AUTHORITY);
+        File cacheFile = new File(cacheDir, Long.toString(artwork.getId()));
+        Uri uri = FileProvider.getUriForFile(context, BuildConfig.LWI_AUTHORITY + ".fileprovider", cacheFile);
+
+        Intent intent = new Intent(Intent.ACTION_SEND).setType("image/*").putExtra(Intent.EXTRA_STREAM, uri);
+        Intent chooseIntent = Intent.createChooser(intent, artwork.getTitle())
+                .addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        // for PendingIntents we need Intent.filterEquals to differentiate between artworks
+        int requestCode = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            intent.setIdentifier(artwork.getToken());
+        } else {
+            requestCode = (int) artwork.getId();
+        }
+
+        RemoteActionCompat action = new RemoteActionCompat(
+                IconCompat.createWithResource(context, R.drawable.ic_share_image_24),
+                context.getString(R.string.action_share_image),
+                context.getString(R.string.action_share_image_description),
+                PendingIntent.getActivity(
+                        context,
+                        requestCode,
+                        chooseIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
         action.setShouldShowIcon(true);
         return action;
