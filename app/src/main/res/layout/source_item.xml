@@ -12,10 +12,12 @@
 
     <TextView
         android:id="@+id/subreddit_name"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_margin="8dp"
         app:layout_constraintBottom_toTopOf="@id/barrier_top"
         app:layout_constraintEnd_toStartOf="@id/button_remove"
+        app:layout_constraintHorizontal_chainStyle="spread_inside"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="@tools:sample/full_names" />
@@ -28,7 +30,8 @@
         android:contentDescription="@string/action_remove"
         app:icon="@drawable/ic_remove_48"
         app:layout_constraintBottom_toTopOf="@id/barrier_top"
-        app:layout_constraintEnd_toStartOf="@id/barrier_end"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/subreddit_name"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_remove_48" />
 
@@ -87,7 +90,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/barrier_end"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/wrap_min_score"
         app:layout_constraintTop_toBottomOf="@id/barrier_top">
 
@@ -101,42 +104,5 @@
             android:inputType="textAutoCorrect"
             android:singleLine="true" />
     </com.google.android.material.textfield.TextInputLayout>
-
-    <androidx.constraintlayout.widget.Barrier
-        android:id="@+id/barrier_end"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:barrierDirection="start"
-        app:constraint_referenced_ids="button_up, button_down" />
-
-    <ImageButton
-        android:id="@+id/button_up"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/action_remove"
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/button_down"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="spread"
-        app:srcCompat="@drawable/ic_arrow_up_24" />
-
-    <ImageButton
-        android:id="@+id/button_down"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/action_remove"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/button_up"
-        app:srcCompat="@drawable/ic_arrow_down_24" />
-
-    <androidx.constraintlayout.widget.Group
-        android:id="@+id/group_un_down"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:visibility="gone"
-        app:constraint_referenced_ids="button_up,button_down" />
 
 </androidx.constraintlayout.motion.widget.MotionLayout>

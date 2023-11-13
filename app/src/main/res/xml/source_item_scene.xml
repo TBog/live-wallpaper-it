@@ -34,9 +34,6 @@
     </Transition>
 
     <ConstraintSet android:id="@+id/base_state">
-        <Constraint
-            android:id="@id/group_un_down"
-            android:visibility="gone" />
     </ConstraintSet>
 
     <ConstraintSet
@@ -48,7 +45,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             app:layout_constraintBottom_toTopOf="@id/wrap_min_score"
-            app:layout_constraintEnd_toStartOf="@id/barrier_end"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/barrier_top" />
         <Constraint
@@ -66,7 +63,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/barrier_end"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/wrap_min_score"
             app:layout_constraintTop_toBottomOf="@id/wrap_min_upvote_percent" />
     </ConstraintSet>
@@ -89,7 +86,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             app:layout_constraintBottom_toTopOf="@id/wrap_min_upvote_percent"
-            app:layout_constraintEnd_toStartOf="@id/barrier_end"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/barrier_top" />
         <Constraint
@@ -98,7 +95,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/barrier_end"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/wrap_min_upvote_percent"
             app:layout_constraintTop_toBottomOf="@id/wrap_min_score" />
     </ConstraintSet>
@@ -121,7 +118,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/barrier_end"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/wrap_min_upvote_percent"
             app:layout_constraintTop_toBottomOf="@id/wrap_min_comments" />
         <Constraint
@@ -130,7 +127,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             app:layout_constraintBottom_toTopOf="@id/wrap_min_upvote_percent"
-            app:layout_constraintEnd_toStartOf="@id/barrier_end"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/barrier_top" />
     </ConstraintSet>
