@@ -1,8 +1,10 @@
 package rocks.tbog.livewallpaperit;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -200,6 +202,18 @@ public class SourcesActivity extends AppCompatActivity {
             holder.minComments.setText(intToString(source.minComments));
             holder.minComments.addTextChangedListener(holder.mCommentsWatcher);
 
+            // open button
+            holder.buttonOpen.setOnClickListener(v -> {
+                Uri urlToOpen = Uri.parse("https://www.reddit.com/r/")
+                        .buildUpon()
+                        .appendPath(source.subreddit)
+                        .build();
+                Activity activity = ViewUtils.getActivity(v);
+                if (activity != null) {
+                    activity.startActivity(new Intent(Intent.ACTION_VIEW).setData(urlToOpen));
+                }
+            });
+
             // remove button
             holder.buttonRemove.setOnClickListener(v -> {
                 mSourceRemovedObserver.onChanged(source);
@@ -240,6 +254,7 @@ public class SourcesActivity extends AppCompatActivity {
     public static class SourceHolder extends RecycleAdapterBase.Holder {
         private final TextView subredditName;
         private final Button buttonRemove;
+        private final Button buttonOpen;
         private final TextView minUpvotePercentage;
         private final TextView minScore;
         private final TextView minComments;
@@ -279,6 +294,7 @@ public class SourcesActivity extends AppCompatActivity {
 
             subredditName = itemView.findViewById(R.id.subreddit_name);
             buttonRemove = itemView.findViewById(R.id.button_remove);
+            buttonOpen = itemView.findViewById(R.id.button_open);
             minUpvotePercentage = itemView.findViewById(R.id.min_upvote_percent);
             minScore = itemView.findViewById(R.id.min_score);
             minComments = itemView.findViewById(R.id.min_comments);

@@ -16,11 +16,29 @@
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
         app:layout_constraintBottom_toTopOf="@id/barrier_top"
-        app:layout_constraintEnd_toStartOf="@id/button_remove"
+        app:layout_constraintEnd_toStartOf="@id/button_title_flow"
         app:layout_constraintHorizontal_chainStyle="spread_inside"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="@tools:sample/full_names" />
+
+    <androidx.constraintlayout.helper.widget.Flow
+        android:id="@+id/button_title_flow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="button_open,button_remove"
+        app:layout_constraintBottom_toTopOf="@id/barrier_top"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/subreddit_name"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_open"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/action_open"
+        app:icon="@drawable/ic_open_24" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/button_remove"
@@ -28,12 +46,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/action_remove"
-        app:icon="@drawable/ic_remove_48"
-        app:layout_constraintBottom_toTopOf="@id/barrier_top"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/subreddit_name"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_remove_48" />
+        app:icon="@drawable/ic_remove_48" />
 
     <androidx.constraintlayout.widget.Barrier
         android:id="@+id/barrier_top"
