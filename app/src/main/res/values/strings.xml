@@ -20,7 +20,7 @@
     <string name="rate_the_app">Rate the app</string>
     <string name="btn_edit_source">Edit sources</string>
     <string name="action_add">Add subreddit</string>
-    <string name="action_remove">Remove subreddit</string>
+    <string name="button_remove_subreddit_tooltip">Remove subreddit</string>
     <string name="confirm_remove_subreddit">Remove subreddit %s?</string>
     <string name="confirm_remove_subreddit_description">%s and all associated filters will be removed. Are you sure?</string>
 
@@ -40,7 +40,7 @@
     <string name="allow_nsfw">Allow NSFW</string>
     <string name="clear_cache">Clear cache</string>
     <string name="clear_cache_summary">Delete downloaded artworks</string>
-    <string name="action_open">Open subreddit details</string>
+    <string name="button_open_tooltip">Open subreddit</string>
     <plurals name="artwork_count">
         <item quantity="one">%d artwork</item>
         <item quantity="other">%d artworks</item>
