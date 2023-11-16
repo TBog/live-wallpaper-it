@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -126,6 +127,12 @@ public class SourcesActivity extends AppCompatActivity {
         if (itemId == R.id.action_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             ViewUtils.launchIntent(this, null, intent);
+            return true;
+        } else if (itemId == R.id.action_clear_cache) {
+            Intent intent = new Intent(this, DeleteArtworkReceiver.class)
+                    .putExtra(DeleteArtworkReceiver.ACTION, DeleteArtworkReceiver.ACTION_CLEAR_CACHE);
+            sendBroadcast(intent);
+            Toast.makeText(this, item.getTitle(), Toast.LENGTH_SHORT).show();
             return true;
         } else if (itemId == R.id.action_add) {
             return openAddSourceDialog();
