@@ -7,8 +7,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 public class LWIViewModel extends AndroidViewModel {
-    private final MutableLiveData<String> mRedditAuth = new MutableLiveData<>();
-    private final MutableLiveData<RedditAuthState> mRedditAuthVerified =
+    private final MutableLiveData<RedditAuth> mRedditAuth = new MutableLiveData<>(new RedditAuth());
+    private final MutableLiveData<RedditAuthState> mRedditAuthState =
             new MutableLiveData<>(RedditAuthState.AUTH_NOT_DONE);
 
     enum RedditAuthState {
@@ -22,19 +22,35 @@ public class LWIViewModel extends AndroidViewModel {
         super(application);
     }
 
-    public void setRedditAuth(String clientId) {
-        mRedditAuth.postValue(clientId);
+    public void setRedditAuth(@NonNull String clientId, boolean isVerified) {
+        mRedditAuth.postValue(new RedditAuth(clientId, isVerified));
     }
 
-    public LiveData<String> getRedditAuth() {
+    public LiveData<RedditAuth> getRedditAuth() {
         return mRedditAuth;
     }
 
-    public void setRedditAuthVerified(RedditAuthState state) {
-        mRedditAuthVerified.postValue(state);
+    public void setRedditAuthState(RedditAuthState state) {
+        mRedditAuthState.postValue(state);
     }
 
-    public LiveData<RedditAuthState> getRedditAuthVerified() {
-        return mRedditAuthVerified;
+    public LiveData<RedditAuthState> getRedditAuthState() {
+        return mRedditAuthState;
+    }
+
+    public static class RedditAuth {
+        @NonNull
+        public final String mClientId;
+
+        public final boolean mIsVerified;
+
+        public RedditAuth(@NonNull String clientId, boolean isVerified) {
+            mClientId = clientId;
+            mIsVerified = isVerified;
+        }
+
+        public RedditAuth() {
+            this("", false);
+        }
     }
 }

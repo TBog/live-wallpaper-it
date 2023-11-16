@@ -28,7 +28,8 @@
         app:layout_constraintBottom_toTopOf="@id/btn_verify"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/hello_world">
+        app:layout_constraintTop_toBottomOf="@id/hello_world"
+        app:passwordToggleEnabled="true">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/client_id"
@@ -36,8 +37,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/label_client_id"
             android:imeOptions="actionDone"
-            android:importantForAutofill="no"
-            android:inputType="textAutoCorrect"
+            android:inputType="textPassword"
             android:singleLine="true" />
 
     </com.google.android.material.textfield.TextInputLayout>

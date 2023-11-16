@@ -40,6 +40,7 @@ public class LWIActivity extends AppCompatActivity {
     private LWIViewModel mModel;
     private UUID mVerifyRequestID;
     TextInputLayout mInputLayout;
+    TextView mInput;
     MaterialButton mButtonVerify;
     MaterialButton mButtonActivate;
     MaterialButton mButtonSources;
@@ -56,15 +57,21 @@ public class LWIActivity extends AppCompatActivity {
 
         mModel = new ViewModelProvider(this).get(LWIViewModel.class);
         mInputLayout = findViewById(R.id.input_client_id);
+        mInput = findViewById(R.id.client_id);
         mButtonVerify = findViewById(R.id.btn_verify);
         mButtonSources = findViewById(R.id.btn_edit_source);
         mProgressVerify = findViewById(R.id.verify_progress);
         mButtonActivate = findViewById(R.id.btn_ok);
         mButtonSettings = findViewById(R.id.btn_settings);
 
-        TextView clientId = findViewById(R.id.client_id);
-        clientId.setText(DataUtils.loadRedditAuth(getApplicationContext()));
-        clientId.addTextChangedListener(new TextWatcher() {
+        if (savedInstanceState == null) {
+            boolean isVerified = DataUtils.isRedditAuthVerified(getApplicationContext());
+            String verifiedClientId = DataUtils.loadRedditAuth(getApplicationContext());
+            mInput.setText(verifiedClientId);
+            mModel.setRedditAuth(verifiedClientId, isVerified);
+        }
+
+        mInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 // nothing to do
@@ -77,10 +84,16 @@ public class LWIActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                mModel.setRedditAuth(s.toString().trim());
+                String text = s.toString();
+                if (text.isEmpty()) {
+                    mModel.setRedditAuth("", false);
+                } else {
+                    String verifiedAuth = DataUtils.loadRedditAuth(getApplicationContext());
+                    mModel.setRedditAuth(text, verifiedAuth.equals(s.toString()));
+                }
             }
         });
-        clientId.setOnEditorActionListener((view, actionId, event) -> {
+        mInput.setOnEditorActionListener((view, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 if (mButtonVerify.isEnabled()) {
                     return mButtonVerify.performClick();
@@ -90,43 +103,41 @@ public class LWIActivity extends AppCompatActivity {
         });
 
         mButtonSources.setOnClickListener(this::onClickSources);
-
-        boolean authVerified = DataUtils.isRedditAuthVerified(getApplicationContext());
-
         mButtonVerify.setOnClickListener(this::onClickVerify);
-        mButtonVerify.setEnabled(!authVerified);
-
         mButtonActivate.setOnClickListener(this::onClickActivate);
-        mButtonActivate.setEnabled(authVerified);
-
         mButtonSettings.setOnClickListener(this::onClickSettings);
 
-        mModel.getRedditAuth().observe(this, s -> {
+        mModel.getRedditAuth().observe(this, auth -> {
             if (mVerifyRequestID != null) {
                 WorkManager workManager = WorkManager.getInstance(this);
                 workManager.cancelWorkById(mVerifyRequestID);
-            } else {
-                mButtonVerify.setEnabled(true);
-                mButtonActivate.setEnabled(false);
             }
-            mModel.setRedditAuthVerified(LWIViewModel.RedditAuthState.AUTH_NOT_DONE);
+            if (auth != null && auth.mIsVerified) {
+                DataUtils.setRedditAuth(getApplicationContext(), auth.mClientId);
+                mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_VALID);
+            } else {
+                mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_NOT_DONE);
+            }
         });
-        mModel.getRedditAuthVerified().observe(this, state -> {
+        mModel.getRedditAuthState().observe(this, state -> {
             if (LWIViewModel.RedditAuthState.AUTH_IN_PROGRESS.equals(state)) {
+                mButtonVerify.setEnabled(false);
                 mProgressVerify.setVisibility(View.VISIBLE);
                 mInputLayout.setError(null);
             } else {
                 mProgressVerify.setVisibility(View.INVISIBLE);
             }
 
-            if (LWIViewModel.RedditAuthState.AUTH_NOT_DONE.equals(state)) {
-                mInputLayout.setError(null);
-            } else if (LWIViewModel.RedditAuthState.AUTH_VALID.equals(state)) {
-                DataUtils.setRedditAuth(
-                        getApplicationContext(), mModel.getRedditAuth().getValue());
-                mButtonActivate.setEnabled(true);
-            } else if (LWIViewModel.RedditAuthState.AUTH_FAILED.equals(state)) {
+            if (LWIViewModel.RedditAuthState.AUTH_FAILED.equals(state)) {
                 mInputLayout.setError(getText(R.string.error_clientId_verify));
+                mButtonVerify.setEnabled(true);
+                mButtonActivate.setEnabled(false);
+            } else if (LWIViewModel.RedditAuthState.AUTH_VALID.equals(state)) {
+                mButtonVerify.setEnabled(false);
+                mButtonActivate.setEnabled(true);
+            } else if (LWIViewModel.RedditAuthState.AUTH_NOT_DONE.equals(state)) {
+                mInputLayout.setError(null);
+                mButtonVerify.setEnabled(true);
                 mButtonActivate.setEnabled(false);
             }
         });
@@ -187,47 +198,44 @@ public class LWIActivity extends AppCompatActivity {
         // String clientId = mModel.getClientId().getValue();
         WorkRequest request = new OneTimeWorkRequest.Builder(VerifyClientIdWorker.class)
                 .setInputData(new Data.Builder()
-                        .putString(
-                                WorkerUtils.DATA_CLIENT_ID,
-                                mModel.getRedditAuth().getValue())
+                        .putString(WorkerUtils.DATA_CLIENT_ID, mInput.getText().toString())
                         .build())
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setConstraints(new Constraints.Builder()
                         .setRequiredNetworkType(NetworkType.CONNECTED)
                         .build())
                 .build();
+        mVerifyRequestID = request.getId();
         WorkManager workManager = WorkManager.getInstance(this);
         workManager.enqueue(request);
         workManager.getWorkInfoByIdLiveData(request.getId()).observe(this, workInfo -> {
             Log.d(TAG, "work " + workInfo.getId() + " state " + workInfo.getState());
             switch (workInfo.getState()) {
                 case SUCCEEDED:
-                    String workerClientId = workInfo.getOutputData().getString(WorkerUtils.DATA_CLIENT_ID);
-                    String modelClientId = mModel.getRedditAuth().getValue();
-                    if (TextUtils.equals(workerClientId, modelClientId)) {
-                        mModel.setRedditAuthVerified(LWIViewModel.RedditAuthState.AUTH_VALID);
-                    } else {
-                        mModel.setRedditAuthVerified(LWIViewModel.RedditAuthState.AUTH_FAILED);
-                        mButtonVerify.setEnabled(true);
-                        mButtonActivate.setEnabled(false);
+                    if (workInfo.getId() == mVerifyRequestID) {
+                        mVerifyRequestID = null;
                     }
-                    mVerifyRequestID = null;
+                    String workerClientId = workInfo.getOutputData().getString(WorkerUtils.DATA_CLIENT_ID);
+                    String modelClientId = mInput.getText().toString();
+                    if (TextUtils.equals(workerClientId, modelClientId)) {
+                        mModel.setRedditAuth(workerClientId, true);
+                    } else {
+                        mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_FAILED);
+                    }
                     return;
                 case ENQUEUED:
                 case RUNNING:
-                    mModel.setRedditAuthVerified(LWIViewModel.RedditAuthState.AUTH_IN_PROGRESS);
-                    mButtonVerify.setEnabled(false);
+                    mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_IN_PROGRESS);
                     break;
                 case FAILED:
-                    mModel.setRedditAuthVerified(LWIViewModel.RedditAuthState.AUTH_FAILED);
+                    mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_FAILED);
                     // fallthrough
                 case CANCELLED:
-                    mButtonVerify.setEnabled(true);
-                    mButtonActivate.setEnabled(false);
-                    mVerifyRequestID = null;
+                    if (workInfo.getId() == mVerifyRequestID) {
+                        mVerifyRequestID = null;
+                    }
                     break;
             }
         });
-        mVerifyRequestID = request.getId();
     }
 }
