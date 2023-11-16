@@ -2,7 +2,6 @@ package rocks.tbog.livewallpaperit.dialog;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -46,10 +45,6 @@ public class EditTextDialog extends DialogFragment<CharSequence> {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            view.setClipToOutline(true);
-        }
 
         // read and apply the arguments
         Bundle args = getArguments() != null ? getArguments() : new Bundle();

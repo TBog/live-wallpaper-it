@@ -2,9 +2,12 @@ package rocks.tbog.livewallpaperit.dialog;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.res.Resources;
+import android.os.Bundle;
 import android.util.Log;
 import android.widget.EditText;
 import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 import rocks.tbog.livewallpaperit.R;
 
 public class DialogHelper {
@@ -60,19 +63,35 @@ public class DialogHelper {
     ////        }
     //    }
 
-    //    public static ConfirmDialog makeConfirmDialog(@NonNull Context context, @StringRes int titleId, @StringRes int
-    // descId, DialogFragment.OnButtonClickListener<Void> onOk) {
-    //        Resources r = context.getResources();
-    //        Bundle args = new Bundle();
-    //        args.putCharSequence("titleText", r.getText(titleId));
-    //        args.putCharSequence("descriptionText", r.getText(descId));
-    //
-    //        ConfirmDialog confirmDialog = new ConfirmDialog();
-    //        confirmDialog.setArguments(args);
-    //        confirmDialog.setOnPositiveClickListener(onOk);
-    //
-    //        return confirmDialog;
-    //    }
+    public static ConfirmDialog makeConfirmDialog(
+            CharSequence title, CharSequence description, DialogFragment.OnButtonClickListener<Void> onOk) {
+        Bundle args = new Bundle();
+        args.putCharSequence("titleText", title);
+        args.putCharSequence("descriptionText", description);
+
+        ConfirmDialog confirmDialog = new ConfirmDialog();
+        confirmDialog.setArguments(args);
+        confirmDialog.setOnPositiveClickListener(onOk);
+
+        return confirmDialog;
+    }
+
+    public static ConfirmDialog makeConfirmDialog(
+            @NonNull Context context,
+            @StringRes int titleId,
+            @StringRes int descId,
+            DialogFragment.OnButtonClickListener<Void> onOk) {
+        Resources r = context.getResources();
+        Bundle args = new Bundle();
+        args.putCharSequence("titleText", r.getText(titleId));
+        args.putCharSequence("descriptionText", r.getText(descId));
+
+        ConfirmDialog confirmDialog = new ConfirmDialog();
+        confirmDialog.setArguments(args);
+        confirmDialog.setOnPositiveClickListener(onOk);
+
+        return confirmDialog;
+    }
 
     public interface OnRename {
         void rename(Dialog dialog, String name);

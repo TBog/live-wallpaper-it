@@ -23,6 +23,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.motion.widget.MotionLayout;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -208,16 +209,25 @@ public class SourcesActivity extends AppCompatActivity {
                         .buildUpon()
                         .appendPath(source.subreddit)
                         .build();
-                Activity activity = ViewUtils.getActivity(v);
-                if (activity != null) {
-                    activity.startActivity(new Intent(Intent.ACTION_VIEW).setData(urlToOpen));
-                }
+                ViewUtils.launchIntent(v, new Intent(Intent.ACTION_VIEW).setData(urlToOpen));
             });
 
             // remove button
             holder.buttonRemove.setOnClickListener(v -> {
-                mSourceRemovedObserver.onChanged(source);
-                removeItem(source);
+                Activity activity = ViewUtils.getActivity(v);
+                FragmentManager fragmentManager = null;
+                if (activity instanceof AppCompatActivity) {
+                    fragmentManager = ((AppCompatActivity) activity).getSupportFragmentManager();
+                }
+                if (fragmentManager == null) return;
+                DialogHelper.makeConfirmDialog(
+                                activity.getString(R.string.confirm_remove_subreddit, source.subreddit),
+                                activity.getString(R.string.confirm_remove_subreddit_description, source.subreddit),
+                                (dialog, button) -> {
+                                    mSourceRemovedObserver.onChanged(source);
+                                    removeItem(source);
+                                })
+                        .show(fragmentManager);
             });
         }
 

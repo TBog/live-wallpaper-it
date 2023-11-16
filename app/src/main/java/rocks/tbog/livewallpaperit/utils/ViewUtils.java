@@ -88,13 +88,11 @@ public class ViewUtils {
         Bundle opts = null;
         // If we got an icon, we create options to get a nice animation
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            opts = ActivityOptions.makeClipRevealAnimation(
-                            source, 0, 0, source.getMeasuredWidth(), source.getMeasuredHeight())
+            opts = ActivityOptions.makeClipRevealAnimation(source, 0, 0, source.getWidth(), source.getHeight())
                     .toBundle();
         }
         if (opts == null) {
-            opts = ActivityOptions.makeScaleUpAnimation(
-                            source, 0, 0, source.getMeasuredWidth(), source.getMeasuredHeight())
+            opts = ActivityOptions.makeScaleUpAnimation(source, 0, 0, source.getWidth(), source.getHeight())
                     .toBundle();
         }
         return opts;

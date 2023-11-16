@@ -126,7 +126,7 @@ public abstract class DialogFragment<Output> extends androidx.fragment.app.Dialo
         //        int theme = UITheme.getDialogTheme(requireContext());
         //        if (theme == UITheme.ID_NULL)
         //            theme = R.style.NoTitleDialogTheme;
-        setStyle(DialogFragment.STYLE_NO_FRAME, R.style.TitleDialogTheme);
+        setStyle(DialogFragment.STYLE_NO_FRAME, R.style.NoTitleDialogTheme);
         // Log.i(TAG, "theme=" + getTheme());
         // Log.i(TAG, "context=" + getContext());
     }
