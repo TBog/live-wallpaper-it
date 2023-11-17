@@ -210,6 +210,16 @@ public class SourcesActivity extends AppCompatActivity {
             holder.minComments.setText(intToString(source.minComments));
             holder.minComments.addTextChangedListener(holder.mCommentsWatcher);
 
+            // preview button
+            holder.buttonPreview.setOnClickListener(v -> {
+                Activity activity = ViewUtils.getActivity(v);
+                if (activity == null) return;
+                Intent intent = new Intent(activity, SubredditActivity.class)
+                        .putExtra(SubredditActivity.EXTRA_SOURCE, source)
+                        .putExtra(SubredditActivity.EXTRA_SUBREDDIT, source.subreddit);
+                ViewUtils.launchIntent(activity, v, intent);
+            });
+
             // open button
             holder.buttonOpen.setOnClickListener(v -> {
                 Uri urlToOpen = Uri.parse("https://www.reddit.com/r/")
@@ -272,6 +282,7 @@ public class SourcesActivity extends AppCompatActivity {
         private final TextView subredditName;
         private final Button buttonRemove;
         private final Button buttonOpen;
+        private final Button buttonPreview;
         private final TextView minUpvotePercentage;
         private final TextView minScore;
         private final TextView minComments;
@@ -312,6 +323,7 @@ public class SourcesActivity extends AppCompatActivity {
             subredditName = itemView.findViewById(R.id.subreddit_name);
             buttonRemove = itemView.findViewById(R.id.button_remove);
             buttonOpen = itemView.findViewById(R.id.button_open);
+            buttonPreview = itemView.findViewById(R.id.button_preview);
             minUpvotePercentage = itemView.findViewById(R.id.min_upvote_percent);
             minScore = itemView.findViewById(R.id.min_score);
             minComments = itemView.findViewById(R.id.min_comments);

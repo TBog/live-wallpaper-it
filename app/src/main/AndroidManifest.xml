@@ -42,6 +42,20 @@
         </activity>
 
         <activity
+            android:name=".SubredditActivity"
+            android:allowTaskReparenting="true"
+            android:exported="false"
+            android:label="@string/subreddit_name"
+            android:launchMode="standard"
+            android:parentActivityName=".SourcesActivity"
+            android:screenOrientation="user">
+            <!-- Parent activity meta-data to support API level 4+ -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".SourcesActivity" />
+        </activity>
+
+        <activity
             android:name=".preference.SettingsActivity"
             android:allowTaskReparenting="true"
             android:exported="true"
@@ -74,6 +88,7 @@
             <intent-filter>
                 <action android:name="com.google.android.apps.muzei.api.MuzeiArtProvider" />
             </intent-filter>
+
             <meta-data
                 android:name="settingsActivity"
                 android:value="rocks.tbog.livewallpaperit.preference.SettingsActivity" />
