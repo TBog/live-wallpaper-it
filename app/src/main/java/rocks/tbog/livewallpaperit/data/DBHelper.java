@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,6 +13,7 @@ import java.util.List;
 import rocks.tbog.livewallpaperit.Source;
 
 public class DBHelper {
+    private static final String TAG = DBHelper.class.getSimpleName();
     private static SQLiteOpenHelper database = null;
 
     private static SQLiteDatabase getDatabase(Context context) {
@@ -133,5 +135,107 @@ public class DBHelper {
                 != db.delete(RedditDatabase.TABLE_SUBREDDITS, RedditDatabase.SUBREDDIT_NAME + "=?", new String[] {
                     source.subreddit
                 });
+    }
+
+    public static void addSubTopic(Context context, String subreddit, SubTopic comment) {
+        SQLiteDatabase db = getDatabase(context);
+
+        ContentValues value = new ContentValues();
+        comment.fillTopicValues(value);
+        value.put(RedditDatabase.TOPIC_SUBREDDIT, subreddit);
+
+        long rowId = db.insertWithOnConflict(RedditDatabase.TABLE_TOPICS, null, value, SQLiteDatabase.CONFLICT_REPLACE);
+        if (rowId == -1) {
+            Log.e(TAG, "failed to insert in " + RedditDatabase.TABLE_TOPICS + " " + value);
+            return;
+        }
+
+        value.clear();
+        db.beginTransaction();
+        try {
+            for (var image : comment.images) {
+                comment.fillImageValues(image, value);
+                rowId = db.insertWithOnConflict(
+                        RedditDatabase.TABLE_TOPIC_IMAGES, null, value, SQLiteDatabase.CONFLICT_REPLACE);
+                if (rowId == -1) {
+                    Log.e(TAG, "failed to insert in " + RedditDatabase.TABLE_TOPIC_IMAGES + " " + value);
+                }
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public static List<SubTopic> getSubTopics(Context context, String subreddit) {
+        SQLiteDatabase db = getDatabase(context);
+        ArrayList<SubTopic> records = null;
+
+        try (Cursor cursor = db.query(
+                RedditDatabase.TABLE_TOPICS,
+                new String[] {
+                    RedditDatabase.TOPIC_ID,
+                    RedditDatabase.TOPIC_TITLE,
+                    RedditDatabase.TOPIC_AUTHOR,
+                    RedditDatabase.TOPIC_LINK_FLAIR_TEXT,
+                    RedditDatabase.TOPIC_PERMALINK,
+                    RedditDatabase.TOPIC_THUMBNAIL,
+                    RedditDatabase.TOPIC_CREATED_UTC,
+                    RedditDatabase.TOPIC_SCORE,
+                    RedditDatabase.TOPIC_UPVOTE_RATIO,
+                    RedditDatabase.TOPIC_NUM_COMMENTS,
+                    RedditDatabase.TOPIC_OVER_18,
+                },
+                "\"" + RedditDatabase.TOPIC_SUBREDDIT + "\" = ?",
+                new String[] {subreddit},
+                null,
+                null,
+                "\"" + RedditDatabase.TOPIC_CREATED_UTC + "\" DESC",
+                null)) {
+            if (cursor != null) {
+                cursor.moveToFirst();
+                records = new ArrayList<>(cursor.getCount());
+                while (!cursor.isAfterLast()) {
+                    SubTopic topic = SubTopic.fromCursor(cursor);
+                    records.add(topic);
+
+                    cursor.moveToNext();
+                }
+            }
+        }
+
+        if (records == null) {
+            return Collections.emptyList();
+        }
+        return records;
+    }
+
+    public static void loadSubTopicImages(@NonNull Context context, @NonNull SubTopic topic) {
+        SQLiteDatabase db = getDatabase(context);
+
+        try (Cursor cursor = db.query(
+                RedditDatabase.TABLE_TOPIC_IMAGES,
+                new String[] {
+                    RedditDatabase.IMAGE_URL,
+                    RedditDatabase.IMAGE_MEDIA_ID,
+                    RedditDatabase.IMAGE_WIDTH,
+                    RedditDatabase.IMAGE_HEIGHT,
+                    RedditDatabase.IMAGE_IS_NSFW,
+                    RedditDatabase.IMAGE_IS_SOURCE,
+                },
+                "\"" + RedditDatabase.IMAGE_TOPIC_ID + "\" = ?",
+                new String[] {topic.id},
+                null,
+                null,
+                null,
+                null)) {
+            if (cursor != null) {
+                cursor.moveToFirst();
+                while (!cursor.isAfterLast()) {
+                    SubTopic.Image image = SubTopic.Image.fromCursor(cursor);
+                    topic.images.add(image);
+                }
+            }
+        }
     }
 }

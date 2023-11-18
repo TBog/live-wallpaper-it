@@ -15,22 +15,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.work.Data;
-import androidx.work.ExistingWorkPolicy;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkInfo;
-import androidx.work.WorkManager;
 import com.google.android.material.divider.MaterialDividerItemDecoration;
 import java.io.Serializable;
 import java.util.ArrayList;
-import rocks.tbog.livewallpaperit.utils.DataUtils;
-import rocks.tbog.livewallpaperit.work.PreviewWorker;
-import rocks.tbog.livewallpaperit.work.WorkerUtils;
+import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
+import rocks.tbog.livewallpaperit.data.DBHelper;
+import rocks.tbog.livewallpaperit.data.SubTopic;
 
 public class SubredditActivity extends AppCompatActivity {
 
     public static final String EXTRA_SUBREDDIT = "subreddit.name";
     public static final String EXTRA_SOURCE = "serializable.source";
+    private static final String TAG = SubredditActivity.class.getSimpleName();
 
     SubredditAdapter mAdapter;
     Source mSource = null;
@@ -86,28 +82,46 @@ public class SubredditActivity extends AppCompatActivity {
         }
     }
 
+    //    private void loadSourceData() {
+    //        if (mSource == null) return;
+    //        var workManager = WorkManager.getInstance(this);
+    //        var request = new OneTimeWorkRequest.Builder(PreviewWorker.class)
+    //                .setInputData(new Data.Builder()
+    //                        .putString(WorkerUtils.DATA_CLIENT_ID, DataUtils.loadRedditAuth(this))
+    //                        .putString(PreviewWorker.DATA_SUBREDDIT, mSource.subreddit)
+    //                        .build())
+    //                .build();
+    //        workManager.enqueueUniqueWork(mSource.subreddit, ExistingWorkPolicy.KEEP, request);
+    //        workManager.getWorkInfosForUniqueWorkLiveData(mSource.subreddit).observe(this, workInfoList -> {
+    //            if (workInfoList == null) return;
+    //            Log.d(TAG, "UniqueWork " + mSource.subreddit + " size " + workInfoList.size());
+    //            for (var workInfo : workInfoList) {
+    //                Log.d(TAG, "work " + workInfo.getId() + " state " + workInfo.getState());
+    //                if (workInfo.getState().isFinished()) {
+    //                    var data = PreviewWorker.getAndRemoveData(mSource.subreddit);
+    //                    if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
+    //                        mAdapter.setItems(data);
+    //                    }
+    //                }
+    //            }
+    //        });
+    //    }
+
     private void loadSourceData() {
         if (mSource == null) return;
-        var workManager = WorkManager.getInstance(this);
-        var request = new OneTimeWorkRequest.Builder(PreviewWorker.class)
-                .setInputData(new Data.Builder()
-                        .putString(WorkerUtils.DATA_CLIENT_ID, DataUtils.loadRedditAuth(this))
-                        .putString(PreviewWorker.DATA_SUBREDDIT, mSource.subreddit)
-                        .build())
-                .build();
-        workManager.enqueueUniqueWork(mSource.subreddit, ExistingWorkPolicy.KEEP, request);
-        workManager.getWorkInfoByIdLiveData(request.getId()).observe(this, workInfo -> {
-            if (workInfo == null) return;
-            if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
-                var data = PreviewWorker.getAndRemoveData(mSource.subreddit);
-                mAdapter.setItems(data);
-            } else if (workInfo.getState().isFinished()) {
-                PreviewWorker.getAndRemoveData(mSource.subreddit);
-            }
-        });
+        final ArrayList<SubTopic> topicList = new ArrayList<>();
+        AsyncUtils.runAsync(
+                getLifecycle(),
+                t -> {
+                    var list = DBHelper.getSubTopics(getApplicationContext(), mSource.subreddit);
+                    topicList.addAll(list);
+                },
+                t -> {
+                    mAdapter.setItems(topicList);
+                });
     }
 
-    public static class SubredditAdapter extends RecycleAdapterBase<PreviewWorker.SubComment, SubmissionHolder> {
+    public static class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHolder> {
 
         public SubredditAdapter() {
             super(new ArrayList<>());
@@ -115,7 +129,7 @@ public class SubredditActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onBindViewHolder(@NonNull SubmissionHolder holder, @NonNull PreviewWorker.SubComment entry) {
+        public void onBindViewHolder(@NonNull SubmissionHolder holder, @NonNull SubTopic entry) {
             holder.mTitleView.setText(entry.title);
             holder.mNsfwView.setVisibility(entry.over18 ? View.VISIBLE : View.GONE);
             holder.mScoreView.setText(String.valueOf(entry.score));

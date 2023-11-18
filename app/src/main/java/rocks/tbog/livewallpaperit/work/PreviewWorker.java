@@ -18,20 +18,21 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import rocks.tbog.livewallpaperit.data.SubTopic;
 
 public class PreviewWorker extends Worker {
 
     private static final String TAG = PreviewWorker.class.getSimpleName();
     public static String DATA_SUBREDDIT = "subreddit";
 
-    private static final HashMap<String, Collection<SubComment>> s_Data = new HashMap<>();
+    private static final HashMap<String, Collection<SubTopic>> s_Data = new HashMap<>();
 
     public PreviewWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
     }
 
     @NonNull
-    public static Collection<SubComment> getAndRemoveData(@NonNull String key) {
+    public static Collection<SubTopic> getAndRemoveData(@NonNull String key) {
         synchronized (s_Data) {
             var data = s_Data.remove(key);
             if (data == null) return Collections.emptyList();
@@ -39,7 +40,7 @@ public class PreviewWorker extends Worker {
         }
     }
 
-    protected static void putData(@NonNull String key, @NonNull Collection<SubComment> data) {
+    protected static void putData(@NonNull String key, @NonNull Collection<SubTopic> data) {
         synchronized (s_Data) {
             s_Data.put(key, data);
         }
@@ -92,28 +93,14 @@ public class PreviewWorker extends Worker {
             return Result.failure();
         }
 
-        var commentList = new ArrayList<SubComment>();
+        var topicList = new ArrayList<SubTopic>();
         for (var submission : submissions) {
-            var comment = new SubComment();
-            commentList.add(comment);
-
-            comment.title = submission.getTitle();
-            comment.score = submission.getScore();
-            comment.upvoteRatio = submission.getUpvoteRatio() != null ? submission.getUpvoteRatio() : 0f;
-            comment.numComments = submission.getNumComments();
-            comment.over18 = submission.getOver18();
+            var topic = SubTopic.fromSubmission(submission);
+            topicList.add(topic);
         }
 
-        putData(subreddit, commentList);
+        putData(subreddit, topicList);
         return Result.success(
                 new Data.Builder().putString(DATA_SUBREDDIT, subreddit).build());
-    }
-
-    public static class SubComment {
-        public String title;
-        public int score;
-        public float upvoteRatio;
-        public int numComments;
-        public boolean over18;
     }
 }

@@ -15,22 +15,16 @@ import com.kirkbushman.araw.RedditClient;
 import com.kirkbushman.araw.fetcher.Fetcher;
 import com.kirkbushman.araw.fetcher.SubmissionsFetcher;
 import com.kirkbushman.araw.helpers.AuthUserlessHelper;
-import com.kirkbushman.araw.models.GalleryData;
-import com.kirkbushman.araw.models.GalleryImageData;
-import com.kirkbushman.araw.models.GalleryMedia;
-import com.kirkbushman.araw.models.GalleryMediaItem;
 import com.kirkbushman.araw.models.Submission;
-import com.kirkbushman.araw.models.commons.ImageDetail;
-import com.kirkbushman.araw.models.commons.Images;
-import com.kirkbushman.araw.models.commons.SubmissionPreview;
 import com.kirkbushman.araw.models.enums.SubmissionsSorting;
 import com.kirkbushman.araw.models.enums.TimePeriod;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import rocks.tbog.livewallpaperit.ArtProvider;
 import rocks.tbog.livewallpaperit.Source;
+import rocks.tbog.livewallpaperit.data.DBHelper;
+import rocks.tbog.livewallpaperit.data.SubTopic;
 
 public class ArtLoadWorker extends Worker {
     private static final String TAG = ArtLoadWorker.class.getSimpleName();
@@ -99,6 +93,8 @@ public class ArtLoadWorker extends Worker {
 
         final int desiredArtworkCount = getInputData().getInt(WorkerUtils.DATA_DESIRED_ARTWORK_COUNT, 10);
 
+        var cachedTopics = DBHelper.getSubTopics(ctx, source.subreddit);
+
         ProviderClient providerClient = ProviderContract.getProviderClient(ctx, ArtProvider.class);
 
         SubmissionsFetcher submissionsFetcher = client.getSubredditsClient()
@@ -113,7 +109,12 @@ public class ArtLoadWorker extends Worker {
             if (submissions == null) break;
 
             for (Submission submission : submissions) {
-                processSubmission(submission, providerClient);
+                final SubTopic topic = SubTopic.fromSubmission(submission);
+                if (topic.images.isEmpty()) continue;
+                if (cachedTopics.stream().noneMatch(subTopic -> subTopic.id.equals(topic.id))) {
+                    DBHelper.addSubTopic(getApplicationContext(), source.subreddit, topic);
+                }
+                getArtworks(submission.getSubredditNamePrefixed(), topic, providerClient);
                 if (mArtworkSubmitCount >= desiredArtworkCount) {
                     Log.v(
                             TAG,
@@ -141,122 +142,54 @@ public class ArtLoadWorker extends Worker {
                 .build());
     }
 
-    private void processSubmission(Submission submission, ProviderClient providerClient) {
+    private void getArtworks(String subredditNamePrefixed, SubTopic topic, ProviderClient providerClient) {
         if (mFilter != null) {
             if (mFilter.minUpvotePercentage > 0) {
-                Float upvoteRatio = submission.getUpvoteRatio();
-                if (upvoteRatio == null) upvoteRatio = 0f;
-                int upvotePercent = (int) (upvoteRatio * 100f);
-                if (upvotePercent < mFilter.minUpvotePercentage) {
+                if (topic.upvoteRatio < mFilter.minUpvotePercentage) {
                     Log.v(
                             TAG,
-                            "upvote " + upvotePercent + "%<" + mFilter.minUpvotePercentage + "% skipping "
-                                    + submission.getPermalink());
+                            "upvote " + topic.upvoteRatio + "%<" + mFilter.minUpvotePercentage + "% skipping "
+                                    + topic.permalink);
                     return;
                 }
             }
             if (mFilter.minScore > 0) {
-                int score = submission.getScore();
-                if (score < mFilter.minScore) {
-                    Log.v(TAG, "score " + score + "<" + mFilter.minScore + " skipping " + submission.getPermalink());
+                if (topic.score < mFilter.minScore) {
+                    Log.v(TAG, "score " + topic.score + "<" + mFilter.minScore + " skipping " + topic.permalink);
                     return;
                 }
             }
             if (mFilter.minComments > 0) {
-                int numComments = submission.getNumComments();
-                if (numComments < mFilter.minComments) {
+                if (topic.numComments < mFilter.minComments) {
                     Log.v(
                             TAG,
-                            "numComments " + numComments + "<" + mFilter.minComments + " skipping "
-                                    + submission.getPermalink());
+                            "numComments " + topic.numComments + "<" + mFilter.minComments + " skipping "
+                                    + topic.permalink);
                     return;
                 }
             }
             if (!mFilter.allowNSFW) {
-                if (submission.getOver18()) {
-                    Log.v(TAG, "NSFW not allowed skipping " + submission.getPermalink());
+                if (topic.over18) {
+                    Log.v(TAG, "NSFW not allowed skipping " + topic.permalink);
                     return;
                 }
             }
         }
-        boolean artworkFound = false;
-        SubmissionPreview preview = submission.getPreview();
-        Images[] imagesArray;
-        if (preview != null) {
-            imagesArray = preview.getImages();
-        } else {
-            imagesArray = new Images[0];
-        }
-        for (Images images : imagesArray) {
-            ImageDetail imageDetail = images.getSource();
-            String byline = submission.getLinkFlairText();
-            if (TextUtils.isEmpty(byline)) byline = submission.getSubredditNamePrefixed();
+        for (var image : topic.images) {
+            if (!image.isSource || image.isObfuscated) continue;
+            String byline = topic.linkFlairText;
+            if (TextUtils.isEmpty(byline)) byline = subredditNamePrefixed;
             Artwork artwork = new Artwork.Builder()
-                    .persistentUri(Uri.parse(imageDetail.getUrl()))
-                    .webUri(Uri.parse("https://www.reddit.com" + submission.getPermalink()))
-                    .token(submission.getId())
-                    .attribution(submission.getAuthor())
+                    .persistentUri(Uri.parse(image.url))
+                    .webUri(Uri.parse("https://www.reddit.com" + topic.permalink))
+                    .token(image.mediaId)
+                    .attribution(topic.author)
                     .byline(byline)
-                    .title(submission.getTitle())
+                    .title(topic.title)
                     .build();
 
-            Log.v(TAG, "(image)addArtwork " + artwork.getToken() + " `" + artwork.getTitle() + "`");
-            artworkFound = true;
+            Log.v(TAG, "addArtwork " + artwork.getToken() + " `" + artwork.getTitle() + "`");
             addArtwork(artwork, providerClient);
-        }
-
-        if (!artworkFound && submission.isRedditMediaDomain()) {
-            String byline = submission.getLinkFlairText();
-            if (TextUtils.isEmpty(byline)) byline = submission.getSubredditNamePrefixed();
-            Artwork artwork = new Artwork.Builder()
-                    .persistentUri(Uri.parse(submission.getUrl()))
-                    .webUri(Uri.parse("https://www.reddit.com" + submission.getPermalink()))
-                    .token(submission.getId())
-                    .attribution(submission.getAuthor())
-                    .byline(byline)
-                    .title(submission.getTitle())
-                    .build();
-
-            Log.v(TAG, "(media)addArtwork " + artwork.getToken() + " `" + artwork.getTitle() + "`");
-            artworkFound = true;
-            addArtwork(artwork, providerClient);
-        }
-
-        if (artworkFound) return;
-
-        GalleryData galleryData = submission.getGalleryData();
-        if (galleryData == null) {
-            Log.d(TAG, "galleryData == null");
-            return;
-        }
-        Map<String, GalleryMedia> mediaMetadata = submission.getMediaMetadata();
-        if (mediaMetadata == null) {
-            Log.d(TAG, "mediaMetadata == null");
-            return;
-        }
-
-        List<GalleryMediaItem> mediaItems = galleryData.getItems();
-        for (GalleryMediaItem item : mediaItems) {
-            GalleryMedia media = mediaMetadata.get(item.getMediaId());
-            if (media == null || !"Image".equalsIgnoreCase(media.getE())) continue;
-            GalleryImageData imageData = media.getS();
-            if (imageData == null || TextUtils.isEmpty(imageData.getU())) continue;
-
-            Artwork artwork = new Artwork.Builder()
-                    .persistentUri(Uri.parse(imageData.getU()))
-                    .webUri(Uri.parse("https://www.reddit.com" + submission.getPermalink()))
-                    .token(media.getId())
-                    .attribution(submission.getAuthor())
-                    .byline(submission.getLinkFlairText())
-                    .title(submission.getTitle())
-                    .build();
-
-            Log.v(TAG, "(gallery)addArtwork " + artwork.getToken() + " `" + artwork.getTitle() + "`");
-            artworkFound = true;
-            addArtwork(artwork, providerClient);
-        }
-        if (!artworkFound) {
-            mArtworkNotFoundCount += 1;
         }
     }
 
