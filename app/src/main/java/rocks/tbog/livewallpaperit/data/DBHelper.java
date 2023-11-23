@@ -234,6 +234,8 @@ public class DBHelper {
                 while (!cursor.isAfterLast()) {
                     SubTopic.Image image = SubTopic.Image.fromCursor(cursor);
                     topic.images.add(image);
+
+                    cursor.moveToNext();
                 }
             }
         }

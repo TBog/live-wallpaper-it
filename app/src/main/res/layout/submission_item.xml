@@ -11,54 +11,79 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
+        android:gravity="start|center_vertical"
+        android:maxLines="6"
+        android:singleLine="false"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="@tools:sample/cities" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/image_carousel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:contentDescription="image carousel"
+        android:orientation="horizontal"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/submission_title"
+        tools:listitem="@layout/image_carousel_item" />
 
     <ImageView
         android:id="@+id/nsfw"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_nsfw_24"
         android:layout_margin="8dp"
+        android:contentDescription="@string/nsfw_tooltip"
+        android:src="@drawable/ic_nsfw_24"
+        android:tooltipText="@string/nsfw_tooltip"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/submission_title"
-        />
-
-    <TextView
-        android:id="@+id/score"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="8dp"
-        app:layout_constraintStart_toEndOf="@id/nsfw"
-        app:layout_constraintTop_toTopOf="@id/nsfw"
-        android:gravity="center_vertical"
-        android:tooltipText="Score"
-        app:layout_goneMarginTop="8dp"
-        tools:text="@tools:sample/us_zipcodes" />
+        app:layout_constraintTop_toBottomOf="@id/image_carousel"
+        app:tint="?android:attr/textColorSecondary" />
 
     <TextView
         android:id="@+id/upvote_ratio"
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:layout_marginHorizontal="8dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
         android:gravity="center_vertical"
-        app:layout_constraintStart_toEndOf="@id/score"
-        app:layout_constraintTop_toTopOf="@id/score"
-        app:layout_constraintBottom_toBottomOf="@id/score"
-        android:tooltipText="Upvote ratio"
+        android:tooltipText="@string/upvote_ratio_tooltip"
+        app:drawableEndCompat="@drawable/ic_percent_24"
+        app:drawableTint="?android:attr/textColorSecondary"
+        app:layout_constraintStart_toEndOf="@id/nsfw"
+        app:layout_constraintTop_toTopOf="@id/nsfw"
+        app:layout_goneMarginBottom="8dp"
+        app:layout_goneMarginStart="8dp"
+        app:layout_goneMarginTop="8dp"
+        tools:text="@tools:sample/us_zipcodes" />
+
+    <TextView
+        android:id="@+id/score"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginHorizontal="12dp"
+        android:gravity="center_vertical"
+        android:tooltipText="@string/score_tooltip"
+        app:layout_constraintBottom_toBottomOf="@id/upvote_ratio"
+        app:layout_constraintStart_toEndOf="@id/upvote_ratio"
+        app:layout_constraintTop_toTopOf="@id/upvote_ratio"
         tools:text="@tools:sample/us_zipcodes" />
 
     <TextView
         android:id="@+id/num_comments"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_marginHorizontal="8dp"
+        android:layout_marginHorizontal="12dp"
         android:gravity="center_vertical"
-        app:layout_constraintStart_toEndOf="@id/upvote_ratio"
-        app:layout_constraintTop_toTopOf="@id/score"
-        app:layout_constraintBottom_toBottomOf="@id/score"
-        android:tooltipText="Comment count"
+        android:tooltipText="@string/num_comments_tooltip"
+        app:drawableStartCompat="@drawable/ic_comment_24"
+        app:drawableTint="?android:attr/textColorSecondary"
+        app:layout_constraintBottom_toBottomOf="@id/upvote_ratio"
+        app:layout_constraintStart_toEndOf="@id/score"
+        app:layout_constraintTop_toTopOf="@id/upvote_ratio"
         tools:text="@tools:sample/us_zipcodes" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

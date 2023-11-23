@@ -21,6 +21,7 @@
     <string name="rate_the_app">Rate the app</string>
     <string name="btn_edit_source">Edit sources</string>
     <string name="action_add">Add subreddit</string>
+    <string name="action_refresh">Refresh subreddit</string>
     <string name="button_remove_subreddit_tooltip">Remove subreddit</string>
     <string name="confirm_remove_subreddit">Remove subreddit %s?</string>
     <string name="confirm_remove_subreddit_description">%s and all associated filters will be removed. Are you sure?</string>
@@ -47,4 +48,9 @@
         <item quantity="one">%d artwork</item>
         <item quantity="other">%d artworks</item>
     </plurals>
+
+    <string name="nsfw_tooltip">not safe for work</string>
+    <string name="upvote_ratio_tooltip">upvote ratio</string>
+    <string name="score_tooltip">score</string>
+    <string name="num_comments_tooltip">comment count</string>
 </resources>

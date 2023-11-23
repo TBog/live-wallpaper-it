@@ -60,26 +60,13 @@ public class ArtProvider extends MuzeiArtProvider {
     public void onLoadRequested(boolean initial) {
         Context ctx = getContext();
         if (ctx == null) return;
-        final OneTimeWorkRequest setupWork = new OneTimeWorkRequest.Builder(SetupWorker.class)
-                .setInputMerger(OverwritingInputMerger.class)
-                .setInputData(new Data.Builder()
-                        .putString(WorkerUtils.DATA_CLIENT_ID, DataUtils.loadRedditAuth(ctx))
-                        .build())
-                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .setConstraints(new Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .build())
-                .build();
+        final OneTimeWorkRequest setupWork = buildSetupWorkRequest(ctx);
         var workManager = WorkManager.getInstance(ctx);
         var workQueue = workManager.beginWith(setupWork);
         final ArrayList<OneTimeWorkRequest> subredditWorkList = new ArrayList<>();
         var sources = DBHelper.loadSources(ctx);
         for (Source source : sources) {
-            subredditWorkList.add(new OneTimeWorkRequest.Builder(ArtLoadWorker.class)
-                    .setInputData(new Data.Builder()
-                            .putByteArray(WorkerUtils.DATA_SOURCE, Source.toByteArray(source))
-                            .build())
-                    .build());
+            subredditWorkList.add(buildSourceWorkRequest(source));
         }
         workQueue.then(subredditWorkList).enqueue();
         if (BuildConfig.DEBUG) {
@@ -90,6 +77,29 @@ public class ArtProvider extends MuzeiArtProvider {
                 }
             });
         }
+    }
+
+    @NonNull
+    public static OneTimeWorkRequest buildSetupWorkRequest(@NonNull Context ctx) {
+        return new OneTimeWorkRequest.Builder(SetupWorker.class)
+                .setInputMerger(OverwritingInputMerger.class)
+                .setInputData(new Data.Builder()
+                        .putString(WorkerUtils.DATA_CLIENT_ID, DataUtils.loadRedditAuth(ctx))
+                        .build())
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .setConstraints(new Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build())
+                .build();
+    }
+
+    @NonNull
+    public static OneTimeWorkRequest buildSourceWorkRequest(@NonNull Source source) {
+        return new OneTimeWorkRequest.Builder(ArtLoadWorker.class)
+                .setInputData(new Data.Builder()
+                        .putByteArray(WorkerUtils.DATA_SOURCE, Source.toByteArray(source))
+                        .build())
+                .build();
     }
 
     @NonNull

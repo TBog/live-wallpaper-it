@@ -1,6 +1,7 @@
 package rocks.tbog.livewallpaperit.data;
 
 import android.content.Context;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
@@ -34,7 +35,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
     public static final String TOPIC_OVER_18 = "over18";
     public static final String IMAGE_TOPIC_ID = "topic_id";
     public static final String IMAGE_URL = "url";
-    public static final String IMAGE_MEDIA_ID = "url";
+    public static final String IMAGE_MEDIA_ID = "media_id";
     public static final String IMAGE_WIDTH = "width";
     public static final String IMAGE_HEIGHT = "height";
     public static final String IMAGE_IS_NSFW = "is_obfuscated";
@@ -46,12 +47,16 @@ public class RedditDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase database) {
-        database.execSQL("CREATE TABLE " + TABLE_IGNORE + " ( "
-                + "\"" + BaseColumns._ID + "\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
-                + "\"" + ARTWORK_TOKEN + "\" TEXT UNIQUE);");
-        createSubredditTable(database);
-        createTopicTable(database);
-        createTopicImageTable(database);
+        try {
+            database.execSQL("CREATE TABLE " + TABLE_IGNORE + " ( "
+                    + "\"" + BaseColumns._ID + "\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
+                    + "\"" + ARTWORK_TOKEN + "\" TEXT UNIQUE);");
+            createSubredditTable(database);
+            createTopicTable(database);
+            createTopicImageTable(database);
+        } catch (SQLException e) {
+            Log.e(TAG, "database failed to open", e);
+        }
     }
 
     @Override
@@ -63,7 +68,8 @@ public class RedditDatabase extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.i(TAG, "Updating database from version " + oldVersion + " to version " + newVersion);
-        if (oldVersion < newVersion) {
+        if (oldVersion >= newVersion) return;
+        try {
             switch (oldVersion) {
                 case 1:
                     createSubredditTable(db);
@@ -75,6 +81,21 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 default:
                     break;
             }
+        } catch (SQLException e) {
+            Log.e(TAG, "database failed to open after upgrade", e);
+        }
+    }
+
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        Log.i(TAG, "DOWN-grade database from version " + oldVersion + " to version " + newVersion);
+        try {
+            if (newVersion == 2) {
+                db.execSQL("DROP TABLE IF EXISTS " + TABLE_TOPICS);
+                db.execSQL("DROP TABLE IF EXISTS " + TABLE_TOPIC_IMAGES);
+            }
+        } catch (SQLException e) {
+            Log.e(TAG, "downgrade from " + oldVersion + " to " + newVersion + " failed", e);
         }
     }
 
@@ -91,9 +112,10 @@ public class RedditDatabase extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE " + TABLE_TOPICS + " ( "
                 + "\"" + BaseColumns._ID + "\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
                 + "\"" + TOPIC_ID + "\" TEXT UNIQUE,"
+                + "\"" + TOPIC_SUBREDDIT + "\" TEXT NOT NULL,"
                 + "\"" + TOPIC_TITLE + "\" TEXT NOT NULL,"
-                + "\"" + TOPIC_AUTHOR + "\" TEXT NOT NULL,"
-                + "\"" + TOPIC_LINK_FLAIR_TEXT + "\" TEXT NOT NULL,"
+                + "\"" + TOPIC_AUTHOR + "\" TEXT,"
+                + "\"" + TOPIC_LINK_FLAIR_TEXT + "\" TEXT,"
                 + "\"" + TOPIC_PERMALINK + "\" TEXT NOT NULL,"
                 + "\"" + TOPIC_THUMBNAIL + "\" TEXT NOT NULL,"
                 + "\"" + TOPIC_CREATED_UTC + "\" INTEGER NOT NULL DEFAULT 0,"

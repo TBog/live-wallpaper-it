@@ -1,26 +1,34 @@
 package rocks.tbog.livewallpaperit;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.Operation;
+import androidx.work.WorkManager;
 import com.google.android.material.divider.MaterialDividerItemDecoration;
 import java.io.Serializable;
 import java.util.ArrayList;
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
 import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.data.SubTopic;
+import rocks.tbog.livewallpaperit.preference.SettingsActivity;
+import rocks.tbog.livewallpaperit.utils.ViewUtils;
 
 public class SubredditActivity extends AppCompatActivity {
 
@@ -82,43 +90,57 @@ public class SubredditActivity extends AppCompatActivity {
         }
     }
 
-    //    private void loadSourceData() {
-    //        if (mSource == null) return;
-    //        var workManager = WorkManager.getInstance(this);
-    //        var request = new OneTimeWorkRequest.Builder(PreviewWorker.class)
-    //                .setInputData(new Data.Builder()
-    //                        .putString(WorkerUtils.DATA_CLIENT_ID, DataUtils.loadRedditAuth(this))
-    //                        .putString(PreviewWorker.DATA_SUBREDDIT, mSource.subreddit)
-    //                        .build())
-    //                .build();
-    //        workManager.enqueueUniqueWork(mSource.subreddit, ExistingWorkPolicy.KEEP, request);
-    //        workManager.getWorkInfosForUniqueWorkLiveData(mSource.subreddit).observe(this, workInfoList -> {
-    //            if (workInfoList == null) return;
-    //            Log.d(TAG, "UniqueWork " + mSource.subreddit + " size " + workInfoList.size());
-    //            for (var workInfo : workInfoList) {
-    //                Log.d(TAG, "work " + workInfo.getId() + " state " + workInfo.getState());
-    //                if (workInfo.getState().isFinished()) {
-    //                    var data = PreviewWorker.getAndRemoveData(mSource.subreddit);
-    //                    if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
-    //                        mAdapter.setItems(data);
-    //                    }
-    //                }
-    //            }
-    //        });
-    //    }
-
     private void loadSourceData() {
         if (mSource == null) return;
         final ArrayList<SubTopic> topicList = new ArrayList<>();
         AsyncUtils.runAsync(
                 getLifecycle(),
                 t -> {
-                    var list = DBHelper.getSubTopics(getApplicationContext(), mSource.subreddit);
+                    Context ctx = getApplicationContext();
+                    var list = DBHelper.getSubTopics(ctx, mSource.subreddit);
+                    for (var topic : list) {
+                        DBHelper.loadSubTopicImages(ctx, topic);
+                    }
                     topicList.addAll(list);
                 },
                 t -> {
                     mAdapter.setItems(topicList);
                 });
+    }
+
+    private void refreshSource() {
+        WorkManager.getInstance(this)
+                .beginWith(ArtProvider.buildSetupWorkRequest(this))
+                .then(ArtProvider.buildSourceWorkRequest(mSource))
+                .enqueue()
+                .getState()
+                .observe(SubredditActivity.this, state -> {
+                    if (state instanceof Operation.State.SUCCESS) {
+                        loadSourceData();
+                    } else if (state instanceof Operation.State.FAILURE) {
+                        Toast.makeText(this, "Failed to get " + mSource.subreddit, Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.subreddit_toolbar, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.action_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            ViewUtils.launchIntent(this, null, intent);
+            return true;
+        } else if (itemId == R.id.action_refresh) {
+            refreshSource();
+        }
+        // The user's action isn't recognized. Invoke the superclass to handle it.
+        return super.onOptionsItemSelected(item);
     }
 
     public static class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHolder> {
@@ -129,12 +151,13 @@ public class SubredditActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onBindViewHolder(@NonNull SubmissionHolder holder, @NonNull SubTopic entry) {
-            holder.mTitleView.setText(entry.title);
-            holder.mNsfwView.setVisibility(entry.over18 ? View.VISIBLE : View.GONE);
-            holder.mScoreView.setText(String.valueOf(entry.score));
-            holder.mUpvoteView.setText(String.valueOf(entry.upvoteRatio));
-            holder.mNumCommentView.setText(String.valueOf(entry.numComments));
+        public void onBindViewHolder(@NonNull SubmissionHolder holder, @NonNull SubTopic topic) {
+            holder.mTitleView.setText(topic.title);
+            holder.mImageCarouselView.setAdapter(new ThumbnailAdapter(topic));
+            holder.mNsfwView.setVisibility(topic.over18 ? View.VISIBLE : View.GONE);
+            holder.mScoreView.setText(String.valueOf(topic.score));
+            holder.mUpvoteView.setText(String.valueOf(topic.upvoteRatio));
+            holder.mNumCommentView.setText(String.valueOf(topic.numComments));
         }
 
         @NonNull
@@ -152,6 +175,7 @@ public class SubredditActivity extends AppCompatActivity {
     public static class SubmissionHolder extends RecycleAdapterBase.Holder {
 
         TextView mTitleView;
+        RecyclerView mImageCarouselView;
         ImageView mNsfwView;
         TextView mScoreView;
         TextView mUpvoteView;
@@ -161,10 +185,17 @@ public class SubredditActivity extends AppCompatActivity {
             super(itemView);
 
             mTitleView = itemView.findViewById(R.id.submission_title);
+            mImageCarouselView = itemView.findViewById(R.id.image_carousel);
             mNsfwView = itemView.findViewById(R.id.nsfw);
             mScoreView = itemView.findViewById(R.id.score);
             mUpvoteView = itemView.findViewById(R.id.upvote_ratio);
             mNumCommentView = itemView.findViewById(R.id.num_comments);
+
+            var layout = new LinearLayoutManager(mImageCarouselView.getContext(), RecyclerView.HORIZONTAL, false);
+            var decoration =
+                    new MaterialDividerItemDecoration(mImageCarouselView.getContext(), layout.getOrientation());
+            decoration.setLastItemDecorated(false);
+            mImageCarouselView.addItemDecoration(decoration);
         }
     }
 }
