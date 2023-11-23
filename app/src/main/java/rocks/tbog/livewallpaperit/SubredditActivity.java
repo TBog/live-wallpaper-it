@@ -22,7 +22,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.work.Operation;
+import androidx.work.ExistingWorkPolicy;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import com.google.android.material.divider.MaterialDividerItemDecoration;
 import java.io.Serializable;
@@ -126,19 +127,33 @@ public class SubredditActivity extends AppCompatActivity {
     }
 
     private void refreshSource() {
-        WorkManager.getInstance(this)
-                .beginWith(ArtProvider.buildSetupWorkRequest(this))
+        var workMgr = WorkManager.getInstance(this);
+        workMgr.beginUniqueWork(mSource.subreddit, ExistingWorkPolicy.KEEP, ArtProvider.buildSetupWorkRequest(this))
                 .then(ArtProvider.buildSourceWorkRequest(mSource))
-                .enqueue()
-                .getState()
-                .observe(SubredditActivity.this, state -> {
-                    if (state instanceof Operation.State.SUCCESS) {
-                        loadSourceData();
-                    } else if (state instanceof Operation.State.FAILURE) {
-                        Toast.makeText(this, "Failed to get " + mSource.subreddit, Toast.LENGTH_SHORT)
-                                .show();
-                    }
-                });
+                .enqueue();
+        workMgr.getWorkInfosForUniqueWorkLiveData(mSource.subreddit).observe(SubredditActivity.this, workInfos -> {
+            if (workInfos == null || workInfos.isEmpty()) return;
+            boolean allFinished = true;
+            boolean allSucceeded = true;
+            for (var workInfo : workInfos) {
+                if (!workInfo.getState().isFinished()) {
+                    allFinished = false;
+                    allSucceeded = false;
+                    break;
+                }
+                if (!WorkInfo.State.SUCCEEDED.equals(workInfo.getState())) {
+                    allSucceeded = false;
+                }
+            }
+            if (allFinished) {
+                if (allSucceeded) {
+                    loadSourceData();
+                } else {
+                    Toast.makeText(this, "Failed to get " + mSource.subreddit, Toast.LENGTH_SHORT)
+                            .show();
+                }
+            }
+        });
     }
 
     @Override

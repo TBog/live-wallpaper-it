@@ -21,7 +21,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
     static final String SUBREDDIT_MIN_UPVOTE_PERCENTAGE = "min_upvote_perc";
     static final String SUBREDDIT_MIN_SCORE = "min_score";
     static final String SUBREDDIT_MIN_COMMENTS = "min_comments";
-    public static final String TOPIC_SUBREDDIT = "subreddit";
+    public static final String TOPIC_SUBREDDIT_NAME = "subreddit";
     public static final String TOPIC_ID = "id";
     public static final String TOPIC_TITLE = "title";
     public static final String TOPIC_AUTHOR = "author";
@@ -112,7 +112,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE " + TABLE_TOPICS + " ( "
                 + "\"" + BaseColumns._ID + "\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
                 + "\"" + TOPIC_ID + "\" TEXT UNIQUE,"
-                + "\"" + TOPIC_SUBREDDIT + "\" TEXT NOT NULL,"
+                + "\"" + TOPIC_SUBREDDIT_NAME + "\" TEXT NOT NULL,"
                 + "\"" + TOPIC_TITLE + "\" TEXT NOT NULL,"
                 + "\"" + TOPIC_AUTHOR + "\" TEXT,"
                 + "\"" + TOPIC_LINK_FLAIR_TEXT + "\" TEXT,"
@@ -122,7 +122,10 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 + "\"" + TOPIC_SCORE + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + TOPIC_UPVOTE_RATIO + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + TOPIC_NUM_COMMENTS + "\" INTEGER NOT NULL DEFAULT 0,"
-                + "\"" + TOPIC_OVER_18 + "\" INTEGER NOT NULL DEFAULT 0);");
+                + "\"" + TOPIC_OVER_18 + "\" INTEGER NOT NULL DEFAULT 0,"
+                + "CONSTRAINT fk_subreddit_name FOREIGN KEY(\"" + TOPIC_SUBREDDIT_NAME + "\") "
+                + "REFERENCES \"" + TABLE_SUBREDDITS + "\"(\"" + SUBREDDIT_NAME + "\") "
+                + "ON DELETE CASCADE ON UPDATE CASCADE);");
     }
 
     private void createTopicImageTable(@NonNull SQLiteDatabase db) {
@@ -135,7 +138,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 + "\"" + IMAGE_HEIGHT + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + IMAGE_IS_NSFW + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + IMAGE_IS_SOURCE + "\" INTEGER NOT NULL DEFAULT 1,"
-                + "CONSTRAINT fk_comment_id FOREIGN KEY(\"" + IMAGE_TOPIC_ID + "\") "
+                + "CONSTRAINT fk_topic_id FOREIGN KEY(\"" + IMAGE_TOPIC_ID + "\") "
                 + "REFERENCES \"" + TABLE_TOPICS + "\"(\"" + TOPIC_ID + "\") "
                 + "ON DELETE CASCADE ON UPDATE CASCADE);");
     }

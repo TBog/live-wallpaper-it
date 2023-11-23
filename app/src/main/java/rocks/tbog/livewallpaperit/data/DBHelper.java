@@ -144,7 +144,7 @@ public class DBHelper {
 
         ContentValues value = new ContentValues();
         comment.fillTopicValues(value);
-        value.put(RedditDatabase.TOPIC_SUBREDDIT, subreddit);
+        value.put(RedditDatabase.TOPIC_SUBREDDIT_NAME, subreddit);
 
         long rowId = db.insertWithOnConflict(RedditDatabase.TABLE_TOPICS, null, value, SQLiteDatabase.CONFLICT_REPLACE);
         if (rowId == -1) {
@@ -188,7 +188,7 @@ public class DBHelper {
                     RedditDatabase.TOPIC_NUM_COMMENTS,
                     RedditDatabase.TOPIC_OVER_18,
                 },
-                "\"" + RedditDatabase.TOPIC_SUBREDDIT + "\" = ?",
+                "\"" + RedditDatabase.TOPIC_SUBREDDIT_NAME + "\" = ?",
                 new String[] {subreddit},
                 null,
                 null,
