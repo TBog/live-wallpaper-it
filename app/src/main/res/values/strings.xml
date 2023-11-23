@@ -42,7 +42,7 @@
     <string name="allow_nsfw">Allow NSFW</string>
     <string name="clear_cache">Clear cache</string>
     <string name="clear_cache_summary">Delete downloaded artworks</string>
-    <string name="button_preview_tooltip">Preview subreddit with filters</string>
+    <string name="button_preview_tooltip">View cached subreddit</string>
     <string name="button_open_tooltip">Open subreddit</string>
     <plurals name="artwork_count">
         <item quantity="one">%d artwork</item>

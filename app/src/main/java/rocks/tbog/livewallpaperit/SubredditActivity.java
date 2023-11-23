@@ -1,7 +1,10 @@
 package rocks.tbog.livewallpaperit;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -79,7 +82,23 @@ public class SubredditActivity extends AppCompatActivity {
         var layout = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         recyclerView.setLayoutManager(layout);
         var decoration = new MaterialDividerItemDecoration(recyclerView.getContext(), layout.getOrientation());
+        decoration.setLastItemDecorated(false);
         recyclerView.addItemDecoration(decoration);
+
+        mAdapter.setOnClickListener((subTopic, v) -> {
+            Uri urlToOpen = Uri.parse("https://www.reddit.com" + subTopic.permalink);
+            ViewUtils.launchIntent(v, new Intent(Intent.ACTION_VIEW).setData(urlToOpen));
+        });
+        mAdapter.setOnLongClickListener((subTopic, view) -> {
+            Uri urlToOpen = Uri.parse("https://www.reddit.com" + subTopic.permalink);
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText(mSource.subreddit, urlToOpen.toString());
+            clipboard.setPrimaryClip(clip);
+            // Only show a toast for Android 12 and lower.
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2)
+                Toast.makeText(this, "Copied link", Toast.LENGTH_SHORT).show();
+            return true;
+        });
     }
 
     @Override
@@ -98,9 +117,7 @@ public class SubredditActivity extends AppCompatActivity {
                 t -> {
                     Context ctx = getApplicationContext();
                     var list = DBHelper.getSubTopics(ctx, mSource.subreddit);
-                    for (var topic : list) {
-                        DBHelper.loadSubTopicImages(ctx, topic);
-                    }
+                    DBHelper.loadSubTopicImages(ctx, list);
                     topicList.addAll(list);
                 },
                 t -> {

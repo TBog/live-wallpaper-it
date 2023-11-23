@@ -5,9 +5,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.provider.BaseColumns;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import rocks.tbog.livewallpaperit.Source;
@@ -227,13 +229,55 @@ public class DBHelper {
                 new String[] {topic.id},
                 null,
                 null,
-                null,
+                "\"" + BaseColumns._ID + "\" ASC",
                 null)) {
             if (cursor != null) {
                 cursor.moveToFirst();
                 while (!cursor.isAfterLast()) {
                     SubTopic.Image image = SubTopic.Image.fromCursor(cursor);
                     topic.images.add(image);
+
+                    cursor.moveToNext();
+                }
+            }
+        }
+    }
+
+    public static void loadSubTopicImages(@NonNull Context context, @NonNull Collection<SubTopic> topics) {
+        if (topics.isEmpty()) return;
+        if (topics.size() == 1) {
+            loadSubTopicImages(context, topics.stream().findAny().get());
+            return;
+        }
+        SQLiteDatabase db = getDatabase(context);
+
+        try (Cursor cursor = db.query(
+                RedditDatabase.TABLE_TOPIC_IMAGES,
+                new String[] {
+                    RedditDatabase.IMAGE_TOPIC_ID,
+                    RedditDatabase.IMAGE_URL,
+                    RedditDatabase.IMAGE_MEDIA_ID,
+                    RedditDatabase.IMAGE_WIDTH,
+                    RedditDatabase.IMAGE_HEIGHT,
+                    RedditDatabase.IMAGE_IS_NSFW,
+                    RedditDatabase.IMAGE_IS_SOURCE,
+                },
+                "\"" + RedditDatabase.IMAGE_TOPIC_ID + "\" IN (?" + ",?".repeat(topics.size() - 1) + ")",
+                topics.stream().map(topic -> topic.id).toArray(String[]::new),
+                null,
+                null,
+                "\"" + BaseColumns._ID + "\" ASC",
+                null)) {
+            if (cursor != null) {
+                cursor.moveToFirst();
+                final int columnTopicId = cursor.getColumnIndex(RedditDatabase.IMAGE_TOPIC_ID);
+                while (!cursor.isAfterLast()) {
+                    final SubTopic.Image image = SubTopic.Image.fromCursor(cursor);
+                    final String topicId = cursor.getString(columnTopicId);
+                    topics.stream()
+                            .filter(topic -> topic.id.equals(topicId))
+                            .findAny()
+                            .ifPresent(topic -> topic.images.add(image));
 
                     cursor.moveToNext();
                 }
