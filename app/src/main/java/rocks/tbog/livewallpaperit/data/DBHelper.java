@@ -139,11 +139,20 @@ public class DBHelper {
                 });
     }
 
-    public static void addSubTopic(Context context, String subreddit, SubTopic comment) {
+    public static boolean removeSourceSubTopics(Context context, Source source) {
+        SQLiteDatabase db = getDatabase(context);
+
+        return -1
+                != db.delete(RedditDatabase.TABLE_TOPICS, RedditDatabase.TOPIC_SUBREDDIT_NAME + "=?", new String[] {
+                    source.subreddit
+                });
+    }
+
+    public static void addSubTopic(Context context, String subreddit, SubTopic topic) {
         SQLiteDatabase db = getDatabase(context);
 
         ContentValues value = new ContentValues();
-        comment.fillTopicValues(value);
+        topic.fillTopicValues(value);
         value.put(RedditDatabase.TOPIC_SUBREDDIT_NAME, subreddit);
 
         long rowId = db.insertWithOnConflict(RedditDatabase.TABLE_TOPICS, null, value, SQLiteDatabase.CONFLICT_REPLACE);
@@ -155,8 +164,8 @@ public class DBHelper {
         value.clear();
         db.beginTransaction();
         try {
-            for (var image : comment.images) {
-                comment.fillImageValues(image, value);
+            for (var image : topic.images) {
+                topic.fillImageValues(image, value);
                 rowId = db.insertWithOnConflict(
                         RedditDatabase.TABLE_TOPIC_IMAGES, null, value, SQLiteDatabase.CONFLICT_REPLACE);
                 if (rowId == -1) {
@@ -167,6 +176,15 @@ public class DBHelper {
         } finally {
             db.endTransaction();
         }
+    }
+
+    public static boolean removeSubTopic(@NonNull Context context, @NonNull SubTopic topic) {
+        SQLiteDatabase db = getDatabase(context);
+
+        return -1
+                != db.delete(
+                        RedditDatabase.TABLE_TOPICS, "\"" + RedditDatabase.TOPIC_ID + "\" = ?", new String[] {topic.id
+                        });
     }
 
     public static List<SubTopic> getSubTopics(Context context, String subreddit) {

@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -133,6 +134,17 @@ public class SubredditActivity extends AppCompatActivity {
                 .enqueue();
         workMgr.getWorkInfosForUniqueWorkLiveData(mSource.subreddit).observe(SubredditActivity.this, workInfos -> {
             if (workInfos == null || workInfos.isEmpty()) return;
+
+            StringBuilder logWork = new StringBuilder("work.size=").append(workInfos.size());
+            for (var workInfo : workInfos) {
+                logWork.append("\n\t")
+                        .append("id=")
+                        .append(workInfo.getId())
+                        .append(" state=")
+                        .append(workInfo.getState());
+            }
+            Log.v(TAG, logWork.toString());
+
             boolean allFinished = true;
             boolean allSucceeded = true;
             for (var workInfo : workInfos) {
@@ -147,13 +159,23 @@ public class SubredditActivity extends AppCompatActivity {
             }
             if (allFinished) {
                 if (allSucceeded) {
+                    Log.i(TAG, "refresh succeeded");
                     loadSourceData();
                 } else {
+                    Log.i(TAG, "refresh failed");
                     Toast.makeText(this, "Failed to get " + mSource.subreddit, Toast.LENGTH_SHORT)
                             .show();
                 }
             }
         });
+    }
+
+    private void reloadSource() {
+        mAdapter.clear();
+        AsyncUtils.runAsync(
+                getLifecycle(),
+                t -> DBHelper.removeSourceSubTopics(getApplicationContext(), mSource),
+                t -> refreshSource());
     }
 
     @Override
@@ -170,6 +192,8 @@ public class SubredditActivity extends AppCompatActivity {
             return true;
         } else if (itemId == R.id.action_refresh) {
             refreshSource();
+        } else if (itemId == R.id.action_reload) {
+            reloadSource();
         }
         // The user's action isn't recognized. Invoke the superclass to handle it.
         return super.onOptionsItemSelected(item);

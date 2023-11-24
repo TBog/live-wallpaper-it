@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -29,7 +30,7 @@ import rocks.tbog.livewallpaperit.data.SubTopic;
 public class ArtLoadWorker extends Worker {
     private static final String TAG = ArtLoadWorker.class.getSimpleName();
     private static final int FETCH_AMOUNT = 100;
-    private static final int MAX_FETCHES = 5;
+    private static final int MAX_FETCHES = 3;
     private List<String> mIgnoreTokenList = Collections.emptyList();
     private int mArtworkSubmitCount = 0;
     private int mArtworkNotFoundCount = 0;
@@ -110,7 +111,13 @@ public class ArtLoadWorker extends Worker {
 
             for (Submission submission : submissions) {
                 final SubTopic topic = SubTopic.fromSubmission(submission);
-                if (topic.images.isEmpty()) continue;
+                if (topic.images.isEmpty() || isRemovedOrDeleted(submission)) {
+                    mArtworkNotFoundCount += 1;
+                    if (DBHelper.removeSubTopic(getApplicationContext(), topic)) {
+                        Log.v(TAG, "removed `" + topic.permalink + "`");
+                    }
+                    continue;
+                }
                 if (cachedTopics.stream().noneMatch(subTopic -> subTopic.id.equals(topic.id))) {
                     DBHelper.addSubTopic(getApplicationContext(), source.subreddit, topic);
                 }
@@ -142,43 +149,69 @@ public class ArtLoadWorker extends Worker {
                 .build());
     }
 
-    private void getArtworks(String subredditNamePrefixed, SubTopic topic, ProviderClient providerClient) {
-        if (mFilter != null) {
-            if (mFilter.minUpvotePercentage > 0) {
-                if (topic.upvoteRatio < mFilter.minUpvotePercentage) {
-                    Log.v(
-                            TAG,
-                            "upvote " + topic.upvoteRatio + "%<" + mFilter.minUpvotePercentage + "% skipping "
-                                    + topic.permalink);
-                    return;
-                }
-            }
-            if (mFilter.minScore > 0) {
-                if (topic.score < mFilter.minScore) {
-                    Log.v(TAG, "score " + topic.score + "<" + mFilter.minScore + " skipping " + topic.permalink);
-                    return;
-                }
-            }
-            if (mFilter.minComments > 0) {
-                if (topic.numComments < mFilter.minComments) {
-                    Log.v(
-                            TAG,
-                            "numComments " + topic.numComments + "<" + mFilter.minComments + " skipping "
-                                    + topic.permalink);
-                    return;
-                }
-            }
-            if (!mFilter.allowNSFW) {
-                if (topic.over18) {
-                    Log.v(TAG, "NSFW not allowed skipping " + topic.permalink);
-                    return;
-                }
+    private static boolean isRemovedOrDeleted(@NonNull Submission submission) {
+        /*
+        According to a Reddit developer post https://www.reddit.com/r/redditdev/comments/kypjmk/check_if_submission_has_been_removed_by_a_mod/
+        The following are the possible values for the removed_by_category field:
+
+        moderator: The post was removed by a moderator.
+        deleted: The post was deleted by the author.
+        author: The post was removed by the author of the post.
+        spam: The post was removed by Reddit’s spam filters.
+        admin: The post was removed by an administrator.
+        anti_evil_ops: The post was removed by Anti-Evil Operations due to violations of Reddit’s content policy.
+        community_ops: The post was removed by a member of the community team while acting as an admin.
+        legal_operations: The post was removed by the legal team for non-copyright related reasons.
+        copyright_takedown: The post was removed for copyright infringement. The content is not removed in the traditional sense, but rather is censored with the text “[ Removed by reddit in response to a copyright notice. ]”.
+        banned_by: The post was removed by a moderator who is not the author of the post.
+        */
+        return submission.getRemovedByCategory() != null;
+    }
+
+    private static boolean shouldSkipTopic(@NonNull SubTopic topic, @Nullable Filter filter) {
+        if (filter == null) return false;
+
+        if (filter.minUpvotePercentage > 0) {
+            if (topic.upvoteRatio < filter.minUpvotePercentage) {
+                Log.v(
+                        TAG,
+                        "upvote " + topic.upvoteRatio + "%<" + filter.minUpvotePercentage + "% skipping "
+                                + topic.permalink);
+                return true;
             }
         }
+        if (filter.minScore > 0) {
+            if (topic.score < filter.minScore) {
+                Log.v(TAG, "score " + topic.score + "<" + filter.minScore + " skipping " + topic.permalink);
+                return true;
+            }
+        }
+        if (filter.minComments > 0) {
+            if (topic.numComments < filter.minComments) {
+                Log.v(
+                        TAG,
+                        "numComments " + topic.numComments + "<" + filter.minComments + " skipping " + topic.permalink);
+                return true;
+            }
+        }
+        if (!filter.allowNSFW) {
+            if (topic.over18) {
+                Log.v(TAG, "NSFW not allowed skipping " + topic.permalink);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void getArtworks(String subredditNamePrefixed, @NonNull SubTopic topic, ProviderClient providerClient) {
+        if (shouldSkipTopic(topic, mFilter)) return;
+
         for (var image : topic.images) {
             if (!image.isSource || image.isObfuscated) continue;
+
             String byline = topic.linkFlairText;
             if (TextUtils.isEmpty(byline)) byline = subredditNamePrefixed;
+
             Artwork artwork = new Artwork.Builder()
                     .persistentUri(Uri.parse(image.url))
                     .webUri(Uri.parse("https://www.reddit.com" + topic.permalink))

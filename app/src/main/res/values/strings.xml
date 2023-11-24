@@ -22,6 +22,7 @@
     <string name="btn_edit_source">Edit sources</string>
     <string name="action_add">Add subreddit</string>
     <string name="action_refresh">Refresh subreddit</string>
+    <string name="action_reload">Reload subreddit</string>
     <string name="button_remove_subreddit_tooltip">Remove subreddit</string>
     <string name="confirm_remove_subreddit">Remove subreddit %s?</string>
     <string name="confirm_remove_subreddit_description">%s and all associated filters will be removed. Are you sure?</string>

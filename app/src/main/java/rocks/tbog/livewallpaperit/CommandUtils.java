@@ -14,7 +14,6 @@ import java.io.File;
 import java.util.ArrayList;
 
 public class CommandUtils {
-    private static final String TAG = CommandUtils.class.getSimpleName();
 
     public static ArrayList<RemoteActionCompat> artworkCommandActions(@NonNull Context ctx, @NonNull Artwork artwork) {
         ArrayList<RemoteActionCompat> commandActions = new ArrayList<>();
