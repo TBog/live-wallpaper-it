@@ -1,0 +1,79 @@
+plugins {
+    id "com.android.library"
+    id "org.jetbrains.kotlin.android"
+    id "org.jetbrains.kotlin.plugin.parcelize"
+//    id "org.jetbrains.dokka"
+    id "com.google.devtools.ksp"
+//    id "io.gitlab.arturbosch.detekt"
+//    id "maven-publish"
+}
+
+android {
+    namespace 'com.kirkbushman.araw'
+
+    compileSdkVersion compile_sdk_ver
+    buildToolsVersion = build_tools_ver
+
+    defaultConfig {
+        minSdkVersion min_sdk_ver
+        targetSdkVersion compile_sdk_ver
+        versionCode = version_code
+        versionName = version_name
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    compileOptions {
+        sourceCompatibility java_target
+        targetCompatibility java_target
+    }
+
+    kotlinOptions {
+        jvmTarget = jvm_target
+    }
+}
+
+kotlin {
+    explicitApi()
+    explicitApiWarning()
+}
+
+//dokkaHtml {
+//    configure {
+//        dokkaSourceSets {
+//
+//            named("main") {
+//                noAndroidSdkLink.set(false)
+//            }
+//        }
+//    }
+//}
+
+//project.afterEvaluate {
+//    publishing {
+//        publications {
+//            release(MavenPublication) {
+//                from components.release
+//            }
+//        }
+//    }
+//}
+
+dependencies {
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_ver"
+
+    implementation "androidx.annotation:annotation:$ax_annot_ver"
+
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_ver"
+    implementation "com.squareup.retrofit2:converter-moshi:$retrofit_ver"
+
+    implementation "com.squareup.okhttp3:okhttp:$okhttp_ver"
+    implementation "com.squareup.okhttp3:logging-interceptor:$okhttp_ver"
+
+    implementation "com.squareup.moshi:moshi:$moshi_ver"
+    implementation "com.squareup.moshi:moshi-adapters:$moshi_ver"
+    ksp            "com.squareup.moshi:moshi-kotlin-codegen:$moshi_ver"
+
+    implementation "com.github.KirkBushman:Android-Reddit-OAuth2:$oauth2_ver"
+}

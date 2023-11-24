@@ -1,8 +1,16 @@
 pluginManagement {
+    resolutionStrategy {
+        eachPlugin {
+            // if (requested.id.id == 'com.google.android.gms.oss-licenses-plugin') {
+            //     useModule "com.google.android.gms:oss-licenses-plugin:${requested.version}"
+            // }
+        }
+    }
     repositories {
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven { url "https://plugins.gradle.org/m2/" }
     }
 }
 dependencyResolutionManagement {
@@ -16,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "LiveWallpaperIt"
 include ':app'
+include ':ARAW'

@@ -163,9 +163,10 @@ public final class SubTopic {
             GalleryMedia media = mediaMetadata.get(item.getMediaId());
             if (media == null || !"Image".equalsIgnoreCase(media.getE())) continue;
 
-            Image source = getImage(media.getS(), item.getMediaId(), false, true);
+            Image source = makeImage(media.getS(), item.getMediaId(), false, true);
             if (source != null) images.add(source);
-            addResolutions(media.getP(), item.getMediaId());
+            addResolutions(media.getP(), item.getMediaId(), false);
+            addResolutions(media.getO(), item.getMediaId(), true);
         }
         return this;
     }
@@ -180,13 +181,13 @@ public final class SubTopic {
                 mediaId = img.getId();
             }
             if (images.stream().anyMatch(image -> image.mediaId.equals(mediaId))) continue;
-            images.add(getImage(img.getSource(), mediaId, false, true));
+            images.add(makeImage(img.getSource(), mediaId, false, true));
             addResolutions(img.getResolutions(), mediaId, false);
             var variants = img.getVariants();
             if (variants != null) {
                 var obfuscated = variants.getObfuscated();
                 if (obfuscated != null) {
-                    images.add(getImage(obfuscated.getSource(), mediaId, true, true));
+                    images.add(makeImage(obfuscated.getSource(), mediaId, true, true));
                     addResolutions(obfuscated.getResolutions(), mediaId, true);
                 }
             }
@@ -195,7 +196,7 @@ public final class SubTopic {
     }
 
     @Nullable
-    private Image getImage(
+    private Image makeImage(
             @Nullable GalleryImageData source, @NonNull String mediaId, boolean obfuscated, boolean isSource) {
         if (source == null) return null;
         var width = source.getX();
@@ -207,21 +208,21 @@ public final class SubTopic {
     }
 
     @NonNull
-    private Image getImage(@NonNull ImageDetail image, @NonNull String mediaId, boolean obfuscated, boolean isSource) {
+    private Image makeImage(@NonNull ImageDetail image, @NonNull String mediaId, boolean obfuscated, boolean isSource) {
         return new Image(image.getUrl(), mediaId, image.getWidth(), image.getHeight(), obfuscated, isSource);
     }
 
-    private void addResolutions(@Nullable List<GalleryImageData> list, @NonNull String mediaId) {
+    private void addResolutions(@Nullable List<GalleryImageData> list, @NonNull String mediaId, boolean obfuscated) {
         if (list == null || list.isEmpty()) return;
         for (var resolution : list) {
-            var image = getImage(resolution, mediaId, false, false);
+            var image = makeImage(resolution, mediaId, obfuscated, false);
             addResolutionUnique(image);
         }
     }
 
     private void addResolutions(@NonNull ImageDetail[] resolutions, @NonNull String mediaId, boolean obfuscated) {
         for (var resolution : resolutions) {
-            var image = getImage(resolution, mediaId, obfuscated, false);
+            var image = makeImage(resolution, mediaId, obfuscated, false);
             addResolutionUnique(image);
         }
     }

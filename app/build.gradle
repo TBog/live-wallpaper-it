@@ -6,7 +6,7 @@ apply from: "$project.rootDir/spotless.gradle"
 
 android {
     namespace 'rocks.tbog.livewallpaperit'
-    compileSdk 34
+    compileSdk compile_sdk_ver
 
     buildFeatures {
         buildConfig true
@@ -15,8 +15,8 @@ android {
 
     defaultConfig {
         applicationId "rocks.tbog.livewallpaperit"
-        minSdk 21
-        targetSdk 34
+        minSdk min_sdk_ver
+        targetSdk compile_sdk_ver
         multiDexEnabled true
         versionCode 2
         versionName "1.0"
@@ -55,24 +55,20 @@ android {
 
     compileOptions {
         coreLibraryDesugaringEnabled true
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility java_target
+        targetCompatibility java_target
     }
-
-//    kotlinOptions {
-//        jvmTarget = '11'
-//    }
 }
 
 dependencies {
 
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.10.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'com.google.android.apps.muzei:muzei-api:3.4.1'
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
-    implementation 'androidx.work:work-runtime:2.8.1'
-    implementation 'androidx.preference:preference:1.2.1'
-    implementation 'com.github.KirkBushman:ARAW:v1.1.0-alpha03'
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
+    implementation "androidx.appcompat:appcompat:$ax_appcompat_ver"
+    implementation "com.google.android.material:material:$material_ver"
+    implementation "androidx.constraintlayout:constraintlayout:$ax_constraintlayout_ver"
+    implementation "com.google.android.apps.muzei:muzei-api:$muzei_api_ver"
+    implementation "androidx.lifecycle:lifecycle-extensions:$ax_lifecycle_ver"
+    implementation "androidx.work:work-runtime:$ax_work_ver"
+    implementation "androidx.preference:preference:$ax_preference_ver"
+    implementation project(path: ':ARAW')
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:$desugar_ver"
 }
