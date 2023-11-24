@@ -23,11 +23,12 @@ import rocks.tbog.livewallpaperit.utils.ViewUtils;
 public class ThumbnailAdapter extends RecycleAdapterBase<SubTopic.Image, ThumbnailAdapter.ThumbnailHolder> {
     private static final String TAG = ThumbnailAdapter.class.getSimpleName();
 
-    public ThumbnailAdapter(SubTopic topic) {
+    public ThumbnailAdapter(SubTopic topic, boolean showObfuscated) {
         super(new ArrayList<>());
         HashMap<String, SubTopic.Image> map = new HashMap<>();
         for (var image : topic.images) {
             if (image.isSource) continue;
+            if (image.isObfuscated != showObfuscated) continue;
             var mapImage = map.get(image.mediaId);
             if (mapImage == null || mapImage.width > image.width) {
                 map.put(image.mediaId, image);
@@ -39,10 +40,7 @@ public class ThumbnailAdapter extends RecycleAdapterBase<SubTopic.Image, Thumbna
     @Override
     public void onBindViewHolder(@NonNull ThumbnailHolder holder, @NonNull SubTopic.Image image) {
         holder.mImage.setImageResource(R.drawable.ic_launcher_background);
-        var params = holder.mImage.getLayoutParams();
-        params.width = image.width;
-        params.height = image.height;
-        holder.mImage.setLayoutParams(params);
+        setImageViewSize(holder.mImage, image);
         Activity activity = ViewUtils.getActivity(holder.itemView);
         final Bitmap[] bitmapWrapper = new Bitmap[] {null};
         if (activity instanceof ComponentActivity)
@@ -62,6 +60,15 @@ public class ThumbnailAdapter extends RecycleAdapterBase<SubTopic.Image, Thumbna
                     task -> {
                         holder.mImage.setImageBitmap(bitmapWrapper[0]);
                     });
+    }
+
+    public static void setImageViewSize(@NonNull ImageView view, @NonNull SubTopic.Image image) {
+        int maxWidth = 108;
+        float ratio = image.width / (float) image.height;
+        var params = view.getLayoutParams();
+        params.width = Math.min(maxWidth, image.width);
+        params.height = Math.round(params.width / ratio);
+        view.setLayoutParams(params);
     }
 
     @NonNull

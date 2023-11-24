@@ -245,6 +245,7 @@ public final class SubTopic {
         if (images.stream()
                 .anyMatch(image -> resolution.width == image.width
                         && resolution.height == image.height
+                        && resolution.isObfuscated == image.isObfuscated
                         && image.mediaId.equals(resolution.mediaId))) {
             return;
         }

@@ -4,16 +4,15 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.ExistingWorkPolicy;
@@ -106,6 +106,11 @@ public class SubredditActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean allowNSFW = pref.getBoolean("allow-nsfw", false);
+        mAdapter.setAllowNSFW(allowNSFW);
+
         if (mAdapter.getItemCount() == 0) {
             loadSourceData();
         }
@@ -197,35 +202,6 @@ public class SubredditActivity extends AppCompatActivity {
         }
         // The user's action isn't recognized. Invoke the superclass to handle it.
         return super.onOptionsItemSelected(item);
-    }
-
-    public static class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHolder> {
-
-        public SubredditAdapter() {
-            super(new ArrayList<>());
-            setHasStableIds(true);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull SubmissionHolder holder, @NonNull SubTopic topic) {
-            holder.mTitleView.setText(topic.title);
-            holder.mImageCarouselView.setAdapter(new ThumbnailAdapter(topic));
-            holder.mNsfwView.setVisibility(topic.over18 ? View.VISIBLE : View.GONE);
-            holder.mScoreView.setText(String.valueOf(topic.score));
-            holder.mUpvoteView.setText(String.valueOf(topic.upvoteRatio));
-            holder.mNumCommentView.setText(String.valueOf(topic.numComments));
-        }
-
-        @NonNull
-        @Override
-        public SubmissionHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            final Context context = parent.getContext();
-
-            LayoutInflater inflater = LayoutInflater.from(context);
-            View itemView = inflater.inflate(R.layout.submission_item, parent, false);
-
-            return new SubmissionHolder(itemView);
-        }
     }
 
     public static class SubmissionHolder extends RecycleAdapterBase.Holder {
