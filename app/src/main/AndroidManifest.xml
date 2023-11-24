@@ -109,6 +109,18 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- Enable On-demand initialization. This creates WorkManager only when is needed, instead of every time the app starts up. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
         <receiver
             android:name=".DeleteArtworkReceiver"
             android:enabled="true"
