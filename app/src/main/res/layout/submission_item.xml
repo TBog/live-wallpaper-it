@@ -8,15 +8,16 @@
 
     <TextView
         android:id="@+id/submission_title"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
         android:gravity="start|center_vertical"
         android:maxLines="6"
         android:singleLine="false"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="@tools:sample/cities" />
+        tools:text="@tools:sample/lorem/random" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/image_carousel"
@@ -85,5 +86,16 @@
         app:layout_constraintStart_toEndOf="@id/score"
         app:layout_constraintTop_toTopOf="@id/upvote_ratio"
         tools:text="@tools:sample/us_zipcodes" />
+
+    <ImageView
+        android:id="@+id/valid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        app:layout_constraintBottom_toBottomOf="@id/upvote_ratio"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/upvote_ratio"
+        app:srcCompat="@drawable/ic_validated_24"
+        tools:srcCompat="@drawable/ic_invalid_24" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -22,6 +22,7 @@ import com.kirkbushman.araw.models.enums.TimePeriod;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import rocks.tbog.livewallpaperit.ArtProvider;
 import rocks.tbog.livewallpaperit.Source;
 import rocks.tbog.livewallpaperit.data.DBHelper;
@@ -37,11 +38,37 @@ public class ArtLoadWorker extends Worker {
 
     private Filter mFilter = null;
 
-    private static class Filter {
+    public static final class Filter {
         public int minUpvotePercentage = 0;
         public int minScore = 0;
         public int minComments = 0;
         public boolean allowNSFW = true;
+
+        @Nullable
+        public static Filter fromSource(@Nullable Source source) {
+            if (source == null) return null;
+            Filter filter = new Filter();
+            filter.minUpvotePercentage = source.minUpvotePercentage;
+            filter.minScore = source.minScore;
+            filter.minComments = source.minComments;
+            return filter;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Filter filter = (Filter) o;
+            return minUpvotePercentage == filter.minUpvotePercentage
+                    && minScore == filter.minScore
+                    && minComments == filter.minComments
+                    && allowNSFW == filter.allowNSFW;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(minUpvotePercentage, minScore, minComments, allowNSFW);
+        }
     }
 
     public ArtLoadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
@@ -86,11 +113,10 @@ public class ArtLoadWorker extends Worker {
                     .putString(WorkerUtils.FAIL_REASON, "getRedditClient=null")
                     .build());
 
-        mFilter = new Filter();
-        mFilter.minUpvotePercentage = source.minUpvotePercentage;
-        mFilter.minScore = source.minScore;
-        mFilter.minComments = source.minComments;
-        mFilter.allowNSFW = getInputData().getBoolean(WorkerUtils.DATA_ALLOW_NSFW, false);
+        mFilter = Filter.fromSource(source);
+        if (mFilter != null) {
+            mFilter.allowNSFW = getInputData().getBoolean(WorkerUtils.DATA_ALLOW_NSFW, false);
+        }
 
         final int desiredArtworkCount = getInputData().getInt(WorkerUtils.DATA_DESIRED_ARTWORK_COUNT, 10);
 
@@ -168,7 +194,7 @@ public class ArtLoadWorker extends Worker {
         return submission.getRemovedByCategory() != null;
     }
 
-    private static boolean shouldSkipTopic(@NonNull SubTopic topic, @Nullable Filter filter) {
+    public static boolean shouldSkipTopic(@NonNull SubTopic topic, @Nullable Filter filter) {
         if (filter == null) return false;
 
         if (filter.minUpvotePercentage > 0) {

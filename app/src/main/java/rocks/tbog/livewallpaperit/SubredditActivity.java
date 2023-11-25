@@ -112,6 +112,7 @@ public class SubredditActivity extends AppCompatActivity {
         mAdapter.setAllowNSFW(allowNSFW);
         int previewWidth = pref.getInt("image-thumbnail-width", 108);
         mAdapter.setPreviewWidth(previewWidth);
+        mAdapter.setFilterFromSource(mSource);
 
         if (mAdapter.getItemCount() == 0) {
             loadSourceData();
@@ -214,6 +215,7 @@ public class SubredditActivity extends AppCompatActivity {
         TextView mScoreView;
         TextView mUpvoteView;
         TextView mNumCommentView;
+        ImageView mValidView;
 
         public SubmissionHolder(@NonNull View itemView) {
             super(itemView);
@@ -224,6 +226,7 @@ public class SubredditActivity extends AppCompatActivity {
             mScoreView = itemView.findViewById(R.id.score);
             mUpvoteView = itemView.findViewById(R.id.upvote_ratio);
             mNumCommentView = itemView.findViewById(R.id.num_comments);
+            mValidView = itemView.findViewById(R.id.valid);
 
             var layout = new LinearLayoutManager(mImageCarouselView.getContext(), RecyclerView.HORIZONTAL, false);
             var decoration =

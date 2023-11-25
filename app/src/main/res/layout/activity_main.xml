@@ -59,7 +59,7 @@
         android:layout_height="0dp"
         android:elevation="8dp"
         android:indeterminate="true"
-        android:indeterminateTint="@color/white"
+        android:indeterminateTint="@android:color/white"
         android:indeterminateTintMode="src_in"
         android:padding="8dp"
         android:visibility="gone"
