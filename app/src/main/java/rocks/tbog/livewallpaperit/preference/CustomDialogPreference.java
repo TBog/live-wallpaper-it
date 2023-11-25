@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import java.util.Collections;
+import rocks.tbog.livewallpaperit.R;
 
 public class CustomDialogPreference extends androidx.preference.DialogPreference {
 
@@ -109,7 +110,12 @@ public class CustomDialogPreference extends androidx.preference.DialogPreference
             String summary = null;
             if ("desired-artwork-count".equals(key)) {
                 if (value instanceof Integer) {
-                    summary = NumberPickerDialog.getValueText(preference.getContext(), (int) value);
+                    summary = NumberPickerDialog.getValueText(
+                            preference.getContext(), R.plurals.artwork_count, ((Integer) value).intValue());
+                }
+            } else if ("image-thumbnail-width".equals(key)) {
+                if (value instanceof Integer) {
+                    summary = preference.getContext().getString(R.string.thumbnail_width, ((Integer) value).intValue());
                 }
             }
             return summary;

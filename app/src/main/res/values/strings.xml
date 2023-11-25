@@ -49,6 +49,7 @@
         <item quantity="one">%d artwork</item>
         <item quantity="other">%d artworks</item>
     </plurals>
+    <string name="thumbnail_width">%d px</string>
 
     <string name="nsfw_tooltip">not safe for work</string>
     <string name="upvote_ratio_tooltip">upvote ratio</string>

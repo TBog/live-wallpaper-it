@@ -22,15 +22,19 @@ import rocks.tbog.livewallpaperit.utils.ViewUtils;
 
 public class ThumbnailAdapter extends RecycleAdapterBase<SubTopic.Image, ThumbnailAdapter.ThumbnailHolder> {
     private static final String TAG = ThumbnailAdapter.class.getSimpleName();
+    private final int mWidth;
 
-    public ThumbnailAdapter(SubTopic topic, boolean showObfuscated) {
+    public ThumbnailAdapter(SubTopic topic, int width, boolean showObfuscated) {
         super(new ArrayList<>());
+        mWidth = width;
         HashMap<String, SubTopic.Image> map = new HashMap<>();
+        int delta = Integer.MAX_VALUE;
         for (var image : topic.images) {
             if (image.isSource) continue;
             if (image.isObfuscated != showObfuscated) continue;
             var mapImage = map.get(image.mediaId);
-            if (mapImage == null || mapImage.width > image.width) {
+            if (mapImage == null || delta > Math.abs(mapImage.width - image.width)) {
+                delta = Math.abs(mWidth - image.width);
                 map.put(image.mediaId, image);
             }
         }
@@ -62,11 +66,10 @@ public class ThumbnailAdapter extends RecycleAdapterBase<SubTopic.Image, Thumbna
                     });
     }
 
-    public static void setImageViewSize(@NonNull ImageView view, @NonNull SubTopic.Image image) {
-        int maxWidth = 108;
+    public void setImageViewSize(@NonNull ImageView view, @NonNull SubTopic.Image image) {
         float ratio = image.width / (float) image.height;
         var params = view.getLayoutParams();
-        params.width = Math.min(maxWidth, image.width);
+        params.width = mWidth;
         params.height = Math.round(params.width / ratio);
         view.setLayoutParams(params);
     }

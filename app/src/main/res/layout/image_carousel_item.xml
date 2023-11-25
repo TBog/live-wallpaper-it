@@ -7,5 +7,5 @@
     android:layout_gravity="center"
     android:layout_marginHorizontal="8dp"
     android:contentDescription="thumbnail"
-    android:scaleType="center"
+    android:scaleType="fitCenter"
     tools:src="@tools:sample/backgrounds/scenic" />

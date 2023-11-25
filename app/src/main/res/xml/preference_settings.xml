@@ -21,6 +21,12 @@
         android:key="desired-artwork-count"
         android:title="Images from each source" />
 
+    <rocks.tbog.livewallpaperit.preference.CustomDialogPreference
+        android:defaultValue="108"
+        android:dialogLayout="@layout/number_picker"
+        android:key="image-thumbnail-width"
+        android:title="Thumbnail width" />
+
     <rocks.tbog.livewallpaperit.preference.BroadcastPreference
         android:summary="@string/clear_cache_summary"
         android:title="@string/clear_cache">

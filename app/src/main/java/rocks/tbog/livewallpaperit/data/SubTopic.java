@@ -213,31 +213,17 @@ public final class SubTopic {
 
     private void addResolutions(@Nullable List<GalleryImageData> list, @NonNull String mediaId) {
         if (list == null || list.isEmpty()) return;
-        Image smallest = null;
-        Image largest = null;
         for (var resolution : list) {
             var image = getImage(resolution, mediaId, false, false);
-            if (image == null) continue;
-            if (smallest == null || smallest.width > image.width) smallest = image;
-            if (largest == null || largest.width < image.width) largest = image;
+            addResolutionUnique(image);
         }
-        addResolutionUnique(smallest);
-        addResolutionUnique(largest);
     }
 
     private void addResolutions(@NonNull ImageDetail[] resolutions, @NonNull String mediaId, boolean obfuscated) {
-        Image smallest = null;
-        Image largest = null;
         for (var resolution : resolutions) {
-            if (smallest == null || smallest.width > resolution.getWidth()) {
-                smallest = getImage(resolution, mediaId, obfuscated, false);
-            }
-            if (largest == null || largest.width < resolution.getWidth()) {
-                largest = getImage(resolution, mediaId, obfuscated, false);
-            }
+            var image = getImage(resolution, mediaId, obfuscated, false);
+            addResolutionUnique(image);
         }
-        addResolutionUnique(smallest);
-        addResolutionUnique(largest);
     }
 
     private void addResolutionUnique(@Nullable final Image resolution) {
@@ -246,6 +232,7 @@ public final class SubTopic {
                 .anyMatch(image -> resolution.width == image.width
                         && resolution.height == image.height
                         && resolution.isObfuscated == image.isObfuscated
+                        && resolution.isSource == image.isSource
                         && image.mediaId.equals(resolution.mediaId))) {
             return;
         }

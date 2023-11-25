@@ -110,6 +110,8 @@ public class SubredditActivity extends AppCompatActivity {
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
         boolean allowNSFW = pref.getBoolean("allow-nsfw", false);
         mAdapter.setAllowNSFW(allowNSFW);
+        int previewWidth = pref.getInt("image-thumbnail-width", 108);
+        mAdapter.setPreviewWidth(previewWidth);
 
         if (mAdapter.getItemCount() == 0) {
             loadSourceData();

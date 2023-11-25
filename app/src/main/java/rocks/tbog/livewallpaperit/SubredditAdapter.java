@@ -10,6 +10,7 @@ import rocks.tbog.livewallpaperit.data.SubTopic;
 
 public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubredditActivity.SubmissionHolder> {
     private boolean mAllowNSFW = true;
+    private int mWidth = 108;
 
     public SubredditAdapter() {
         super(new ArrayList<>());
@@ -22,10 +23,17 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubredditActi
         notifyItemRangeChanged(0, getItemCount());
     }
 
+    public void setPreviewWidth(int width) {
+        if (mWidth == width) return;
+        mWidth = width;
+        notifyItemRangeChanged(0, getItemCount());
+    }
+
     @Override
     public void onBindViewHolder(@NonNull SubredditActivity.SubmissionHolder holder, @NonNull SubTopic topic) {
         holder.mTitleView.setText(topic.title);
-        holder.mImageCarouselView.setAdapter(new ThumbnailAdapter(topic, topic.over18 && !mAllowNSFW));
+        boolean showObfuscatedPreview = topic.over18 && !mAllowNSFW;
+        holder.mImageCarouselView.setAdapter(new ThumbnailAdapter(topic, mWidth, showObfuscatedPreview));
         holder.mNsfwView.setVisibility(topic.over18 ? View.VISIBLE : View.GONE);
         holder.mScoreView.setText(String.valueOf(topic.score));
         holder.mUpvoteView.setText(String.valueOf(topic.upvoteRatio));
