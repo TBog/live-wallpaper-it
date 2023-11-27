@@ -11,7 +11,7 @@
         android:summary="@string/sources_summary"
         android:title="@string/sources_name">
         <intent
-            android:targetClass="rocks.tbog.livewallpaperit.SourcesActivity"
+            android:targetClass="rocks.tbog.livewallpaperit.preview.SourcesActivity"
             android:targetPackage="rocks.tbog.livewallpaperit" />
     </Preference>
 

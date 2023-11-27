@@ -30,6 +30,7 @@ import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
 import java.util.UUID;
 import rocks.tbog.livewallpaperit.preference.SettingsActivity;
+import rocks.tbog.livewallpaperit.preview.SourcesActivity;
 import rocks.tbog.livewallpaperit.utils.DataUtils;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
 import rocks.tbog.livewallpaperit.work.VerifyClientIdWorker;

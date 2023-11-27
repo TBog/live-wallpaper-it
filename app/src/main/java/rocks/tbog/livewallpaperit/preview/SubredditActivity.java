@@ -1,4 +1,4 @@
-package rocks.tbog.livewallpaperit;
+package rocks.tbog.livewallpaperit.preview;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -12,11 +12,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -29,6 +25,9 @@ import androidx.work.WorkManager;
 import com.google.android.material.divider.MaterialDividerItemDecoration;
 import java.io.Serializable;
 import java.util.ArrayList;
+import rocks.tbog.livewallpaperit.ArtProvider;
+import rocks.tbog.livewallpaperit.R;
+import rocks.tbog.livewallpaperit.Source;
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
 import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.data.SubTopic;
@@ -80,6 +79,7 @@ public class SubredditActivity extends AppCompatActivity {
 
         RecyclerView recyclerView = findViewById(R.id.source_list);
         recyclerView.setHasFixedSize(true);
+        recyclerView.setNestedScrollingEnabled(true);
         recyclerView.setAdapter(mAdapter);
         var layout = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         recyclerView.setLayoutManager(layout);
@@ -87,10 +87,6 @@ public class SubredditActivity extends AppCompatActivity {
         decoration.setLastItemDecorated(false);
         recyclerView.addItemDecoration(decoration);
 
-        mAdapter.setOnClickListener((subTopic, v) -> {
-            Uri urlToOpen = Uri.parse("https://www.reddit.com" + subTopic.permalink);
-            ViewUtils.launchIntent(v, new Intent(Intent.ACTION_VIEW).setData(urlToOpen));
-        });
         mAdapter.setOnLongClickListener((subTopic, view) -> {
             Uri urlToOpen = Uri.parse("https://www.reddit.com" + subTopic.permalink);
             ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -122,6 +118,7 @@ public class SubredditActivity extends AppCompatActivity {
     private void loadSourceData() {
         if (mSource == null) return;
         final ArrayList<SubTopic> topicList = new ArrayList<>();
+        final ArrayList<String> ignoreList = new ArrayList<>();
         AsyncUtils.runAsync(
                 getLifecycle(),
                 t -> {
@@ -129,9 +126,12 @@ public class SubredditActivity extends AppCompatActivity {
                     var list = DBHelper.getSubTopics(ctx, mSource.subreddit);
                     DBHelper.loadSubTopicImages(ctx, list);
                     topicList.addAll(list);
+
+                    ignoreList.addAll(DBHelper.getIgnoreTokenList(ctx));
                 },
                 t -> {
                     mAdapter.setItems(topicList);
+                    mAdapter.setIgnoreList(ignoreList);
                 });
     }
 
@@ -205,34 +205,5 @@ public class SubredditActivity extends AppCompatActivity {
         }
         // The user's action isn't recognized. Invoke the superclass to handle it.
         return super.onOptionsItemSelected(item);
-    }
-
-    public static class SubmissionHolder extends RecycleAdapterBase.Holder {
-
-        TextView mTitleView;
-        RecyclerView mImageCarouselView;
-        ImageView mNsfwView;
-        TextView mScoreView;
-        TextView mUpvoteView;
-        TextView mNumCommentView;
-        ImageView mValidView;
-
-        public SubmissionHolder(@NonNull View itemView) {
-            super(itemView);
-
-            mTitleView = itemView.findViewById(R.id.submission_title);
-            mImageCarouselView = itemView.findViewById(R.id.image_carousel);
-            mNsfwView = itemView.findViewById(R.id.nsfw);
-            mScoreView = itemView.findViewById(R.id.score);
-            mUpvoteView = itemView.findViewById(R.id.upvote_ratio);
-            mNumCommentView = itemView.findViewById(R.id.num_comments);
-            mValidView = itemView.findViewById(R.id.valid);
-
-            var layout = new LinearLayoutManager(mImageCarouselView.getContext(), RecyclerView.HORIZONTAL, false);
-            var decoration =
-                    new MaterialDividerItemDecoration(mImageCarouselView.getContext(), layout.getOrientation());
-            decoration.setLastItemDecorated(false);
-            mImageCarouselView.addItemDecoration(decoration);
-        }
     }
 }

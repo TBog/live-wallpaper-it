@@ -1,4 +1,4 @@
-package rocks.tbog.livewallpaperit;
+package rocks.tbog.livewallpaperit.preview;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -32,6 +32,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.divider.MaterialDividerItemDecoration;
 import java.util.ArrayList;
 import java.util.Collections;
+import rocks.tbog.livewallpaperit.ArtProvider;
+import rocks.tbog.livewallpaperit.DeleteArtworkReceiver;
+import rocks.tbog.livewallpaperit.R;
+import rocks.tbog.livewallpaperit.RecycleAdapterBase;
+import rocks.tbog.livewallpaperit.Source;
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
 import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.dialog.DialogHelper;

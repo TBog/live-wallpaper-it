@@ -1,11 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ImageView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@android:id/icon"
-    android:layout_width="108px"
-    android:layout_height="108px"
-    android:layout_gravity="center"
-    android:layout_marginHorizontal="8dp"
-    android:contentDescription="thumbnail"
-    android:scaleType="fitCenter"
-    tools:src="@tools:sample/backgrounds/scenic" />
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/margin">
+
+    <ImageView
+        android:id="@android:id/icon"
+        android:layout_width="108px"
+        android:layout_height="108px"
+        android:layout_gravity="center"
+        android:contentDescription="thumbnail"
+        android:scaleType="fitCenter"
+        tools:src="@tools:sample/backgrounds/scenic" />
+
+    <ImageView
+        android:id="@+id/invalid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:elevation="@dimen/cardview_default_elevation"
+        android:visibility="gone"
+        app:srcCompat="@drawable/ic_invalid_24"
+        tools:visibility="visible" />
+
+</FrameLayout>

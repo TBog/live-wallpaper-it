@@ -31,8 +31,27 @@ public class DBHelper {
         ContentValues values = new ContentValues();
         values.put(RedditDatabase.ARTWORK_TOKEN, token);
 
-        return -1
-                != db.insertWithOnConflict(RedditDatabase.TABLE_IGNORE, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        return -1 != db.insertWithOnConflict(RedditDatabase.TABLE_IGNORE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+    }
+
+    public static int insertIgnoreTokens(@NonNull Context context, @NonNull String[] mediaIdArray) {
+        SQLiteDatabase db = getDatabase(context);
+
+        int count = 0;
+        ContentValues values = new ContentValues();
+        db.beginTransaction();
+        try {
+            for (var mediaId : mediaIdArray) {
+                values.put(RedditDatabase.ARTWORK_TOKEN, mediaId);
+                count += db.insertWithOnConflict(
+                        RedditDatabase.TABLE_IGNORE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+
+        return count;
     }
 
     @NonNull

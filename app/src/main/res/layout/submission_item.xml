@@ -10,33 +10,59 @@
         android:id="@+id/submission_title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
         android:gravity="start|center_vertical"
         android:maxLines="6"
         android:singleLine="false"
-        app:layout_constraintStart_toStartOf="parent"
+        tools:text="@tools:sample/full_names" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_open"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/button_open_submission_tooltip"
+        android:tooltipText="@string/button_open_submission_tooltip"
+        app:icon="@drawable/ic_open_24" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_remove"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/button_remove_submission_tooltip"
+        android:tooltipText="@string/button_remove_submission_tooltip"
+        app:icon="@drawable/ic_remove_48" />
+
+    <androidx.constraintlayout.helper.widget.Flow
+        android:id="@+id/button_title_flow"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/margin"
+        android:layout_marginVertical="@dimen/margin"
+        android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="@tools:sample/lorem/random" />
+        app:constraint_referenced_ids="submission_title,button_open,button_remove"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/image_carousel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_margin="@dimen/margin"
         android:contentDescription="image carousel"
         android:orientation="horizontal"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/submission_title"
+        app:layout_constraintTop_toBottomOf="@id/button_title_flow"
         tools:listitem="@layout/image_carousel_item" />
 
     <ImageView
         android:id="@+id/nsfw"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_margin="@dimen/margin"
         android:contentDescription="@string/nsfw_tooltip"
         android:src="@drawable/ic_nsfw_24"
         android:tooltipText="@string/nsfw_tooltip"
@@ -56,9 +82,9 @@
         app:drawableTint="?android:attr/textColorSecondary"
         app:layout_constraintStart_toEndOf="@id/nsfw"
         app:layout_constraintTop_toTopOf="@id/nsfw"
-        app:layout_goneMarginBottom="8dp"
-        app:layout_goneMarginStart="8dp"
-        app:layout_goneMarginTop="8dp"
+        app:layout_goneMarginBottom="@dimen/margin"
+        app:layout_goneMarginStart="@dimen/margin"
+        app:layout_goneMarginTop="@dimen/margin"
         tools:text="@tools:sample/us_zipcodes" />
 
     <TextView
@@ -88,10 +114,10 @@
         tools:text="@tools:sample/us_zipcodes" />
 
     <ImageView
-        android:id="@+id/valid"
+        android:id="@+id/valid_invalid"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_margin="@dimen/margin"
         app:layout_constraintBottom_toBottomOf="@id/upvote_ratio"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/upvote_ratio"

@@ -1,4 +1,4 @@
-package rocks.tbog.livewallpaperit;
+package rocks.tbog.livewallpaperit.preview;
 
 import android.app.Activity;
 import android.content.Context;
@@ -16,6 +16,9 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
+import rocks.tbog.livewallpaperit.R;
+import rocks.tbog.livewallpaperit.RecycleAdapterBase;
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
 import rocks.tbog.livewallpaperit.data.SubTopic;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
@@ -23,10 +26,12 @@ import rocks.tbog.livewallpaperit.utils.ViewUtils;
 public class ThumbnailAdapter extends RecycleAdapterBase<SubTopic.Image, ThumbnailAdapter.ThumbnailHolder> {
     private static final String TAG = ThumbnailAdapter.class.getSimpleName();
     private final int mWidth;
+    private final Set<String> mInvalidMediaIdSet;
 
-    public ThumbnailAdapter(SubTopic topic, int width, boolean showObfuscated) {
+    public ThumbnailAdapter(SubTopic topic, int width, boolean showObfuscated, @NonNull Set<String> invalidMediaIdSet) {
         super(new ArrayList<>());
         mWidth = width;
+        mInvalidMediaIdSet = invalidMediaIdSet;
         HashMap<String, SubTopic.Image> map = new HashMap<>();
         int delta = Integer.MAX_VALUE;
         for (var image : topic.images) {
@@ -43,8 +48,11 @@ public class ThumbnailAdapter extends RecycleAdapterBase<SubTopic.Image, Thumbna
 
     @Override
     public void onBindViewHolder(@NonNull ThumbnailHolder holder, @NonNull SubTopic.Image image) {
-        holder.mImage.setImageResource(R.drawable.ic_launcher_background);
-        setImageViewSize(holder.mImage, image);
+        holder.mImageView.setImageResource(R.drawable.ic_launcher_background);
+        holder.mInvalidView.setVisibility(mInvalidMediaIdSet.contains(image.mediaId) ? View.VISIBLE : View.GONE);
+
+        setImageViewSize(holder.mImageView, image);
+
         Activity activity = ViewUtils.getActivity(holder.itemView);
         final Bitmap[] bitmapWrapper = new Bitmap[] {null};
         if (activity instanceof ComponentActivity)
@@ -62,7 +70,9 @@ public class ThumbnailAdapter extends RecycleAdapterBase<SubTopic.Image, Thumbna
                         bitmapWrapper[0] = BitmapFactory.decodeStream(inputStream);
                     },
                     task -> {
-                        holder.mImage.setImageBitmap(bitmapWrapper[0]);
+                        if (bitmapWrapper[0] != null) {
+                            holder.mImageView.setImageBitmap(bitmapWrapper[0]);
+                        }
                     });
     }
 
@@ -86,11 +96,13 @@ public class ThumbnailAdapter extends RecycleAdapterBase<SubTopic.Image, Thumbna
     }
 
     public static class ThumbnailHolder extends RecycleAdapterBase.Holder {
-        ImageView mImage;
+        ImageView mImageView;
+        ImageView mInvalidView;
 
         public ThumbnailHolder(@NonNull View itemView) {
             super(itemView);
-            mImage = itemView.findViewById(android.R.id.icon);
+            mImageView = itemView.findViewById(android.R.id.icon);
+            mInvalidView = itemView.findViewById(R.id.invalid);
         }
     }
 }

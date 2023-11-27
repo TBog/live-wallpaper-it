@@ -18,16 +18,44 @@ public class DeleteArtworkReceiver extends BroadcastReceiver {
     public static final String ACTION_CLEAR_CACHE = "clear_cache";
     public static final String ARTWORK_ID = "delete.artwork.ID";
     public static final String ARTWORK_TOKEN = "delete.artwork.token";
+    public static final String MEDIA_ID_ARRAY = "delete.media_id.array";
 
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getStringExtra(ACTION);
         if (ACTION_DELETE.equals(action)) {
-            deleteArtwork(context, intent);
+            if (intent.hasExtra(MEDIA_ID_ARRAY)) {
+                deleteMedia(context, intent.getStringArrayExtra(MEDIA_ID_ARRAY));
+            } else {
+                deleteArtwork(context, intent);
+            }
         } else if (ACTION_CLEAR_CACHE.equals(action)) {
             deleteAll(context);
         } else {
             Log.e(TAG, "invalid action `" + action + "`");
+        }
+    }
+
+    private void deleteMedia(Context context, String[] mediaArray) {
+        if (mediaArray == null) {
+            Log.e(TAG, "mediaId array is null");
+            return;
+        }
+
+        final ContentResolver content = context.getContentResolver();
+        final Uri contentUri =
+                ProviderContract.getProviderClient(context, ArtProvider.class).getContentUri();
+        final String whereFilter;
+        if (mediaArray.length > 1) {
+            whereFilter = ProviderContract.Artwork.TOKEN + " IN (?" + ",?".repeat(mediaArray.length - 1) + ")";
+        } else {
+            whereFilter = ProviderContract.Artwork.TOKEN + " = ?";
+        }
+        int count = content.delete(contentUri, whereFilter, mediaArray);
+        Log.d(TAG, "deleted " + count + "/" + mediaArray.length);
+
+        if ((count = DBHelper.insertIgnoreTokens(context, mediaArray)) != -1) {
+            Log.d(TAG, "ignored " + count + "/" + mediaArray.length);
         }
     }
 
