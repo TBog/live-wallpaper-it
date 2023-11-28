@@ -1,11 +1,13 @@
 package rocks.tbog.livewallpaperit.work;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.collection.ArraySet;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -121,6 +123,7 @@ public class ArtLoadWorker extends Worker {
         final int desiredArtworkCount = getInputData().getInt(WorkerUtils.DATA_DESIRED_ARTWORK_COUNT, 10);
 
         ProviderClient providerClient = ProviderContract.getProviderClient(ctx, ArtProvider.class);
+        ArraySet<String> filteredOutImages = new ArraySet<>();
 
         SubmissionsFetcher submissionsFetcher = client.getSubredditsClient()
                 .createSubmissionsFetcher(
@@ -137,12 +140,21 @@ public class ArtLoadWorker extends Worker {
                 final SubTopic topic = SubTopic.fromSubmission(submission);
                 if (topic.images.isEmpty() || isRemovedOrDeleted(submission)) {
                     mArtworkNotFoundCount += 1;
-                    if (DBHelper.removeSubTopic(getApplicationContext(), topic)) {
+                    for (var image : topic.images) {
+                        filteredOutImages.add(image.mediaId);
+                    }
+                    if (DBHelper.removeSubTopic(ctx, topic)) {
                         Log.v(TAG, "removed `" + topic.permalink + "`");
                     }
                     continue;
                 }
-                DBHelper.insertOrUpdateSubTopic(getApplicationContext(), source.subreddit, topic);
+                DBHelper.insertOrUpdateSubTopic(ctx, source.subreddit, topic);
+                if (shouldSkipTopic(topic, mFilter)) {
+                    for (var image : topic.images) {
+                        filteredOutImages.add(image.mediaId);
+                    }
+                    continue;
+                }
                 getArtworks(submission.getSubredditNamePrefixed(), topic, providerClient);
                 if (mArtworkSubmitCount >= desiredArtworkCount) {
                     Log.v(
@@ -164,11 +176,28 @@ public class ArtLoadWorker extends Worker {
             }
         }
 
+        // remove artworks that no longer pass the filter
+        deleteArtworks(ctx, filteredOutImages);
+
         Log.i(TAG, "artworkSubmitCount=" + mArtworkSubmitCount + " artworkNotFoundCount=" + mArtworkNotFoundCount);
         return Result.success(new Data.Builder()
                 .putInt(WorkerUtils.DATA_ARTWORK_SUBMIT_COUNT, mArtworkSubmitCount)
                 .putInt(WorkerUtils.DATA_ARTWORK_NOT_FOUND_COUNT, mArtworkNotFoundCount)
                 .build());
+    }
+
+    private void deleteArtworks(Context context, ArraySet<String> mediaIds) {
+        if (mediaIds.isEmpty()) return;
+        final ContentResolver content = context.getContentResolver();
+        final Uri contentUri =
+                ProviderContract.getProviderClient(context, ArtProvider.class).getContentUri();
+        String whereFilter = ProviderContract.Artwork.TOKEN + " IN (?";
+        if (mediaIds.size() > 1) whereFilter += ",?".repeat(mediaIds.size() - 1);
+        whereFilter += ")";
+        final String[] whereArgs = mediaIds.toArray(new String[0]);
+
+        int count = content.delete(contentUri, whereFilter, whereArgs);
+        Log.d(TAG, "deleteArtworks count=" + count + "/" + mediaIds.size());
     }
 
     private static boolean isRemovedOrDeleted(@NonNull Submission submission) {
@@ -226,8 +255,6 @@ public class ArtLoadWorker extends Worker {
     }
 
     private void getArtworks(String subredditNamePrefixed, @NonNull SubTopic topic, ProviderClient providerClient) {
-        if (shouldSkipTopic(topic, mFilter)) return;
-
         for (var image : topic.images) {
             if (!image.isSource || image.isObfuscated) continue;
 
