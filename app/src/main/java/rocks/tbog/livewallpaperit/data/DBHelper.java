@@ -6,23 +6,35 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
-import android.util.Log;
 import androidx.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import rocks.tbog.livewallpaperit.Source;
+import rocks.tbog.livewallpaperit.Version;
 
 public class DBHelper {
     private static final String TAG = DBHelper.class.getSimpleName();
+    private static final Version UPSERT_added_ver = new Version("3.24.0");
     private static SQLiteOpenHelper database = null;
+    private static Version sqliteVersion = null;
 
     private static SQLiteDatabase getDatabase(Context context) {
         if (database == null) {
             database = new RedditDatabase(context);
         }
         return database.getReadableDatabase();
+    }
+
+    private static Version getSQLiteVersion(SQLiteDatabase db) {
+        if (sqliteVersion != null) return sqliteVersion;
+        try (Cursor cursor = db.rawQuery("SELECT sqlite_version() AS sqlite_version", null)) {
+            if (cursor.moveToNext()) {
+                return sqliteVersion = new Version(cursor.getString(0));
+            }
+        }
+        return sqliteVersion = new Version("0.0.0");
     }
 
     public static boolean insertIgnoreToken(@NonNull Context context, @NonNull String token) {
@@ -167,33 +179,78 @@ public class DBHelper {
                 });
     }
 
-    public static void addSubTopic(Context context, String subreddit, SubTopic topic) {
+    public static void insertOrUpdateSubTopic(Context context, String subreddit, SubTopic topic) {
         SQLiteDatabase db = getDatabase(context);
 
         ContentValues value = new ContentValues();
         topic.fillTopicValues(value);
         value.put(RedditDatabase.TOPIC_SUBREDDIT_NAME, subreddit);
 
-        long rowId = db.insertWithOnConflict(RedditDatabase.TABLE_TOPICS, null, value, SQLiteDatabase.CONFLICT_REPLACE);
-        if (rowId == -1) {
-            Log.e(TAG, "failed to insert in " + RedditDatabase.TABLE_TOPICS + " " + value);
-            return;
-        }
+        insertOrUpdate(db, RedditDatabase.TABLE_TOPICS, value, new String[] {RedditDatabase.TOPIC_ID});
 
         value.clear();
-        db.beginTransaction();
-        try {
-            for (var image : topic.images) {
-                topic.fillImageValues(image, value);
-                rowId = db.insertWithOnConflict(
-                        RedditDatabase.TABLE_TOPIC_IMAGES, null, value, SQLiteDatabase.CONFLICT_REPLACE);
-                if (rowId == -1) {
-                    Log.e(TAG, "failed to insert in " + RedditDatabase.TABLE_TOPIC_IMAGES + " " + value);
-                }
+        for (var image : topic.images) {
+            topic.fillImageValues(image, value);
+            insertOrUpdate(db, RedditDatabase.TABLE_TOPIC_IMAGES, value, new String[] {
+                RedditDatabase.IMAGE_MEDIA_ID,
+                RedditDatabase.IMAGE_TOPIC_ID,
+                RedditDatabase.IMAGE_WIDTH,
+                RedditDatabase.IMAGE_HEIGHT,
+                RedditDatabase.IMAGE_IS_BLUR,
+                RedditDatabase.IMAGE_IS_SOURCE
+            });
+        }
+    }
+
+    private static void insertOrUpdate(
+            SQLiteDatabase db, @NonNull String table, @NonNull ContentValues values, @NonNull String[] onConflict) {
+        var ver = DBHelper.getSQLiteVersion(db);
+
+        // UPSERT syntax was added to SQLite with version 3.24.0 (2018-06-04) https://sqlite.org/lang_upsert.html
+        if (ver.compareTo(UPSERT_added_ver) >= 0) {
+            // INSERT INTO _table(column1, column2) VALUES(?,?) ON CONFLICT(column1) DO UPDATE SET
+            // column1=excluded.column1,column2=excluded.column2
+            var columns = new ArrayList<>(values.keySet());
+            var query = new StringBuilder("INSERT INTO \"").append(table).append("\"(");
+            int colCount = columns.size();
+            String[] columnValues = new String[colCount];
+            for (int colIdx = 0; colIdx < colCount; colIdx++) {
+                if (colIdx == 0) query.append("\"");
+                else query.append(",\"");
+                String columnName = columns.get(colIdx);
+                query.append(columnName).append("\"");
+                columnValues[colIdx] = values.getAsString(columnName);
             }
-            db.setTransactionSuccessful();
-        } finally {
-            db.endTransaction();
+            query.append(") VALUES (?");
+            if (colCount > 1) query.append(",?".repeat(colCount - 1));
+            query.append(") ON CONFLICT (");
+            for (int i = 0; i < onConflict.length; i++) {
+                if (i == 0) query.append("\"");
+                else query.append(",\"");
+                query.append(onConflict[i]).append("\"");
+            }
+            query.append(") DO UPDATE SET ");
+            for (int colIdx = 0; colIdx < colCount; colIdx++) {
+                if (colIdx == 0) query.append("\"");
+                else query.append(",\"");
+                var column = columns.get(colIdx);
+                query.append(column).append("\"=excluded.\"").append(column).append("\"");
+            }
+            db.execSQL(query.toString(), columnValues);
+        } else {
+            var rowId = db.insertWithOnConflict(table, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+            if (rowId == -1) {
+                String[] whereArgs = new String[onConflict.length];
+                StringBuilder where = new StringBuilder();
+                for (int i = 0; i < onConflict.length; i++) {
+                    if (i == 0) where.append("\"");
+                    else where.append(" AND \"");
+                    String columnName = onConflict[i];
+                    where.append(columnName).append("\"=?");
+                    whereArgs[i] = values.getAsString(columnName);
+                }
+                db.updateWithOnConflict(table, values, where.toString(), whereArgs, SQLiteDatabase.CONFLICT_IGNORE);
+            }
         }
     }
 
@@ -251,7 +308,11 @@ public class DBHelper {
 
     public static void loadSubTopicImages(@NonNull Context context, @NonNull SubTopic topic) {
         SQLiteDatabase db = getDatabase(context);
+        loadSubTopicImages(db, topic.id, topic.images);
+    }
 
+    private static void loadSubTopicImages(
+            SQLiteDatabase db, @NonNull String topicId, @NonNull List<SubTopic.Image> outImages) {
         try (Cursor cursor = db.query(
                 RedditDatabase.TABLE_TOPIC_IMAGES,
                 new String[] {
@@ -259,22 +320,19 @@ public class DBHelper {
                     RedditDatabase.IMAGE_MEDIA_ID,
                     RedditDatabase.IMAGE_WIDTH,
                     RedditDatabase.IMAGE_HEIGHT,
-                    RedditDatabase.IMAGE_IS_NSFW,
+                    RedditDatabase.IMAGE_IS_BLUR,
                     RedditDatabase.IMAGE_IS_SOURCE,
                 },
                 "\"" + RedditDatabase.IMAGE_TOPIC_ID + "\" = ?",
-                new String[] {topic.id},
+                new String[] {topicId},
                 null,
                 null,
                 "\"" + BaseColumns._ID + "\" ASC",
                 null)) {
             if (cursor != null) {
-                cursor.moveToFirst();
-                while (!cursor.isAfterLast()) {
+                while (cursor.moveToNext()) {
                     SubTopic.Image image = SubTopic.Image.fromCursor(cursor);
-                    topic.images.add(image);
-
-                    cursor.moveToNext();
+                    outImages.add(image);
                 }
             }
         }
@@ -296,7 +354,7 @@ public class DBHelper {
                     RedditDatabase.IMAGE_MEDIA_ID,
                     RedditDatabase.IMAGE_WIDTH,
                     RedditDatabase.IMAGE_HEIGHT,
-                    RedditDatabase.IMAGE_IS_NSFW,
+                    RedditDatabase.IMAGE_IS_BLUR,
                     RedditDatabase.IMAGE_IS_SOURCE,
                 },
                 "\"" + RedditDatabase.IMAGE_TOPIC_ID + "\" IN (?" + ",?".repeat(topics.size() - 1) + ")",
@@ -306,17 +364,14 @@ public class DBHelper {
                 "\"" + BaseColumns._ID + "\" ASC",
                 null)) {
             if (cursor != null) {
-                cursor.moveToFirst();
                 final int columnTopicId = cursor.getColumnIndex(RedditDatabase.IMAGE_TOPIC_ID);
-                while (!cursor.isAfterLast()) {
+                while (cursor.moveToNext()) {
                     final SubTopic.Image image = SubTopic.Image.fromCursor(cursor);
                     final String topicId = cursor.getString(columnTopicId);
                     topics.stream()
                             .filter(topic -> topic.id.equals(topicId))
                             .findAny()
                             .ifPresent(topic -> topic.images.add(image));
-
-                    cursor.moveToNext();
                 }
             }
         }

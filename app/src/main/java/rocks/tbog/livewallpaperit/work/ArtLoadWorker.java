@@ -120,8 +120,6 @@ public class ArtLoadWorker extends Worker {
 
         final int desiredArtworkCount = getInputData().getInt(WorkerUtils.DATA_DESIRED_ARTWORK_COUNT, 10);
 
-        var cachedTopics = DBHelper.getSubTopics(ctx, source.subreddit);
-
         ProviderClient providerClient = ProviderContract.getProviderClient(ctx, ArtProvider.class);
 
         SubmissionsFetcher submissionsFetcher = client.getSubredditsClient()
@@ -144,9 +142,7 @@ public class ArtLoadWorker extends Worker {
                     }
                     continue;
                 }
-                if (cachedTopics.stream().noneMatch(subTopic -> subTopic.id.equals(topic.id))) {
-                    DBHelper.addSubTopic(getApplicationContext(), source.subreddit, topic);
-                }
+                DBHelper.insertOrUpdateSubTopic(getApplicationContext(), source.subreddit, topic);
                 getArtworks(submission.getSubredditNamePrefixed(), topic, providerClient);
                 if (mArtworkSubmitCount >= desiredArtworkCount) {
                     Log.v(

@@ -157,18 +157,29 @@ public final class SubTopic {
     }
 
     private SubTopic addImages(GalleryData galleryData, Map<String, GalleryMedia> mediaMetadata) {
-        if (galleryData == null || mediaMetadata == null) return this;
-        List<GalleryMediaItem> mediaItems = galleryData.getItems();
-        for (GalleryMediaItem item : mediaItems) {
-            GalleryMedia media = mediaMetadata.get(item.getMediaId());
-            if (media == null || !"Image".equalsIgnoreCase(media.getE())) continue;
-
-            Image source = makeImage(media.getS(), item.getMediaId(), false, true);
-            if (source != null) images.add(source);
-            addResolutions(media.getP(), item.getMediaId(), false);
-            addResolutions(media.getO(), item.getMediaId(), true);
+        if (mediaMetadata == null) return this;
+        if (galleryData != null) {
+            List<GalleryMediaItem> mediaItems = galleryData.getItems();
+            for (GalleryMediaItem item : mediaItems) {
+                GalleryMedia media = mediaMetadata.get(item.getMediaId());
+                if (media == null || !"Image".equalsIgnoreCase(media.getE())) continue;
+                addImages(media, item.getMediaId());
+            }
+        } else {
+            for (GalleryMedia media : mediaMetadata.values()) {
+                if (media == null || !"Image".equalsIgnoreCase(media.getE()) || TextUtils.isEmpty(media.getId()))
+                    continue;
+                addImages(media, media.getId());
+            }
         }
         return this;
+    }
+
+    private void addImages(@NonNull GalleryMedia media, @NonNull String mediaId) {
+        Image source = makeImage(media.getS(), mediaId, false, true);
+        if (source != null) images.add(source);
+        addResolutions(media.getP(), mediaId, false);
+        addResolutions(media.getO(), mediaId, true);
     }
 
     private SubTopic addImages(@Nullable SubmissionPreview preview, @NonNull String submissionId) {
@@ -260,7 +271,7 @@ public final class SubTopic {
         value.put(RedditDatabase.IMAGE_MEDIA_ID, image.mediaId);
         value.put(RedditDatabase.IMAGE_WIDTH, image.width);
         value.put(RedditDatabase.IMAGE_HEIGHT, image.height);
-        value.put(RedditDatabase.IMAGE_IS_NSFW, image.isObfuscated);
+        value.put(RedditDatabase.IMAGE_IS_BLUR, image.isObfuscated);
         value.put(RedditDatabase.IMAGE_IS_SOURCE, image.isSource);
     }
 
@@ -297,7 +308,7 @@ public final class SubTopic {
             String mediaId = getStringFromCursor(cursor, columnNames, RedditDatabase.IMAGE_MEDIA_ID);
             int width = getIntFromCursor(cursor, columnNames, RedditDatabase.IMAGE_WIDTH);
             int height = getIntFromCursor(cursor, columnNames, RedditDatabase.IMAGE_HEIGHT);
-            boolean isObfuscated = 0 != getIntFromCursor(cursor, columnNames, RedditDatabase.IMAGE_IS_NSFW);
+            boolean isObfuscated = 0 != getIntFromCursor(cursor, columnNames, RedditDatabase.IMAGE_IS_BLUR);
             boolean isSource = 0 != getIntFromCursor(cursor, columnNames, RedditDatabase.IMAGE_IS_SOURCE);
             return new Image(url, mediaId, width, height, isObfuscated, isSource);
         }

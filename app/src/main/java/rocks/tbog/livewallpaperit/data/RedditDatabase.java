@@ -10,7 +10,7 @@ import androidx.annotation.NonNull;
 
 public class RedditDatabase extends SQLiteOpenHelper {
     private static final String DB_NAME = "reddit.s3db";
-    private static final int DB_VERSION = 3;
+    private static final int DB_VERSION = 4;
     private static final String TAG = "DB";
     static final String TABLE_IGNORE = "ignore_artwork";
     static final String TABLE_SUBREDDITS = "subreddits";
@@ -38,7 +38,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
     public static final String IMAGE_MEDIA_ID = "media_id";
     public static final String IMAGE_WIDTH = "width";
     public static final String IMAGE_HEIGHT = "height";
-    public static final String IMAGE_IS_NSFW = "is_obfuscated";
+    public static final String IMAGE_IS_BLUR = "is_obfuscated";
     public static final String IMAGE_IS_SOURCE = "is_source";
 
     RedditDatabase(Context context) {
@@ -54,6 +54,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
             createSubredditTable(database);
             createTopicTable(database);
             createTopicImageTable(database);
+            createTopicImageTableIndex(database);
         } catch (SQLException e) {
             Log.e(TAG, "database failed to open", e);
         }
@@ -78,11 +79,14 @@ public class RedditDatabase extends SQLiteOpenHelper {
                     createTopicTable(db);
                     createTopicImageTable(db);
                     // fall through
+                case 3:
+                    createTopicImageTableIndex(db);
+                    // fall through
                 default:
                     break;
             }
         } catch (SQLException e) {
-            Log.e(TAG, "database failed to open after upgrade", e);
+            Log.e(TAG, "upgrade from " + oldVersion + " to " + newVersion + " failed", e);
         }
     }
 
@@ -136,10 +140,20 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 + "\"" + IMAGE_URL + "\" TEXT NOT NULL,"
                 + "\"" + IMAGE_WIDTH + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + IMAGE_HEIGHT + "\" INTEGER NOT NULL DEFAULT 0,"
-                + "\"" + IMAGE_IS_NSFW + "\" INTEGER NOT NULL DEFAULT 0,"
+                + "\"" + IMAGE_IS_BLUR + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + IMAGE_IS_SOURCE + "\" INTEGER NOT NULL DEFAULT 1,"
                 + "CONSTRAINT fk_topic_id FOREIGN KEY(\"" + IMAGE_TOPIC_ID + "\") "
                 + "REFERENCES \"" + TABLE_TOPICS + "\"(\"" + TOPIC_ID + "\") "
                 + "ON DELETE CASCADE ON UPDATE CASCADE);");
+    }
+
+    private void createTopicImageTableIndex(@NonNull SQLiteDatabase db) {
+        db.execSQL("CREATE UNIQUE INDEX idx_topic_images_unique ON \"" + TABLE_TOPIC_IMAGES + "\"("
+                + "\"" + IMAGE_MEDIA_ID + "\","
+                + "\"" + IMAGE_TOPIC_ID + "\","
+                + "\"" + IMAGE_WIDTH + "\","
+                + "\"" + IMAGE_HEIGHT + "\","
+                + "\"" + IMAGE_IS_BLUR + "\","
+                + "\"" + IMAGE_IS_SOURCE + "\")");
     }
 }
