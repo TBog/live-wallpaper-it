@@ -15,32 +15,31 @@ public class Version implements Comparable<Version> {
     }
 
     public Version(@NonNull String version) {
-        // if (version == null) throw new IllegalArgumentException("Version can not be null");
-        // if (!version.matches("[0-9]+(\\.[0-9]+)*")) throw new IllegalArgumentException("Invalid version format");
         this.version = version;
     }
 
     @Override
     public int compareTo(Version that) {
         if (that == null) return 1;
-        String[] thisParts = this.get().split("\\.");
-        String[] thatParts = that.get().split("\\.");
+        String[] thisParts = this.version.split("\\.");
+        String[] thatParts = that.version.split("\\.");
         int length = Math.max(thisParts.length, thatParts.length);
         for (int i = 0; i < length; i++) {
-            int thisPart;
-            if (i < thisParts.length) {
-                thisPart = Integer.parseInt(thisParts[i]);
-            } else {
-                thisPart = 0;
-            }
-            int thatPart;
-            if (i < thatParts.length) {
-                thatPart = Integer.parseInt(thatParts[i]);
-            } else {
-                thatPart = 0;
-            }
+            int thisPart = getIntegerFromPart(thisParts, i);
+            int thatPart = getIntegerFromPart(thatParts, i);
             if (thisPart < thatPart) return -1;
             if (thisPart > thatPart) return 1;
+        }
+        return 0;
+    }
+
+    private static int getIntegerFromPart(@NonNull String[] parts, int idx) {
+        if (idx < parts.length) {
+            try {
+                return Integer.parseInt(parts[idx]);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
         }
         return 0;
     }

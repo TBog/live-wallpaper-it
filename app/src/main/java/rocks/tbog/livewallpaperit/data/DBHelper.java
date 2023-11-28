@@ -15,16 +15,17 @@ import rocks.tbog.livewallpaperit.Source;
 import rocks.tbog.livewallpaperit.Version;
 
 public class DBHelper {
-    private static final String TAG = DBHelper.class.getSimpleName();
     private static final Version UPSERT_added_ver = new Version("3.24.0");
     private static SQLiteOpenHelper database = null;
     private static Version sqliteVersion = null;
 
     private static SQLiteDatabase getDatabase(Context context) {
-        if (database == null) {
-            database = new RedditDatabase(context);
+        synchronized (DBHelper.class) {
+            if (database == null) {
+                database = new RedditDatabase(context);
+            }
+            return database.getReadableDatabase();
         }
-        return database.getReadableDatabase();
     }
 
     private static Version getSQLiteVersion(SQLiteDatabase db) {
@@ -186,19 +187,25 @@ public class DBHelper {
         topic.fillTopicValues(value);
         value.put(RedditDatabase.TOPIC_SUBREDDIT_NAME, subreddit);
 
-        insertOrUpdate(db, RedditDatabase.TABLE_TOPICS, value, new String[] {RedditDatabase.TOPIC_ID});
+        db.beginTransaction();
+        try {
+            insertOrUpdate(db, RedditDatabase.TABLE_TOPICS, value, new String[] {RedditDatabase.TOPIC_ID});
 
-        value.clear();
-        for (var image : topic.images) {
-            topic.fillImageValues(image, value);
-            insertOrUpdate(db, RedditDatabase.TABLE_TOPIC_IMAGES, value, new String[] {
-                RedditDatabase.IMAGE_MEDIA_ID,
-                RedditDatabase.IMAGE_TOPIC_ID,
-                RedditDatabase.IMAGE_WIDTH,
-                RedditDatabase.IMAGE_HEIGHT,
-                RedditDatabase.IMAGE_IS_BLUR,
-                RedditDatabase.IMAGE_IS_SOURCE
-            });
+            value.clear();
+            for (var image : topic.images) {
+                topic.fillImageValues(image, value);
+                insertOrUpdate(db, RedditDatabase.TABLE_TOPIC_IMAGES, value, new String[] {
+                    RedditDatabase.IMAGE_MEDIA_ID,
+                    RedditDatabase.IMAGE_TOPIC_ID,
+                    RedditDatabase.IMAGE_WIDTH,
+                    RedditDatabase.IMAGE_HEIGHT,
+                    RedditDatabase.IMAGE_IS_BLUR,
+                    RedditDatabase.IMAGE_IS_SOURCE
+                });
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
         }
     }
 
