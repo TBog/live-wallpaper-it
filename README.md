@@ -1,4 +1,7 @@
 # live-wallpaper-it
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ca812dfa6ab04a1095b6833377e47128)](https://app.codacy.com/gh/TBog/live-wallpaper-it?utm_source=github.com&utm_medium=referral&utm_content=TBog/live-wallpaper-it&utm_campaign=Badge_Grade)
+
 Android live-wallpaper from Reddit.
 This is a plugin for [Muzei](https://github.com/muzei/muzei), which is an Android live wallpaper app, by Roman Nurik and Ian Lake.<br>
 <br>
