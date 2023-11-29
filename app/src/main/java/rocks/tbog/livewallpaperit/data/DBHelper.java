@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -211,6 +212,17 @@ public class DBHelper {
         }
     }
 
+    @Nullable
+    private static String getValueAsString(@NonNull ContentValues map, String key) {
+        var value = map.get(key);
+        if (value instanceof Boolean) {
+            if ((Boolean) value) return "1";
+            return "0";
+        }
+        if (value != null) return value.toString();
+        return null;
+    }
+
     private static void insertOrUpdate(
             SQLiteDatabase db, @NonNull String table, @NonNull ContentValues values, @NonNull String[] onConflict) {
         var ver = DBHelper.getSQLiteVersion(db);
@@ -228,7 +240,7 @@ public class DBHelper {
                 else query.append(",\"");
                 String columnName = columns.get(colIdx);
                 query.append(columnName).append("\"");
-                columnValues[colIdx] = values.getAsString(columnName);
+                columnValues[colIdx] = getValueAsString(values, columnName);
             }
             query.append(") VALUES (?");
             if (colCount > 1) query.append(",?".repeat(colCount - 1));
@@ -256,7 +268,7 @@ public class DBHelper {
                     else where.append(" AND \"");
                     String columnName = onConflict[i];
                     where.append(columnName).append("\"=?");
-                    whereArgs[i] = values.getAsString(columnName);
+                    whereArgs[i] = getValueAsString(values, columnName);
                 }
                 db.updateWithOnConflict(table, values, where.toString(), whereArgs, SQLiteDatabase.CONFLICT_IGNORE);
             }
