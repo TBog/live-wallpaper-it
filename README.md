@@ -4,8 +4,17 @@ This is a plugin for [Muzei](https://github.com/muzei/muzei), which is an Androi
 <br>
 This plugin allows you to pick subreddits as a wallpaper source for the Muzei app, so that your favorite photos can be displayed as wallpaper on both the home and the lock screen.<br>
 
+### Where one can get it
+
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+     alt="Get it on F-Droid"
+     height="80">](https://f-droid.org/packages/rocks.tbog.livewallpaperit/)
+[<img src="https://i.ibb.co/q0mdc4Z/get-it-on-github.png"
+     alt="Get it on Github"
+     height="80">](https://github.com/TBog/live-wallpaper-it/releases/latest)
+
 ## Getting started
-* After installing the app you will be asked for a Reddit API key.
+* After installing the app you will need to enter a Reddit API key.
 * Go to [reddit.com/prefs/apps](https://www.reddit.com/prefs/apps) and create your own app.<br>
   ![image](https://github.com/TBog/live-wallpaper-it/assets/6465804/691d4ebd-9a76-4fbc-a646-3c8ee08ed8ff)<br>
   <br>
