@@ -319,7 +319,7 @@ public class DBHelper {
     }
 
     private static void loadSubTopicImages(
-            SQLiteDatabase db, @NonNull String topicId, @NonNull List<SubTopic.Image> outImages) {
+            SQLiteDatabase db, @NonNull String topicId, @NonNull Collection<SubTopic.Image> outImages) {
         try (Cursor cursor = db.query(
                 RedditDatabase.TABLE_TOPIC_IMAGES,
                 new String[] {
@@ -382,5 +382,16 @@ public class DBHelper {
                 }
             }
         }
+    }
+
+    public static void removeImages(Context context, Collection<String> mediaIds) {
+        if (mediaIds.isEmpty()) return;
+        SQLiteDatabase db = getDatabase(context);
+
+        StringBuilder where = new StringBuilder(RedditDatabase.IMAGE_MEDIA_ID).append(" IN (?");
+        if (mediaIds.size() > 1) where.append(",?".repeat(mediaIds.size() - 1));
+        where.append(")");
+        String[] args = mediaIds.toArray(new String[0]);
+        db.delete(RedditDatabase.TABLE_TOPIC_IMAGES, where.toString(), args);
     }
 }

@@ -12,7 +12,6 @@ import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 import com.google.android.apps.muzei.api.provider.Artwork;
-import com.google.android.apps.muzei.api.provider.ProviderClient;
 import com.google.android.apps.muzei.api.provider.ProviderContract;
 import com.kirkbushman.araw.RedditClient;
 import com.kirkbushman.araw.fetcher.Fetcher;
@@ -21,6 +20,7 @@ import com.kirkbushman.araw.helpers.AuthUserlessHelper;
 import com.kirkbushman.araw.models.Submission;
 import com.kirkbushman.araw.models.enums.SubmissionsSorting;
 import com.kirkbushman.araw.models.enums.TimePeriod;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -35,10 +35,8 @@ public class ArtLoadWorker extends Worker {
     private static final int FETCH_AMOUNT = 100;
     private static final int MAX_FETCHES = 3;
     private List<String> mIgnoreTokenList = Collections.emptyList();
-    private int mArtworkSubmitCount = 0;
     private int mArtworkNotFoundCount = 0;
-
-    private Filter mFilter = null;
+    private final ArrayList<Artwork> mArtworkFound = new ArrayList<>();
 
     public static final class Filter {
         public int minUpvotePercentage = 0;
@@ -115,14 +113,12 @@ public class ArtLoadWorker extends Worker {
                     .putString(WorkerUtils.FAIL_REASON, "getRedditClient=null")
                     .build());
 
-        mFilter = Filter.fromSource(source);
-        if (mFilter != null) {
-            mFilter.allowNSFW = getInputData().getBoolean(WorkerUtils.DATA_ALLOW_NSFW, false);
+        Filter filter = Filter.fromSource(source);
+        if (filter != null) {
+            filter.allowNSFW = getInputData().getBoolean(WorkerUtils.DATA_ALLOW_NSFW, false);
         }
 
         final int desiredArtworkCount = getInputData().getInt(WorkerUtils.DATA_DESIRED_ARTWORK_COUNT, 10);
-
-        ProviderClient providerClient = ProviderContract.getProviderClient(ctx, ArtProvider.class);
         ArraySet<String> filteredOutImages = new ArraySet<>();
 
         SubmissionsFetcher submissionsFetcher = client.getSubredditsClient()
@@ -140,36 +136,39 @@ public class ArtLoadWorker extends Worker {
                 final SubTopic topic = SubTopic.fromSubmission(submission);
                 if (topic.images.isEmpty() || isRemovedOrDeleted(submission)) {
                     mArtworkNotFoundCount += 1;
+                    // get cached images and mark for removal in Muzei
+                    DBHelper.loadSubTopicImages(ctx, topic);
                     for (var image : topic.images) {
                         filteredOutImages.add(image.mediaId);
                     }
+                    // remove images and topic from cache
                     if (DBHelper.removeSubTopic(ctx, topic)) {
                         Log.v(TAG, "removed `" + topic.permalink + "`");
                     }
                     continue;
                 }
                 DBHelper.insertOrUpdateSubTopic(ctx, source.subreddit, topic);
-                if (shouldSkipTopic(topic, mFilter)) {
+                if (shouldSkipTopic(topic, filter)) {
                     for (var image : topic.images) {
                         filteredOutImages.add(image.mediaId);
                     }
                     continue;
                 }
-                getArtworks(submission.getSubredditNamePrefixed(), topic, providerClient);
-                if (mArtworkSubmitCount >= desiredArtworkCount) {
+                getArtworks(submission.getSubredditNamePrefixed(), topic);
+                if (mArtworkFound.size() >= desiredArtworkCount) {
                     Log.v(
                             TAG,
                             "stop; desiredArtworkCount=" + desiredArtworkCount + " artworkSubmitCount="
-                                    + mArtworkSubmitCount);
+                                    + mArtworkFound.size());
                     break;
                 }
             }
 
-            if (mArtworkSubmitCount < desiredArtworkCount && submissionsFetcher.hasNext()) {
+            if (mArtworkFound.size() < desiredArtworkCount && submissionsFetcher.hasNext()) {
                 Log.d(
                         TAG,
                         "#" + fetchIndex + " fetchNext " + submissionsFetcher.getSubreddit() + "; artworkSubmitCount="
-                                + mArtworkSubmitCount);
+                                + mArtworkFound.size());
                 submissions = submissionsFetcher.fetchNext();
             } else {
                 break;
@@ -178,25 +177,28 @@ public class ArtLoadWorker extends Worker {
 
         // remove artworks that no longer pass the filter
         deleteArtworks(ctx, filteredOutImages);
+        // provide artworks to Muzei
+        ProviderContract.getProviderClient(ctx, ArtProvider.class).addArtwork(mArtworkFound);
 
-        Log.i(TAG, "artworkSubmitCount=" + mArtworkSubmitCount + " artworkNotFoundCount=" + mArtworkNotFoundCount);
+        Log.i(TAG, "artworkSubmitCount=" + mArtworkFound.size() + " artworkNotFoundCount=" + mArtworkNotFoundCount);
         return Result.success(new Data.Builder()
-                .putInt(WorkerUtils.DATA_ARTWORK_SUBMIT_COUNT, mArtworkSubmitCount)
+                .putInt(WorkerUtils.DATA_ARTWORK_SUBMIT_COUNT, mArtworkFound.size())
                 .putInt(WorkerUtils.DATA_ARTWORK_NOT_FOUND_COUNT, mArtworkNotFoundCount)
                 .build());
     }
 
     private void deleteArtworks(Context context, ArraySet<String> mediaIds) {
+        DBHelper.removeImages(context, mediaIds);
         if (mediaIds.isEmpty()) return;
         final ContentResolver content = context.getContentResolver();
         final Uri contentUri =
                 ProviderContract.getProviderClient(context, ArtProvider.class).getContentUri();
-        String whereFilter = ProviderContract.Artwork.TOKEN + " IN (?";
-        if (mediaIds.size() > 1) whereFilter += ",?".repeat(mediaIds.size() - 1);
-        whereFilter += ")";
+        StringBuilder whereFilter = new StringBuilder(ProviderContract.Artwork.TOKEN).append(" IN (?");
+        if (mediaIds.size() > 1) whereFilter.append(",?".repeat(mediaIds.size() - 1));
+        whereFilter.append(")");
         final String[] whereArgs = mediaIds.toArray(new String[0]);
 
-        int count = content.delete(contentUri, whereFilter, whereArgs);
+        int count = content.delete(contentUri, whereFilter.toString(), whereArgs);
         Log.d(TAG, "deleteArtworks count=" + count + "/" + mediaIds.size());
     }
 
@@ -216,7 +218,7 @@ public class ArtLoadWorker extends Worker {
         copyright_takedown: The post was removed for copyright infringement. The content is not removed in the traditional sense, but rather is censored with the text “[ Removed by reddit in response to a copyright notice. ]”.
         banned_by: The post was removed by a moderator who is not the author of the post.
         */
-        return submission.getRemovedByCategory() != null;
+        return !TextUtils.isEmpty(submission.getRemovedByCategory());
     }
 
     public static boolean shouldSkipTopic(@NonNull SubTopic topic, @Nullable Filter filter) {
@@ -254,7 +256,7 @@ public class ArtLoadWorker extends Worker {
         return false;
     }
 
-    private void getArtworks(String subredditNamePrefixed, @NonNull SubTopic topic, ProviderClient providerClient) {
+    private void getArtworks(String subredditNamePrefixed, @NonNull SubTopic topic) {
         for (var image : topic.images) {
             if (!image.isSource || image.isObfuscated) continue;
 
@@ -271,14 +273,13 @@ public class ArtLoadWorker extends Worker {
                     .build();
 
             Log.v(TAG, "addArtwork " + artwork.getToken() + " `" + artwork.getTitle() + "`");
-            addArtwork(artwork, providerClient);
+            addArtwork(artwork);
         }
     }
 
-    private void addArtwork(Artwork artwork, ProviderClient providerClient) {
+    private void addArtwork(Artwork artwork) {
         if (!mIgnoreTokenList.contains(artwork.getToken())) {
-            mArtworkSubmitCount += 1;
-            providerClient.addArtwork(artwork);
+            mArtworkFound.add(artwork);
         }
     }
 }
