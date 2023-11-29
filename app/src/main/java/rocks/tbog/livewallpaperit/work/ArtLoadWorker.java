@@ -147,7 +147,9 @@ public class ArtLoadWorker extends Worker {
                     }
                     continue;
                 }
+                // cache topic and images
                 DBHelper.insertOrUpdateSubTopic(ctx, source.subreddit, topic);
+                // if filter not passed mark for removal in Muzei
                 if (shouldSkipTopic(topic, filter)) {
                     for (var image : topic.images) {
                         filteredOutImages.add(image.mediaId);
@@ -175,9 +177,9 @@ public class ArtLoadWorker extends Worker {
             }
         }
 
-        // remove artworks that no longer pass the filter
+        // remove artworks that no longer pass the filter from Muzei
         deleteArtworks(ctx, filteredOutImages);
-        // provide artworks to Muzei
+        // provide found artworks to Muzei
         ProviderContract.getProviderClient(ctx, ArtProvider.class).addArtwork(mArtworkFound);
 
         Log.i(TAG, "artworkSubmitCount=" + mArtworkFound.size() + " artworkNotFoundCount=" + mArtworkNotFoundCount);
@@ -188,7 +190,6 @@ public class ArtLoadWorker extends Worker {
     }
 
     private void deleteArtworks(Context context, ArraySet<String> mediaIds) {
-        DBHelper.removeImages(context, mediaIds);
         if (mediaIds.isEmpty()) return;
         final ContentResolver content = context.getContentResolver();
         final Uri contentUri =
@@ -199,7 +200,7 @@ public class ArtLoadWorker extends Worker {
         final String[] whereArgs = mediaIds.toArray(new String[0]);
 
         int count = content.delete(contentUri, whereFilter.toString(), whereArgs);
-        Log.d(TAG, "deleteArtworks count=" + count + "/" + mediaIds.size());
+        Log.d(TAG, "deleteArtworks result " + count + "/" + mediaIds.size());
     }
 
     private static boolean isRemovedOrDeleted(@NonNull Submission submission) {
