@@ -28,7 +28,7 @@
     <string name="confirm_remove_subreddit">Remove subreddit %s?</string>
     <string name="confirm_remove_subreddit_description">%s and all associated filters will be removed. Are you sure?</string>
     <string name="confirm_remove_submission">Delete and ignore images?</string>
-    <string name="confirm_remove_submission_description">All images from `%s` be removed and added to the ignore list. Are you sure?</string>
+    <string name="confirm_remove_submission_description">All images from `%s` will be removed and added to the ignore list. Are you sure?</string>
 
     <string name="action_settings">Settings</string>
     <string name="title_add_subreddit">Add image source</string>

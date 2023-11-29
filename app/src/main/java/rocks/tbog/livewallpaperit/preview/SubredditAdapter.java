@@ -85,12 +85,17 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
                             activity.getString(R.string.confirm_remove_submission),
                             activity.getString(R.string.confirm_remove_submission_description, topic.title),
                             (dialog, button) -> {
+                                // add ignore list changes locally
+                                for (var image : topic.images) {
+                                    mIgnoreMediaIdSet.add(image.mediaId);
+                                }
                                 Intent intent = new Intent(activity, DeleteArtworkReceiver.class)
                                         .putExtra(DeleteArtworkReceiver.ACTION, DeleteArtworkReceiver.ACTION_DELETE)
                                         .putExtra(
                                                 DeleteArtworkReceiver.MEDIA_ID_ARRAY,
                                                 topic.images.stream()
                                                         .map(image -> image.mediaId)
+                                                        .distinct()
                                                         .toArray(String[]::new));
                                 activity.sendBroadcast(intent);
                                 Toast.makeText(

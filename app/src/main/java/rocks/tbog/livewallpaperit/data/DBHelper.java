@@ -56,8 +56,10 @@ public class DBHelper {
         try {
             for (var mediaId : mediaIdArray) {
                 values.put(RedditDatabase.ARTWORK_TOKEN, mediaId);
-                count += db.insertWithOnConflict(
-                        RedditDatabase.TABLE_IGNORE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+                if (db.insertWithOnConflict(RedditDatabase.TABLE_IGNORE, null, values, SQLiteDatabase.CONFLICT_IGNORE)
+                        != -1) {
+                    count += 1;
+                }
             }
             db.setTransactionSuccessful();
         } finally {
