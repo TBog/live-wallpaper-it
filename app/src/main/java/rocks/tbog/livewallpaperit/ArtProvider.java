@@ -66,6 +66,7 @@ public class ArtProvider extends MuzeiArtProvider {
         final ArrayList<OneTimeWorkRequest> subredditWorkList = new ArrayList<>();
         var sources = DBHelper.loadSources(ctx);
         for (Source source : sources) {
+            if (!source.isEnabled) continue;
             subredditWorkList.add(buildSourceWorkRequest(source));
         }
         workQueue.then(subredditWorkList).enqueue();

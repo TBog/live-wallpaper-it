@@ -10,15 +10,27 @@
     app:layoutDescription="@xml/source_item_scene"
     tools:showIn="@layout/activity_sources">
 
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/toggle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:checked="true"
+        app:layout_constraintBottom_toTopOf="@id/barrier_top"
+        app:layout_constraintHeight="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth="wrap_content" />
+
     <TextView
         android:id="@+id/subreddit_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
+        android:singleLine="true"
         app:layout_constraintBottom_toTopOf="@id/barrier_top"
         app:layout_constraintEnd_toStartOf="@id/button_title_flow"
         app:layout_constraintHorizontal_chainStyle="spread_inside"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@id/toggle"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="@tools:sample/cities" />
 
@@ -28,8 +40,8 @@
         android:layout_height="0dp"
         android:orientation="horizontal"
         app:constraint_referenced_ids="button_preview,button_open,button_remove"
-        app:flow_horizontalStyle="packed"
         app:flow_horizontalBias="1"
+        app:flow_horizontalStyle="packed"
         app:flow_wrapMode="chain"
         app:layout_constraintBottom_toTopOf="@id/barrier_top"
         app:layout_constraintEnd_toEndOf="parent"
@@ -68,14 +80,14 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:barrierDirection="bottom"
-        app:constraint_referenced_ids="subreddit_name, button_remove" />
+        app:constraint_referenced_ids="toggle,subreddit_name,button_remove" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/wrap_min_upvote_percent"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/barrier_bottom"
         app:layout_constraintEnd_toStartOf="@id/wrap_min_score"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/barrier_top">
@@ -96,7 +108,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/barrier_bottom"
         app:layout_constraintEnd_toStartOf="@id/wrap_min_comments"
         app:layout_constraintStart_toEndOf="@id/wrap_min_upvote_percent"
         app:layout_constraintTop_toBottomOf="@id/barrier_top">
@@ -117,7 +129,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/barrier_bottom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/wrap_min_score"
         app:layout_constraintTop_toBottomOf="@id/barrier_top">
@@ -132,5 +144,12 @@
             android:inputType="textAutoCorrect"
             android:singleLine="true" />
     </com.google.android.material.textfield.TextInputLayout>
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier_bottom"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:barrierDirection="bottom"
+        app:constraint_referenced_ids="wrap_min_upvote_percent,wrap_min_score,wrap_min_comments" />
 
 </androidx.constraintlayout.motion.widget.MotionLayout>

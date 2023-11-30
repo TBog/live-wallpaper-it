@@ -108,7 +108,8 @@ public class DBHelper {
                     RedditDatabase.SUBREDDIT_NAME,
                     RedditDatabase.SUBREDDIT_MIN_UPVOTE_PERCENTAGE,
                     RedditDatabase.SUBREDDIT_MIN_SCORE,
-                    RedditDatabase.SUBREDDIT_MIN_COMMENTS
+                    RedditDatabase.SUBREDDIT_MIN_COMMENTS,
+                    RedditDatabase.SUBREDDIT_ENABLED,
                 },
                 null,
                 null,
@@ -124,6 +125,7 @@ public class DBHelper {
                     source.minUpvotePercentage = cursor.getInt(1);
                     source.minScore = cursor.getInt(2);
                     source.minComments = cursor.getInt(3);
+                    source.isEnabled = 0 != cursor.getInt(4);
                     records.add(source);
 
                     cursor.moveToNext();
@@ -144,42 +146,40 @@ public class DBHelper {
         value.put(RedditDatabase.SUBREDDIT_MIN_UPVOTE_PERCENTAGE, source.minUpvotePercentage);
         value.put(RedditDatabase.SUBREDDIT_MIN_SCORE, source.minScore);
         value.put(RedditDatabase.SUBREDDIT_MIN_COMMENTS, source.minComments);
+        value.put(RedditDatabase.SUBREDDIT_ENABLED, source.isEnabled);
         return -1
                 != db.insertWithOnConflict(
                         RedditDatabase.TABLE_SUBREDDITS, null, value, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
-    public static boolean updateSource(Context context, Source source) {
+    public static void updateSource(Context context, Source source) {
         SQLiteDatabase db = getDatabase(context);
 
         ContentValues value = new ContentValues();
         value.put(RedditDatabase.SUBREDDIT_MIN_UPVOTE_PERCENTAGE, source.minUpvotePercentage);
         value.put(RedditDatabase.SUBREDDIT_MIN_SCORE, source.minScore);
         value.put(RedditDatabase.SUBREDDIT_MIN_COMMENTS, source.minComments);
-        return -1
-                != db.updateWithOnConflict(
-                        RedditDatabase.TABLE_SUBREDDITS,
-                        value,
-                        RedditDatabase.SUBREDDIT_NAME + "=?",
-                        new String[] {source.subreddit},
-                        SQLiteDatabase.CONFLICT_IGNORE);
+        value.put(RedditDatabase.SUBREDDIT_ENABLED, source.isEnabled);
+        db.updateWithOnConflict(
+                RedditDatabase.TABLE_SUBREDDITS,
+                value,
+                RedditDatabase.SUBREDDIT_NAME + "=?",
+                new String[] {source.subreddit},
+                SQLiteDatabase.CONFLICT_IGNORE);
     }
 
-    public static boolean removeSource(Context context, Source source) {
+    public static void removeSource(Context context, Source source) {
         SQLiteDatabase db = getDatabase(context);
 
-        return -1
-                != db.delete(RedditDatabase.TABLE_SUBREDDITS, RedditDatabase.SUBREDDIT_NAME + "=?", new String[] {
-                    source.subreddit
-                });
+        db.delete(
+                RedditDatabase.TABLE_SUBREDDITS, RedditDatabase.SUBREDDIT_NAME + "=?", new String[] {source.subreddit});
     }
 
-    public static boolean removeSourceSubTopics(Context context, Source source) {
+    public static void removeSourceSubTopics(Context context, Source source) {
         SQLiteDatabase db = getDatabase(context);
 
-        return -1
-                != db.delete(RedditDatabase.TABLE_TOPICS, RedditDatabase.TOPIC_SUBREDDIT_NAME + "=?", new String[] {
-                    source.subreddit
+        db.delete(
+                RedditDatabase.TABLE_TOPICS, RedditDatabase.TOPIC_SUBREDDIT_NAME + "=?", new String[] {source.subreddit
                 });
     }
 
@@ -210,6 +210,22 @@ public class DBHelper {
         } finally {
             db.endTransaction();
         }
+    }
+
+    /**
+     * Update only topic values from the TABLE_TOPICS table
+     */
+    public static void updateSubTopic(Context context, SubTopic topic) {
+        SQLiteDatabase db = getDatabase(context);
+
+        ContentValues values = new ContentValues();
+        topic.fillTopicValues(values);
+        db.updateWithOnConflict(
+                RedditDatabase.TABLE_TOPICS,
+                values,
+                "\"" + RedditDatabase.TOPIC_ID + "\"=?",
+                new String[] {topic.id},
+                SQLiteDatabase.CONFLICT_IGNORE);
     }
 
     @Nullable
@@ -302,6 +318,7 @@ public class DBHelper {
                     RedditDatabase.TOPIC_UPVOTE_RATIO,
                     RedditDatabase.TOPIC_NUM_COMMENTS,
                     RedditDatabase.TOPIC_OVER_18,
+                    RedditDatabase.TOPIC_SELECTED,
                 },
                 "\"" + RedditDatabase.TOPIC_SUBREDDIT_NAME + "\" = ?",
                 new String[] {subreddit},

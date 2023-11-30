@@ -114,15 +114,10 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
         holder.mScoreView.setText(String.valueOf(topic.score));
         holder.mUpvoteView.setText(String.valueOf(topic.upvoteRatio));
         holder.mNumCommentView.setText(String.valueOf(topic.numComments));
-        if (mFilter == null) {
-            holder.mValidInvalidView.setVisibility(View.GONE);
+        if (ArtLoadWorker.shouldSkipTopic(topic, mFilter)) {
+            holder.mInvalidView.setVisibility(View.VISIBLE);
         } else {
-            holder.mValidInvalidView.setVisibility(View.VISIBLE);
-            if (ArtLoadWorker.shouldSkipTopic(topic, mFilter)) {
-                holder.mValidInvalidView.setImageResource(R.drawable.ic_invalid_24);
-            } else {
-                holder.mValidInvalidView.setImageResource(R.drawable.ic_validated_24);
-            }
+            holder.mInvalidView.setVisibility(View.GONE);
         }
     }
 

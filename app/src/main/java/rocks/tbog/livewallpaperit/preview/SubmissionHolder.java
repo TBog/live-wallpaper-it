@@ -20,7 +20,7 @@ public class SubmissionHolder extends RecycleAdapterBase.Holder {
     public final TextView mScoreView;
     public final TextView mUpvoteView;
     public final TextView mNumCommentView;
-    public final ImageView mValidInvalidView;
+    public final ImageView mInvalidView;
 
     public SubmissionHolder(@NonNull View itemView) {
         super(itemView);
@@ -33,7 +33,7 @@ public class SubmissionHolder extends RecycleAdapterBase.Holder {
         mScoreView = itemView.findViewById(R.id.score);
         mUpvoteView = itemView.findViewById(R.id.upvote_ratio);
         mNumCommentView = itemView.findViewById(R.id.num_comments);
-        mValidInvalidView = itemView.findViewById(R.id.valid_invalid);
+        mInvalidView = itemView.findViewById(R.id.invalid);
 
         var layout = new LinearLayoutManager(mImageCarouselView.getContext(), RecyclerView.HORIZONTAL, false);
         var decoration = new MaterialDividerItemDecoration(mImageCarouselView.getContext(), layout.getOrientation());

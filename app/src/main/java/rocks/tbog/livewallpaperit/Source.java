@@ -18,6 +18,7 @@ public class Source implements Serializable {
     public int minUpvotePercentage = 0;
     public int minScore = 0;
     public int minComments = 0;
+    public boolean isEnabled = true;
 
     public Source(@NonNull String subreddit) {
         this.subreddit = subreddit;

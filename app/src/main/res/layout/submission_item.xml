@@ -9,11 +9,18 @@
     <TextView
         android:id="@+id/submission_title"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:gravity="start|center_vertical"
+        android:layout_height="0dp"
+        android:layout_marginStart="@dimen/margin"
+        android:gravity="top|start"
         android:maxLines="6"
         android:singleLine="false"
-        tools:text="@tools:sample/full_names" />
+        app:layout_constraintBottom_toTopOf="@id/barrier_title"
+        app:layout_constraintEnd_toStartOf="@id/button_title_flow"
+        app:layout_constraintHeight="wrap_content_constrained"
+        app:layout_constraintHorizontal_chainStyle="spread_inside"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="@tools:sample/lorem/random" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/button_open"
@@ -36,14 +43,22 @@
     <androidx.constraintlayout.helper.widget.Flow
         android:id="@+id/button_title_flow"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/margin"
-        android:layout_marginVertical="@dimen/margin"
+        android:layout_height="0dp"
         android:orientation="horizontal"
+        app:constraint_referenced_ids="button_open,button_remove"
+        app:layout_constraintBottom_toTopOf="@id/barrier_title"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight="wrap_content"
+        app:layout_constraintStart_toEndOf="@id/submission_title"
         app:layout_constraintTop_toTopOf="parent"
-        app:constraint_referenced_ids="submission_title,button_open,button_remove"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintWidth="wrap_content" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier_title"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:barrierDirection="bottom"
+        app:constraint_referenced_ids="submission_title,button_title_flow" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/image_carousel"
@@ -55,7 +70,7 @@
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/button_title_flow"
+        app:layout_constraintTop_toBottomOf="@id/barrier_title"
         tools:listitem="@layout/image_carousel_item" />
 
     <ImageView
@@ -114,14 +129,13 @@
         tools:text="@tools:sample/us_zipcodes" />
 
     <ImageView
-        android:id="@+id/valid_invalid"
+        android:id="@+id/invalid"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/margin"
         app:layout_constraintBottom_toBottomOf="@id/upvote_ratio"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/upvote_ratio"
-        app:srcCompat="@drawable/ic_validated_24"
-        tools:srcCompat="@drawable/ic_invalid_24" />
+        app:srcCompat="@drawable/ic_invalid_24" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

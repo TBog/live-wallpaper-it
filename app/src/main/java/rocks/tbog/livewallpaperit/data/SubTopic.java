@@ -38,6 +38,10 @@ public final class SubTopic {
     public final int upvoteRatio;
     public final int numComments;
     public final boolean over18;
+
+    @Nullable
+    private Boolean isSelected = null;
+
     public final ArrayList<Image> images = new ArrayList<>();
 
     private SubTopic(
@@ -99,61 +103,64 @@ public final class SubTopic {
     }
 
     public static SubTopic fromCursor(Cursor cursor) {
-        final String[] columnNames = cursor.getColumnNames();
-        String id = getStringFromCursor(cursor, columnNames, RedditDatabase.TOPIC_ID);
-        String title = getStringFromCursor(cursor, columnNames, RedditDatabase.TOPIC_TITLE);
-        String author = getStringFromCursor(cursor, columnNames, RedditDatabase.TOPIC_AUTHOR);
-        String linkFlairText = getStringFromCursor(cursor, columnNames, RedditDatabase.TOPIC_LINK_FLAIR_TEXT);
-        String permalink = getStringFromCursor(cursor, columnNames, RedditDatabase.TOPIC_PERMALINK);
-        String thumbnail = getStringFromCursor(cursor, columnNames, RedditDatabase.TOPIC_THUMBNAIL);
-        long createdUTC = getLongFromCursor(cursor, columnNames, RedditDatabase.TOPIC_CREATED_UTC);
-        int score = getIntFromCursor(cursor, columnNames, RedditDatabase.TOPIC_SCORE);
-        int upvoteRatio = getIntFromCursor(cursor, columnNames, RedditDatabase.TOPIC_UPVOTE_RATIO);
-        int numComments = getIntFromCursor(cursor, columnNames, RedditDatabase.TOPIC_NUM_COMMENTS);
-        boolean over18 = 0 != getIntFromCursor(cursor, columnNames, RedditDatabase.TOPIC_OVER_18);
+        String id = getStringFromCursor(cursor, RedditDatabase.TOPIC_ID);
+        String title = getStringFromCursor(cursor, RedditDatabase.TOPIC_TITLE);
+        String author = getStringFromCursor(cursor, RedditDatabase.TOPIC_AUTHOR);
+        String linkFlairText = getStringFromCursor(cursor, RedditDatabase.TOPIC_LINK_FLAIR_TEXT);
+        String permalink = getStringFromCursor(cursor, RedditDatabase.TOPIC_PERMALINK);
+        String thumbnail = getStringFromCursor(cursor, RedditDatabase.TOPIC_THUMBNAIL);
+        long createdUTC = getLongFromCursor(cursor, RedditDatabase.TOPIC_CREATED_UTC);
+        int score = getIntFromCursor(cursor, RedditDatabase.TOPIC_SCORE);
+        int upvoteRatio = getIntFromCursor(cursor, RedditDatabase.TOPIC_UPVOTE_RATIO);
+        int numComments = getIntFromCursor(cursor, RedditDatabase.TOPIC_NUM_COMMENTS);
+        boolean over18 = getBoolFromCursor(cursor, RedditDatabase.TOPIC_OVER_18);
         return new SubTopic(
-                id,
-                title,
-                author,
-                linkFlairText,
-                permalink,
-                thumbnail,
-                createdUTC,
-                score,
-                upvoteRatio,
-                numComments,
-                over18);
+                        id,
+                        title,
+                        author,
+                        linkFlairText,
+                        permalink,
+                        thumbnail,
+                        createdUTC,
+                        score,
+                        upvoteRatio,
+                        numComments,
+                        over18)
+                .setSelected(getBoolFromCursor(cursor, RedditDatabase.TOPIC_SELECTED));
+    }
+
+    public SubTopic setSelected(boolean isSelected) {
+        this.isSelected = isSelected;
+        return this;
     }
 
     @NonNull
-    private static String getStringFromCursor(Cursor cursor, String[] columnNames, @NonNull String column) {
-        for (int idx = 0; idx < columnNames.length; idx += 1) {
-            if (column.equals(columnNames[idx])) {
-                return cursor.getString(idx);
-            }
-        }
-        Log.e(TAG, "cursor missing `" + column + "` (string) in " + Arrays.toString(columnNames));
+    private static String getStringFromCursor(Cursor cursor, @NonNull String column) {
+        int index = cursor.getColumnIndex(column);
+        if (index != -1) return cursor.getString(index);
+        Log.e(TAG, "cursor missing `" + column + "` (string) in " + Arrays.toString(cursor.getColumnNames()));
         return "";
     }
 
-    private static int getIntFromCursor(Cursor cursor, String[] columnNames, @NonNull String column) {
-        for (int idx = 0; idx < columnNames.length; idx += 1) {
-            if (column.equals(columnNames[idx])) {
-                return cursor.getInt(idx);
-            }
-        }
-        Log.e(TAG, "cursor missing `" + column + "` (int) in " + Arrays.toString(columnNames));
+    private static int getIntFromCursor(Cursor cursor, @NonNull String column) {
+        int index = cursor.getColumnIndex(column);
+        if (index != -1) return cursor.getInt(index);
+        Log.e(TAG, "cursor missing `" + column + "` (int) in " + Arrays.toString(cursor.getColumnNames()));
         return 0;
     }
 
-    private static long getLongFromCursor(Cursor cursor, String[] columnNames, @NonNull String column) {
-        for (int idx = 0; idx < columnNames.length; idx += 1) {
-            if (column.equals(columnNames[idx])) {
-                return cursor.getLong(idx);
-            }
-        }
-        Log.e(TAG, "cursor missing `" + column + "` (int) in " + Arrays.toString(columnNames));
+    private static long getLongFromCursor(Cursor cursor, @NonNull String column) {
+        int index = cursor.getColumnIndex(column);
+        if (index != -1) return cursor.getLong(index);
+        Log.e(TAG, "cursor missing `" + column + "` (long) in " + Arrays.toString(cursor.getColumnNames()));
         return 0;
+    }
+
+    private static boolean getBoolFromCursor(Cursor cursor, @NonNull String column) {
+        int index = cursor.getColumnIndex(column);
+        if (index != -1) return 0 != cursor.getInt(index);
+        Log.e(TAG, "cursor missing `" + column + "` (bool) in " + Arrays.toString(cursor.getColumnNames()));
+        return false;
     }
 
     private SubTopic addImages(GalleryData galleryData, Map<String, GalleryMedia> mediaMetadata) {
@@ -263,6 +270,7 @@ public final class SubTopic {
         value.put(RedditDatabase.TOPIC_UPVOTE_RATIO, upvoteRatio);
         value.put(RedditDatabase.TOPIC_NUM_COMMENTS, numComments);
         value.put(RedditDatabase.TOPIC_OVER_18, over18);
+        if (isSelected != null) value.put(RedditDatabase.TOPIC_SELECTED, isSelected);
     }
 
     public void fillImageValues(Image image, ContentValues value) {
@@ -273,6 +281,11 @@ public final class SubTopic {
         value.put(RedditDatabase.IMAGE_HEIGHT, image.height);
         value.put(RedditDatabase.IMAGE_IS_BLUR, image.isObfuscated);
         value.put(RedditDatabase.IMAGE_IS_SOURCE, image.isSource);
+    }
+
+    public boolean isSelected() {
+        if (isSelected == null) return true;
+        return isSelected;
     }
 
     public static class Image {
@@ -303,13 +316,12 @@ public final class SubTopic {
         }
 
         public static Image fromCursor(Cursor cursor) {
-            final String[] columnNames = cursor.getColumnNames();
-            String url = getStringFromCursor(cursor, columnNames, RedditDatabase.IMAGE_URL);
-            String mediaId = getStringFromCursor(cursor, columnNames, RedditDatabase.IMAGE_MEDIA_ID);
-            int width = getIntFromCursor(cursor, columnNames, RedditDatabase.IMAGE_WIDTH);
-            int height = getIntFromCursor(cursor, columnNames, RedditDatabase.IMAGE_HEIGHT);
-            boolean isObfuscated = 0 != getIntFromCursor(cursor, columnNames, RedditDatabase.IMAGE_IS_BLUR);
-            boolean isSource = 0 != getIntFromCursor(cursor, columnNames, RedditDatabase.IMAGE_IS_SOURCE);
+            String url = getStringFromCursor(cursor, RedditDatabase.IMAGE_URL);
+            String mediaId = getStringFromCursor(cursor, RedditDatabase.IMAGE_MEDIA_ID);
+            int width = getIntFromCursor(cursor, RedditDatabase.IMAGE_WIDTH);
+            int height = getIntFromCursor(cursor, RedditDatabase.IMAGE_HEIGHT);
+            boolean isObfuscated = 0 != getIntFromCursor(cursor, RedditDatabase.IMAGE_IS_BLUR);
+            boolean isSource = 0 != getIntFromCursor(cursor, RedditDatabase.IMAGE_IS_SOURCE);
             return new Image(url, mediaId, width, height, isObfuscated, isSource);
         }
     }

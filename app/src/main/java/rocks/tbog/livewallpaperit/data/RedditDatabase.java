@@ -21,6 +21,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
     static final String SUBREDDIT_MIN_UPVOTE_PERCENTAGE = "min_upvote_perc";
     static final String SUBREDDIT_MIN_SCORE = "min_score";
     static final String SUBREDDIT_MIN_COMMENTS = "min_comments";
+    static final String SUBREDDIT_ENABLED = "is_enabled";
     public static final String TOPIC_SUBREDDIT_NAME = "subreddit";
     public static final String TOPIC_ID = "id";
     public static final String TOPIC_TITLE = "title";
@@ -33,6 +34,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
     public static final String TOPIC_UPVOTE_RATIO = "upvote_ratio";
     public static final String TOPIC_NUM_COMMENTS = "num_comments";
     public static final String TOPIC_OVER_18 = "over18";
+    public static final String TOPIC_SELECTED = "is_selected";
     public static final String IMAGE_TOPIC_ID = "topic_id";
     public static final String IMAGE_URL = "url";
     public static final String IMAGE_MEDIA_ID = "media_id";
@@ -54,7 +56,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
             createSubredditTable(database);
             createTopicTable(database);
             createTopicImageTable(database);
-            createTopicImageTableIndex(database);
+            addTopicImageTableIndex(database);
         } catch (SQLException e) {
             Log.e(TAG, "database failed to open", e);
         }
@@ -80,7 +82,13 @@ public class RedditDatabase extends SQLiteOpenHelper {
                     createTopicImageTable(db);
                     // fall through
                 case 3:
-                    createTopicImageTableIndex(db);
+                    if (oldVersion == 3) {
+                        db.execSQL("ALTER TABLE \"" + TABLE_TOPICS + "\" ADD COLUMN \"" + TOPIC_SELECTED
+                                + "\" INTEGER NOT NULL DEFAULT 1");
+                        db.execSQL("ALTER TABLE \"" + TABLE_SUBREDDITS + "\" ADD COLUMN \"" + SUBREDDIT_ENABLED
+                                + "\" INTEGER NOT NULL DEFAULT 1");
+                    }
+                    addTopicImageTableIndex(db);
                     // fall through
                 default:
                     break;
@@ -109,6 +117,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 + "\"" + SUBREDDIT_NAME + "\" TEXT UNIQUE,"
                 + "\"" + SUBREDDIT_MIN_UPVOTE_PERCENTAGE + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + SUBREDDIT_MIN_SCORE + "\" INTEGER NOT NULL DEFAULT 0,"
+                + "\"" + SUBREDDIT_ENABLED + "\" INTEGER NOT NULL DEFAULT 1,"
                 + "\"" + SUBREDDIT_MIN_COMMENTS + "\" INTEGER NOT NULL DEFAULT 0);");
     }
 
@@ -127,6 +136,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 + "\"" + TOPIC_UPVOTE_RATIO + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + TOPIC_NUM_COMMENTS + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + TOPIC_OVER_18 + "\" INTEGER NOT NULL DEFAULT 0,"
+                + "\"" + TOPIC_SELECTED + "\" INTEGER NOT NULL DEFAULT 1,"
                 + "CONSTRAINT fk_subreddit_name FOREIGN KEY(\"" + TOPIC_SUBREDDIT_NAME + "\") "
                 + "REFERENCES \"" + TABLE_SUBREDDITS + "\"(\"" + SUBREDDIT_NAME + "\") "
                 + "ON DELETE CASCADE ON UPDATE CASCADE);");
@@ -147,7 +157,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 + "ON DELETE CASCADE ON UPDATE CASCADE);");
     }
 
-    private void createTopicImageTableIndex(@NonNull SQLiteDatabase db) {
+    private void addTopicImageTableIndex(@NonNull SQLiteDatabase db) {
         db.execSQL("CREATE UNIQUE INDEX idx_topic_images_unique ON \"" + TABLE_TOPIC_IMAGES + "\"("
                 + "\"" + IMAGE_MEDIA_ID + "\","
                 + "\"" + IMAGE_TOPIC_ID + "\","
