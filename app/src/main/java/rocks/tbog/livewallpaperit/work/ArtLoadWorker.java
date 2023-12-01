@@ -179,8 +179,17 @@ public class ArtLoadWorker extends Worker {
 
         // remove artworks that no longer pass the filter from Muzei
         deleteArtworks(ctx, filteredOutImages);
-        // provide found artworks to Muzei
-        ProviderContract.getProviderClient(ctx, ArtProvider.class).addArtwork(mArtworkFound);
+        if (source.isEnabled) {
+            // provide found artworks to Muzei
+            var uriList =
+                    ProviderContract.getProviderClient(ctx, ArtProvider.class).addArtwork(mArtworkFound);
+            Log.v(TAG, uriList.size() + "/" + mArtworkFound.size() + " artwork(s) added to Muzei");
+        } else {
+            Log.v(
+                    TAG,
+                    "source " + source.subreddit + " not enabled. " + mArtworkFound.size()
+                            + " artwork(s) not added to Muzei");
+        }
 
         Log.i(TAG, "artworkSubmitCount=" + mArtworkFound.size() + " artworkNotFoundCount=" + mArtworkNotFoundCount);
         return Result.success(new Data.Builder()
