@@ -137,11 +137,6 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
         public Holder(@NonNull View itemView) {
             super(itemView);
             itemView.setTag(this);
-
-            //            // we set background selector here to do it only once
-            //            int touchColor = UIColors.getResultListRipple(itemView.getContext());
-            //            Drawable selectorBackground = CustomizeUI.getSelectorDrawable(itemView, touchColor, false);
-            //            itemView.setBackground(selectorBackground);
         }
 
         public void setOnClickListener(@Nullable View.OnClickListener listener) {

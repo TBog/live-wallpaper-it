@@ -12,6 +12,7 @@ import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
 
 public class SubmissionHolder extends RecycleAdapterBase.Holder {
+    public final TextView mInfoView;
     public final TextView mTitleView;
     public final Button mButtonOpen;
     public final Button mButtonRemove;
@@ -25,6 +26,7 @@ public class SubmissionHolder extends RecycleAdapterBase.Holder {
     public SubmissionHolder(@NonNull View itemView) {
         super(itemView);
 
+        mInfoView = itemView.findViewById(R.id.submission_info);
         mTitleView = itemView.findViewById(R.id.submission_title);
         mButtonOpen = itemView.findViewById(R.id.button_open);
         mButtonRemove = itemView.findViewById(R.id.button_remove);

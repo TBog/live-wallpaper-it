@@ -1,3 +1,4 @@
 <resources>
     <dimen name="margin">8dip</dimen>
+    <dimen name="scrollbar_thickness">12dip</dimen>
 </resources>

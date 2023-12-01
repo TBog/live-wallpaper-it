@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentManager;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -69,6 +71,15 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
 
     @Override
     public void onBindViewHolder(@NonNull SubmissionHolder holder, @NonNull SubTopic topic) {
+        final Context ctx = holder.itemView.getContext();
+        long createdMilli = Instant.ofEpochSecond(topic.createdUTC).toEpochMilli();
+        var displayAgo = DateUtils.getRelativeDateTimeString(
+                ctx,
+                createdMilli,
+                DateUtils.MINUTE_IN_MILLIS,
+                DateUtils.DAY_IN_MILLIS,
+                DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE);
+        holder.mInfoView.setText(displayAgo);
         holder.mTitleView.setText(topic.title);
         holder.mButtonOpen.setOnClickListener(v -> {
             Uri urlToOpen = Uri.parse("https://www.reddit.com" + topic.permalink);

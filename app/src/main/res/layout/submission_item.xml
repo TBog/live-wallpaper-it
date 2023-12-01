@@ -7,6 +7,21 @@
     tools:showIn="@layout/activity_sources">
 
     <TextView
+        android:id="@+id/submission_info"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="@dimen/margin"
+        android:gravity="top|start"
+        android:singleLine="true"
+        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+        app:layout_constraintBottom_toTopOf="@id/submission_title"
+        app:layout_constraintEnd_toEndOf="@id/submission_title"
+        app:layout_constraintHeight="wrap_content_constrained"
+        app:layout_constraintStart_toStartOf="@id/submission_title"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="@tools:sample/date/ddmmyy" />
+
+    <TextView
         android:id="@+id/submission_title"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -14,12 +29,13 @@
         android:gravity="top|start"
         android:maxLines="6"
         android:singleLine="false"
+        android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
         app:layout_constraintBottom_toTopOf="@id/barrier_title"
         app:layout_constraintEnd_toStartOf="@id/button_title_flow"
         app:layout_constraintHeight="wrap_content_constrained"
         app:layout_constraintHorizontal_chainStyle="spread_inside"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/submission_info"
         tools:text="@tools:sample/lorem/random" />
 
     <com.google.android.material.button.MaterialButton
@@ -51,6 +67,7 @@
         app:layout_constraintHeight="wrap_content"
         app:layout_constraintStart_toEndOf="@id/submission_title"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0"
         app:layout_constraintWidth="wrap_content" />
 
     <androidx.constraintlayout.widget.Barrier

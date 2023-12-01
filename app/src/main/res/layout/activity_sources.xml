@@ -20,10 +20,15 @@
         android:id="@+id/source_list"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:fadeScrollbars="true"
+        android:overScrollMode="never"
+        android:scrollbarSize="@dimen/scrollbar_thickness"
+        android:scrollbarStyle="outsideOverlay"
+        android:scrollbars="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/top_toolbar"
-        tools:listitem="@layout/source_item" />
+        tools:listitem="@layout/submission_item" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

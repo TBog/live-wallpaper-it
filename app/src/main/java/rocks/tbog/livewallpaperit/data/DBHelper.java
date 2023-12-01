@@ -294,10 +294,34 @@ public class DBHelper {
     public static boolean removeSubTopic(@NonNull Context context, @NonNull SubTopic topic) {
         SQLiteDatabase db = getDatabase(context);
 
-        return -1
-                != db.delete(
+        return 0
+                <= db.delete(
                         RedditDatabase.TABLE_TOPICS, "\"" + RedditDatabase.TOPIC_ID + "\" = ?", new String[] {topic.id
                         });
+    }
+
+    public static int removeSubTopicsNotMatching(
+            @NonNull Context context, String subreddit, @NonNull Collection<String> topicIds) {
+        if (topicIds.isEmpty()) return 0;
+        SQLiteDatabase db = getDatabase(context);
+
+        StringBuilder where = new StringBuilder()
+                .append("\"")
+                .append(RedditDatabase.TOPIC_SUBREDDIT_NAME)
+                .append("\"=? AND \"")
+                .append(RedditDatabase.TOPIC_ID)
+                .append("\" NOT IN (?");
+        if (topicIds.size() > 1) where.append(",?".repeat(topicIds.size() - 1));
+        where.append(")");
+
+        String[] args = new String[1 + topicIds.size()];
+        int idx = 0;
+        args[idx++] = subreddit;
+        for (var topicId : topicIds) {
+            args[idx++] = topicId;
+        }
+
+        return db.delete(RedditDatabase.TABLE_TOPICS, where.toString(), args);
     }
 
     public static List<SubTopic> getSubTopics(Context context, String subreddit) {
@@ -419,7 +443,10 @@ public class DBHelper {
         if (mediaIds.isEmpty()) return;
         SQLiteDatabase db = getDatabase(context);
 
-        StringBuilder where = new StringBuilder(RedditDatabase.IMAGE_MEDIA_ID).append(" IN (?");
+        StringBuilder where = new StringBuilder()
+                .append("\"")
+                .append(RedditDatabase.IMAGE_MEDIA_ID)
+                .append("\" IN (?");
         if (mediaIds.size() > 1) where.append(",?".repeat(mediaIds.size() - 1));
         where.append(")");
         String[] args = mediaIds.toArray(new String[0]);

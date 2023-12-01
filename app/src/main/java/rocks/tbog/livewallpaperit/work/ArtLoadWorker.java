@@ -120,6 +120,7 @@ public class ArtLoadWorker extends Worker {
 
         final int desiredArtworkCount = getInputData().getInt(WorkerUtils.DATA_DESIRED_ARTWORK_COUNT, 10);
         ArraySet<String> filteredOutImages = new ArraySet<>();
+        ArrayList<String> foundTopicIds = new ArrayList<>();
 
         SubmissionsFetcher submissionsFetcher = client.getSubredditsClient()
                 .createSubmissionsFetcher(
@@ -134,6 +135,7 @@ public class ArtLoadWorker extends Worker {
 
             for (Submission submission : submissions) {
                 final SubTopic topic = SubTopic.fromSubmission(submission);
+                foundTopicIds.add(topic.id);
                 if (topic.images.isEmpty() || isRemovedOrDeleted(submission)) {
                     mArtworkNotFoundCount += 1;
                     // get cached images and mark for removal in Muzei
@@ -156,13 +158,8 @@ public class ArtLoadWorker extends Worker {
                     }
                     continue;
                 }
-                getArtworks(submission.getSubredditNamePrefixed(), topic);
-                if (mArtworkFound.size() >= desiredArtworkCount) {
-                    Log.v(
-                            TAG,
-                            "stop; desiredArtworkCount=" + desiredArtworkCount + " artworkSubmitCount="
-                                    + mArtworkFound.size());
-                    break;
+                if (mArtworkFound.size() < desiredArtworkCount) {
+                    getArtworks(submission.getSubredditNamePrefixed(), topic);
                 }
             }
 
@@ -176,7 +173,9 @@ public class ArtLoadWorker extends Worker {
                 break;
             }
         }
-
+        // remove outdated topics from cache
+        var deleteCount = DBHelper.removeSubTopicsNotMatching(ctx, source.subreddit, foundTopicIds);
+        Log.v(TAG, "removed " + deleteCount + " old submission(s)");
         // remove artworks that no longer pass the filter from Muzei
         deleteArtworks(ctx, filteredOutImages);
         if (source.isEnabled) {

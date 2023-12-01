@@ -22,6 +22,7 @@ import java.util.Set;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
+import rocks.tbog.livewallpaperit.WorkAsync.RunnableTask;
 import rocks.tbog.livewallpaperit.data.SubTopic;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
 
@@ -69,7 +70,7 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
         Activity activity = ViewUtils.getActivity(holder.itemView);
         final Bitmap[] bitmapWrapper = new Bitmap[] {null};
         if (activity instanceof ComponentActivity) {
-            AsyncUtils.runAsync(
+            holder.loadImageTask = AsyncUtils.runAsync(
                     ((ComponentActivity) activity).getLifecycle(),
                     task -> {
                         InputStream inputStream = null;
@@ -79,14 +80,30 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
                         } catch (IOException e) {
                             Log.e(TAG, "image " + item.image.mediaId + " failed to open connection", e);
                         }
-                        if (inputStream == null) task.cancel();
+                        if (task.isCancelled()) return;
+                        if (inputStream == null) {
+                            task.cancel();
+                            return;
+                        }
                         bitmapWrapper[0] = BitmapFactory.decodeStream(inputStream);
                     },
                     task -> {
+                        if (task.isCancelled()) return;
                         if (bitmapWrapper[0] != null) {
                             holder.mImageView.setImageBitmap(bitmapWrapper[0]);
                         }
+                        if (holder.loadImageTask == task) {
+                            holder.loadImageTask = null;
+                        }
                     });
+        }
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull ThumbnailHolder holder) {
+        if (holder.loadImageTask != null) {
+            holder.loadImageTask.cancel();
+            holder.loadImageTask = null;
         }
     }
 
@@ -110,8 +127,9 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
     }
 
     public static class ThumbnailHolder extends RecycleAdapterBase.Holder {
-        ImageView mImageView;
-        ImageView mInvalidView;
+        public ImageView mImageView;
+        public ImageView mInvalidView;
+        public RunnableTask loadImageTask = null;
 
         public ThumbnailHolder(@NonNull View itemView) {
             super(itemView);
