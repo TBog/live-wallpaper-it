@@ -82,12 +82,13 @@ public class RedditDatabase extends SQLiteOpenHelper {
                     createTopicImageTable(db);
                     // fall through
                 case 3:
-                    if (oldVersion == 3) {
+                    if (oldVersion == 3)
                         db.execSQL("ALTER TABLE \"" + TABLE_TOPICS + "\" ADD COLUMN \"" + TOPIC_SELECTED
                                 + "\" INTEGER NOT NULL DEFAULT 1");
+                    if (oldVersion >= 2)
                         db.execSQL("ALTER TABLE \"" + TABLE_SUBREDDITS + "\" ADD COLUMN \"" + SUBREDDIT_ENABLED
                                 + "\" INTEGER NOT NULL DEFAULT 1");
-                    }
+
                     addTopicImageTableIndex(db);
                     // fall through
                 default:
@@ -101,8 +102,9 @@ public class RedditDatabase extends SQLiteOpenHelper {
     @Override
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.i(TAG, "DOWN-grade database from version " + oldVersion + " to version " + newVersion);
+        if (oldVersion <= newVersion) return;
         try {
-            if (newVersion == 2) {
+            if (newVersion <= 2) {
                 db.execSQL("DROP TABLE IF EXISTS " + TABLE_TOPICS);
                 db.execSQL("DROP TABLE IF EXISTS " + TABLE_TOPIC_IMAGES);
             }
@@ -117,8 +119,8 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 + "\"" + SUBREDDIT_NAME + "\" TEXT UNIQUE,"
                 + "\"" + SUBREDDIT_MIN_UPVOTE_PERCENTAGE + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + SUBREDDIT_MIN_SCORE + "\" INTEGER NOT NULL DEFAULT 0,"
-                + "\"" + SUBREDDIT_ENABLED + "\" INTEGER NOT NULL DEFAULT 1,"
-                + "\"" + SUBREDDIT_MIN_COMMENTS + "\" INTEGER NOT NULL DEFAULT 0);");
+                + "\"" + SUBREDDIT_MIN_COMMENTS + "\" INTEGER NOT NULL DEFAULT 0,"
+                + "\"" + SUBREDDIT_ENABLED + "\" INTEGER NOT NULL DEFAULT 1);");
     }
 
     private void createTopicTable(@NonNull SQLiteDatabase db) {
