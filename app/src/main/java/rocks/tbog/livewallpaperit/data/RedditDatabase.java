@@ -10,7 +10,7 @@ import androidx.annotation.NonNull;
 
 public class RedditDatabase extends SQLiteOpenHelper {
     private static final String DB_NAME = "reddit.s3db";
-    private static final int DB_VERSION = 4;
+    private static final int DB_VERSION = 5;
     private static final String TAG = "DB";
     static final String TABLE_IGNORE = "ignore_artwork";
     static final String TABLE_SUBREDDITS = "subreddits";
@@ -21,6 +21,9 @@ public class RedditDatabase extends SQLiteOpenHelper {
     static final String SUBREDDIT_MIN_UPVOTE_PERCENTAGE = "min_upvote_perc";
     static final String SUBREDDIT_MIN_SCORE = "min_score";
     static final String SUBREDDIT_MIN_COMMENTS = "min_comments";
+    static final String SUBREDDIT_IMAGE_MIN_WIDTH = "img_min_width";
+    static final String SUBREDDIT_IMAGE_MIN_HEIGHT = "img_min_height";
+    static final String SUBREDDIT_IMAGE_ORIENTATION = "img_orientation";
     static final String SUBREDDIT_ENABLED = "is_enabled";
     public static final String TOPIC_SUBREDDIT_NAME = "subreddit";
     public static final String TOPIC_ID = "id";
@@ -91,6 +94,16 @@ public class RedditDatabase extends SQLiteOpenHelper {
 
                     addTopicImageTableIndex(db);
                     // fall through
+                case 4:
+                    if (oldVersion >= 2) {
+                        db.execSQL("ALTER TABLE \"" + TABLE_SUBREDDITS + "\" ADD COLUMN \"" + SUBREDDIT_IMAGE_MIN_WIDTH
+                                + "\" INTEGER NOT NULL DEFAULT 0");
+                        db.execSQL("ALTER TABLE \"" + TABLE_SUBREDDITS + "\" ADD COLUMN \"" + SUBREDDIT_IMAGE_MIN_HEIGHT
+                                + "\" INTEGER NOT NULL DEFAULT 0");
+                        db.execSQL("ALTER TABLE \"" + TABLE_SUBREDDITS + "\" ADD COLUMN \""
+                                + SUBREDDIT_IMAGE_ORIENTATION + "\" INTEGER NOT NULL DEFAULT 0");
+                    }
+                    // fall through
                 default:
                     break;
             }
@@ -120,6 +133,9 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 + "\"" + SUBREDDIT_MIN_UPVOTE_PERCENTAGE + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + SUBREDDIT_MIN_SCORE + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + SUBREDDIT_MIN_COMMENTS + "\" INTEGER NOT NULL DEFAULT 0,"
+                + "\"" + SUBREDDIT_IMAGE_MIN_WIDTH + "\" INTEGER NOT NULL DEFAULT 0,"
+                + "\"" + SUBREDDIT_IMAGE_MIN_HEIGHT + "\" INTEGER NOT NULL DEFAULT 0,"
+                + "\"" + SUBREDDIT_IMAGE_ORIENTATION + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + SUBREDDIT_ENABLED + "\" INTEGER NOT NULL DEFAULT 1);");
     }
 

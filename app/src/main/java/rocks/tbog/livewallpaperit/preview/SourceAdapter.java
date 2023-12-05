@@ -45,24 +45,33 @@ public class SourceAdapter extends RecycleAdapterBase<Source, SourceHolder> {
         holder.bind(source, mSourceChangedObserver);
 
         holder.subredditName.setText(source.subreddit);
-        holder.toggleSwitch.setOnCheckedChangeListener(null);
+
         holder.toggleSwitch.setChecked(source.isEnabled);
         holder.toggleSwitch.setOnCheckedChangeListener(holder.mToggleListener);
 
         // minUpvotePercentage
-        holder.minUpvotePercentage.removeTextChangedListener(holder.mUpvotePercentageWatcher);
         holder.minUpvotePercentage.setText(intToString(source.minUpvotePercentage));
         holder.minUpvotePercentage.addTextChangedListener(holder.mUpvotePercentageWatcher);
 
         // minScore
-        holder.minScore.removeTextChangedListener(holder.mScoreWatcher);
         holder.minScore.setText(intToString(source.minScore));
         holder.minScore.addTextChangedListener(holder.mScoreWatcher);
 
         // minComments
-        holder.minComments.removeTextChangedListener(holder.mCommentsWatcher);
         holder.minComments.setText(intToString(source.minComments));
         holder.minComments.addTextChangedListener(holder.mCommentsWatcher);
+
+        // image
+        holder.imageMinWidth.setText(intToString(source.imageMinWidth), false);
+        holder.imageMinHeight.setText(intToString(source.imageMinHeight), false);
+        holder.imageMinWidth.setOnItemClickListener(holder.mImageWidthListener);
+        holder.imageMinHeight.setOnItemClickListener(holder.mImageHeightListener);
+
+        // orientation
+        var adapter = holder.imageOrientation.getAdapter();
+        CharSequence orientation = (CharSequence) adapter.getItem(source.imageOrientation.toInt());
+        holder.imageOrientation.setText(orientation, false);
+        holder.imageOrientation.setOnItemClickListener(holder.mImageOrientationListener);
 
         // preview button
         holder.buttonPreview.setOnClickListener(v -> {
@@ -100,6 +109,17 @@ public class SourceAdapter extends RecycleAdapterBase<Source, SourceHolder> {
                             })
                     .show(fragmentManager);
         });
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull SourceHolder holder) {
+        holder.toggleSwitch.setOnCheckedChangeListener(null);
+        holder.minUpvotePercentage.removeTextChangedListener(holder.mUpvotePercentageWatcher);
+        holder.minScore.removeTextChangedListener(holder.mScoreWatcher);
+        holder.minComments.removeTextChangedListener(holder.mCommentsWatcher);
+        holder.imageMinWidth.setOnItemSelectedListener(null);
+        holder.imageMinHeight.setOnItemSelectedListener(null);
+        holder.imageOrientation.setOnItemSelectedListener(null);
     }
 
     private static String intToString(int value) {

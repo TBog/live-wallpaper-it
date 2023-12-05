@@ -152,4 +152,71 @@
         app:barrierDirection="bottom"
         app:constraint_referenced_ids="wrap_min_upvote_percent,wrap_min_score,wrap_min_comments" />
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/wrap_img_min_width"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginHorizontal="@dimen/margin"
+        android:hint="min width"
+        android:labelFor="@id/img_min_width"
+        app:layout_constraintEnd_toStartOf="@id/wrap_img_min_height"
+        app:layout_constraintHeight="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/barrier_bottom">
+
+        <AutoCompleteTextView
+            android:id="@+id/img_min_width"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            tools:text="@tools:sample/us_zipcodes" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/wrap_img_min_height"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginHorizontal="@dimen/margin"
+        android:hint="min height"
+        android:labelFor="@id/img_min_height"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight="wrap_content"
+        app:layout_constraintStart_toEndOf="@id/wrap_img_min_width"
+        app:layout_constraintTop_toBottomOf="@id/barrier_bottom">
+
+        <AutoCompleteTextView
+            android:id="@+id/img_min_height"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            tools:text="@tools:sample/us_zipcodes" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/wrap_img_orientation"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginHorizontal="@dimen/margin"
+        android:hint="orientation"
+        android:labelFor="@id/img_min_height"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/wrap_img_min_width">
+
+        <AutoCompleteTextView
+            android:id="@+id/img_orientation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none"
+            tools:text="@string/image_orientation_portrait" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
 </androidx.constraintlayout.motion.widget.MotionLayout>

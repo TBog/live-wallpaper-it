@@ -22,7 +22,6 @@ import com.kirkbushman.araw.models.enums.SubmissionsSorting;
 import com.kirkbushman.araw.models.enums.TimePeriod;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import rocks.tbog.livewallpaperit.ArtProvider;
@@ -34,7 +33,6 @@ public class ArtLoadWorker extends Worker {
     private static final String TAG = ArtLoadWorker.class.getSimpleName();
     private static final int FETCH_AMOUNT = 100;
     private static final int MAX_FETCHES = 3;
-    private List<String> mIgnoreTokenList = Collections.emptyList();
     private int mArtworkNotFoundCount = 0;
     private final ArrayList<Artwork> mArtworkFound = new ArrayList<>();
 
@@ -42,7 +40,13 @@ public class ArtLoadWorker extends Worker {
         public int minUpvotePercentage = 0;
         public int minScore = 0;
         public int minComments = 0;
+        public int imageMinWidth = 0;
+        public int imageMinHeight = 0;
+        private Source.Orientation imageOrientation = Source.Orientation.ANY;
         public boolean allowNSFW = true;
+
+        @NonNull
+        public final ArraySet<String> ignoreTokenList = new ArraySet<>();
 
         @Nullable
         public static Filter fromSource(@Nullable Source source) {
@@ -51,6 +55,9 @@ public class ArtLoadWorker extends Worker {
             filter.minUpvotePercentage = source.minUpvotePercentage;
             filter.minScore = source.minScore;
             filter.minComments = source.minComments;
+            filter.imageMinWidth = source.imageMinWidth;
+            filter.imageMinHeight = source.imageMinHeight;
+            filter.imageOrientation = source.imageOrientation;
             return filter;
         }
 
@@ -62,12 +69,22 @@ public class ArtLoadWorker extends Worker {
             return minUpvotePercentage == filter.minUpvotePercentage
                     && minScore == filter.minScore
                     && minComments == filter.minComments
-                    && allowNSFW == filter.allowNSFW;
+                    && imageMinWidth == filter.imageMinWidth
+                    && imageMinHeight == filter.imageMinHeight
+                    && allowNSFW == filter.allowNSFW
+                    && imageOrientation == filter.imageOrientation;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(minUpvotePercentage, minScore, minComments, allowNSFW);
+            return Objects.hash(
+                    minUpvotePercentage,
+                    minScore,
+                    minComments,
+                    imageMinWidth,
+                    imageMinHeight,
+                    imageOrientation,
+                    allowNSFW);
         }
     }
 
@@ -79,11 +96,6 @@ public class ArtLoadWorker extends Worker {
     @Override
     public Result doWork() {
         Context ctx = getApplicationContext();
-
-        String[] ignoreTokens = getInputData().getStringArray(WorkerUtils.DATA_IGNORE_TOKEN_LIST);
-        if (ignoreTokens != null) {
-            mIgnoreTokenList = Arrays.asList(ignoreTokens);
-        }
 
         Source source = Source.fromByteArray(getInputData().getByteArray(WorkerUtils.DATA_SOURCE));
         if (source == null) {
@@ -114,8 +126,13 @@ public class ArtLoadWorker extends Worker {
                     .build());
 
         Filter filter = Filter.fromSource(source);
-        if (filter != null) {
-            filter.allowNSFW = getInputData().getBoolean(WorkerUtils.DATA_ALLOW_NSFW, false);
+        if (filter == null) {
+            filter = new Filter();
+        }
+        filter.allowNSFW = getInputData().getBoolean(WorkerUtils.DATA_ALLOW_NSFW, false);
+        String[] ignoreTokens = getInputData().getStringArray(WorkerUtils.DATA_IGNORE_TOKEN_LIST);
+        if (ignoreTokens != null) {
+            filter.ignoreTokenList.addAll(Arrays.asList(ignoreTokens));
         }
 
         final int desiredArtworkCount = getInputData().getInt(WorkerUtils.DATA_DESIRED_ARTWORK_COUNT, 10);
@@ -158,8 +175,15 @@ public class ArtLoadWorker extends Worker {
                     }
                     continue;
                 }
+                // remove (un-obfuscated source) images that don't pass the filter from Muzei
+                for (var image : topic.images) {
+                    if (!image.isSource || image.isObfuscated) continue;
+                    if (shouldSkipImage(image, filter)) {
+                        filteredOutImages.add(image.mediaId);
+                    }
+                }
                 if (mArtworkFound.size() < desiredArtworkCount) {
-                    getArtworks(submission.getSubredditNamePrefixed(), topic);
+                    getArtworks(submission.getSubredditNamePrefixed(), topic, filter);
                 }
             }
 
@@ -170,7 +194,7 @@ public class ArtLoadWorker extends Worker {
                                 + mArtworkFound.size());
                 submissions = submissionsFetcher.fetchNext();
             } else {
-                break;
+                submissions = null;
             }
         }
         // remove outdated topics from cache
@@ -230,9 +254,7 @@ public class ArtLoadWorker extends Worker {
         return !TextUtils.isEmpty(submission.getRemovedByCategory());
     }
 
-    public static boolean shouldSkipTopic(@NonNull SubTopic topic, @Nullable Filter filter) {
-        if (filter == null) return false;
-
+    public static boolean shouldSkipTopic(@NonNull SubTopic topic, @NonNull Filter filter) {
         if (filter.minUpvotePercentage > 0) {
             if (topic.upvoteRatio < filter.minUpvotePercentage) {
                 Log.v(
@@ -265,9 +287,57 @@ public class ArtLoadWorker extends Worker {
         return false;
     }
 
-    private void getArtworks(String subredditNamePrefixed, @NonNull SubTopic topic) {
+    /**
+     * Check if the image should be skipped while adding artworks
+     */
+    public static boolean shouldSkipImage(@NonNull SubTopic.Image image, @NonNull Filter filter) {
+        if (!image.isSource || image.isObfuscated) return true;
+        if (filter.imageMinWidth > 0 && image.width < filter.imageMinWidth) {
+            Log.v(TAG, "imageMinWidth " + image.width + "<" + filter.imageMinWidth + " skipping " + image.mediaId);
+            return true;
+        }
+        if (filter.imageMinHeight > 0 && image.height < filter.imageMinHeight) {
+            Log.v(TAG, "imageMinHeight " + image.height + "<" + filter.imageMinHeight + " skipping " + image.mediaId);
+            return true;
+        }
+        float aspect = image.width / (float) image.height;
+        switch (filter.imageOrientation) {
+            case ANY:
+                return false;
+            case PORTRAIT:
+                if (aspect > 1.f) {
+                    Log.v(
+                            TAG,
+                            "image aspect " + aspect + ">1 (" + filter.imageOrientation + ") skipping "
+                                    + image.mediaId);
+                    return true;
+                }
+                return false;
+            case LANDSCAPE:
+                if (aspect < 1.f) {
+                    Log.v(
+                            TAG,
+                            "image aspect " + aspect + "<1 (" + filter.imageOrientation + ") skipping "
+                                    + image.mediaId);
+                    return true;
+                }
+                return false;
+            case SQUARE:
+                if (!(.9f <= aspect && aspect <= 1.1f)) {
+                    Log.v(
+                            TAG,
+                            "image aspect " + aspect + "!=1 (" + filter.imageOrientation + ") skipping "
+                                    + image.mediaId);
+                    return true;
+                }
+                return false;
+        }
+        return false;
+    }
+
+    private void getArtworks(String subredditNamePrefixed, @NonNull SubTopic topic, @NonNull Filter filter) {
         for (var image : topic.images) {
-            if (!image.isSource || image.isObfuscated) continue;
+            if (shouldSkipImage(image, filter)) continue;
 
             String byline = topic.linkFlairText;
             if (TextUtils.isEmpty(byline)) byline = subredditNamePrefixed;
@@ -281,13 +351,11 @@ public class ArtLoadWorker extends Worker {
                     .title(topic.title)
                     .build();
 
+            if (filter.ignoreTokenList.contains(artwork.getToken())) {
+                Log.v(TAG, "ignoreArtwork " + artwork.getToken() + " `" + artwork.getTitle() + "`");
+                continue;
+            }
             Log.v(TAG, "addArtwork " + artwork.getToken() + " `" + artwork.getTitle() + "`");
-            addArtwork(artwork);
-        }
-    }
-
-    private void addArtwork(Artwork artwork) {
-        if (!mIgnoreTokenList.contains(artwork.getToken())) {
             mArtworkFound.add(artwork);
         }
     }

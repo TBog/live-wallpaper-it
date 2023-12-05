@@ -18,7 +18,36 @@ public class Source implements Serializable {
     public int minUpvotePercentage = 0;
     public int minScore = 0;
     public int minComments = 0;
+    public int imageMinWidth = 0;
+    public int imageMinHeight = 0;
+    public Orientation imageOrientation = Orientation.ANY;
     public boolean isEnabled = true;
+
+    public enum Orientation {
+        ANY(0),
+        PORTRAIT(1),
+        LANDSCAPE(2),
+        SQUARE(3);
+
+        private final int mValue;
+
+        Orientation(int value) {
+            mValue = value;
+        }
+
+        public static Orientation fromInt(int value) {
+            for (var e : values()) {
+                if (e.mValue == value) {
+                    return e;
+                }
+            }
+            return ANY;
+        }
+
+        public int toInt() {
+            return mValue;
+        }
+    }
 
     public Source(@NonNull String subreddit) {
         this.subreddit = subreddit;

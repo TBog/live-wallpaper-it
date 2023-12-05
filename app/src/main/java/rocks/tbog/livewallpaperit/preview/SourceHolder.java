@@ -1,10 +1,14 @@
 package rocks.tbog.livewallpaperit.preview;
 
+import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.TextView;
@@ -13,11 +17,16 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.motion.widget.MotionLayout;
 import androidx.lifecycle.Observer;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
 import rocks.tbog.livewallpaperit.Source;
 
 public class SourceHolder extends RecycleAdapterBase.Holder {
+    @Nullable
+    private Source mSource = null;
+
     public final TextView subredditName;
     public final SwitchMaterial toggleSwitch;
     public final Button buttonRemove;
@@ -26,6 +35,9 @@ public class SourceHolder extends RecycleAdapterBase.Holder {
     public final TextView minUpvotePercentage;
     public final TextView minScore;
     public final TextView minComments;
+    public final AutoCompleteTextView imageMinWidth;
+    public final AutoCompleteTextView imageMinHeight;
+    public final AutoCompleteTextView imageOrientation;
 
     public Observer<Source> mSourceChangedObserver;
 
@@ -61,6 +73,45 @@ public class SourceHolder extends RecycleAdapterBase.Holder {
             mSourceChangedObserver.onChanged(source);
         }
     };
+    public final AdapterView.OnItemClickListener mImageWidthListener = new IntItemSelectedListener() {
+        @Override
+        void onSelectionChanged(@NonNull Source source, @Nullable Integer newValue) {
+            int value;
+            if (newValue != null) {
+                value = newValue;
+            } else {
+                value = 0;
+            }
+            if (source.imageMinWidth == value) return;
+            source.imageMinWidth = value;
+            mSourceChangedObserver.onChanged(source);
+        }
+    };
+    public final AdapterView.OnItemClickListener mImageHeightListener = new IntItemSelectedListener() {
+        @Override
+        void onSelectionChanged(@NonNull Source source, @Nullable Integer newValue) {
+            final int value;
+            if (newValue != null) {
+                value = newValue;
+            } else {
+                value = 0;
+            }
+            if (source.imageMinHeight == value) return;
+            source.imageMinHeight = value;
+            mSourceChangedObserver.onChanged(source);
+        }
+    };
+    public final AdapterView.OnItemClickListener mImageOrientationListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            if (mSource == null) return;
+            var values = parent.getResources().getIntArray(R.array.image_orientation_values);
+            Source.Orientation orientation = Source.Orientation.fromInt(values[position]);
+            if (mSource.imageOrientation == orientation) return;
+            mSource.imageOrientation = orientation;
+            mSourceChangedObserver.onChanged(mSource);
+        }
+    };
 
     public SourceHolder(@NonNull View itemView) {
         super(itemView);
@@ -73,6 +124,44 @@ public class SourceHolder extends RecycleAdapterBase.Holder {
         minUpvotePercentage = itemView.findViewById(R.id.min_upvote_percent);
         minScore = itemView.findViewById(R.id.min_score);
         minComments = itemView.findViewById(R.id.min_comments);
+        imageMinWidth = itemView.findViewById(R.id.img_min_width);
+        imageMinHeight = itemView.findViewById(R.id.img_min_height);
+        imageOrientation = itemView.findViewById(R.id.img_orientation);
+
+        Context ctx = itemView.getContext();
+        var widthList = IntStream.range(108, 2160).boxed().collect(Collectors.toList());
+        var widthAdapter = new ArrayAdapter<>(ctx, android.R.layout.simple_dropdown_item_1line, widthList);
+        imageMinWidth.setAdapter(widthAdapter);
+        imageMinWidth.setOnFocusChangeListener((v, hasFocus) -> {
+            if (mSource == null) return;
+            if (hasFocus) return;
+            final String value;
+            if (mSource.imageMinWidth > 0) {
+                value = String.valueOf(mSource.imageMinWidth);
+            } else {
+                value = "";
+            }
+            imageMinWidth.setText(value);
+        });
+
+        var heightList = IntStream.range(108, 3840).boxed().collect(Collectors.toList());
+        var heightAdapter = new ArrayAdapter<>(ctx, android.R.layout.simple_dropdown_item_1line, heightList);
+        imageMinHeight.setAdapter(heightAdapter);
+        imageMinHeight.setOnFocusChangeListener((v, hasFocus) -> {
+            if (mSource == null) return;
+            if (hasFocus) return;
+            final String value;
+            if (mSource.imageMinHeight > 0) {
+                value = String.valueOf(mSource.imageMinHeight);
+            } else {
+                value = "";
+            }
+            imageMinHeight.setText(value);
+        });
+
+        var dropdownOptions = ctx.getResources().getTextArray(R.array.image_orientation_display);
+        imageOrientation.setAdapter(
+                new ArrayAdapter<>(ctx, android.R.layout.simple_dropdown_item_1line, dropdownOptions));
 
         final MotionLayout parent = (MotionLayout) itemView;
         minUpvotePercentage.setOnFocusChangeListener((v, hasFocus) -> {
@@ -93,11 +182,8 @@ public class SourceHolder extends RecycleAdapterBase.Holder {
     }
 
     public void bind(Source source, Observer<Source> sourceChangedObserver) {
+        mSource = source;
         mSourceChangedObserver = sourceChangedObserver;
-        mUpvotePercentageWatcher.mSource = source;
-        mScoreWatcher.mSource = source;
-        mCommentsWatcher.mSource = source;
-        mToggleListener.mSource = source;
 
         final MotionLayout parent = (MotionLayout) itemView;
         final View.OnKeyListener blurOnEnter = (view, keyCode, event) -> {
@@ -124,10 +210,7 @@ public class SourceHolder extends RecycleAdapterBase.Holder {
         minComments.setOnEditorActionListener(blurOnDone);
     }
 
-    public abstract static class TextChangedWatcher implements TextWatcher {
-        @Nullable
-        private Source mSource = null;
-
+    public abstract class TextChangedWatcher implements TextWatcher {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
@@ -148,10 +231,7 @@ public class SourceHolder extends RecycleAdapterBase.Holder {
         abstract void onIntChanged(@NonNull Source source, int newValue);
     }
 
-    public abstract static class ToggleChangedListener implements CompoundButton.OnCheckedChangeListener {
-        @Nullable
-        private Source mSource = null;
-
+    public abstract class ToggleChangedListener implements CompoundButton.OnCheckedChangeListener {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (mSource == null) return;
@@ -159,5 +239,26 @@ public class SourceHolder extends RecycleAdapterBase.Holder {
         }
 
         abstract void onToggleChanged(@NonNull Source mSource, boolean isChecked);
+    }
+
+    public abstract class IntItemSelectedListener implements AdapterView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            if (mSource == null) return;
+            var item = parent.getItemAtPosition(position);
+            if (item instanceof Integer) {
+                onSelectionChanged(mSource, (Integer) item);
+            } else if (item instanceof String) {
+                int value;
+                try {
+                    value = Integer.parseInt((String) item);
+                } catch (NumberFormatException ignored) {
+                    return;
+                }
+                onSelectionChanged(mSource, value);
+            }
+        }
+
+        abstract void onSelectionChanged(@NonNull Source source, @Nullable Integer value);
     }
 }

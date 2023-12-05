@@ -1,0 +1,18 @@
+<resources>
+    <string-array name="image_orientation_display">
+        <item>@string/image_orientation_any</item>
+        <item>@string/image_orientation_portrait</item>
+        <item>@string/image_orientation_landscape</item>
+        <item>@string/image_orientation_square</item>
+    </string-array>
+    <integer-array name="image_orientation_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </integer-array>
+    <string name="image_orientation_any">Any</string>
+    <string name="image_orientation_portrait">Portrait</string>
+    <string name="image_orientation_landscape">Landscape</string>
+    <string name="image_orientation_square">Square</string>
+</resources>

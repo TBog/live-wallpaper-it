@@ -109,6 +109,9 @@ public class DBHelper {
                     RedditDatabase.SUBREDDIT_MIN_UPVOTE_PERCENTAGE,
                     RedditDatabase.SUBREDDIT_MIN_SCORE,
                     RedditDatabase.SUBREDDIT_MIN_COMMENTS,
+                    RedditDatabase.SUBREDDIT_IMAGE_MIN_WIDTH,
+                    RedditDatabase.SUBREDDIT_IMAGE_MIN_HEIGHT,
+                    RedditDatabase.SUBREDDIT_IMAGE_ORIENTATION,
                     RedditDatabase.SUBREDDIT_ENABLED,
                 },
                 null,
@@ -121,11 +124,17 @@ public class DBHelper {
                 cursor.moveToFirst();
                 records = new ArrayList<>(cursor.getCount());
                 while (!cursor.isAfterLast()) {
-                    Source source = new Source(cursor.getString(0));
-                    source.minUpvotePercentage = cursor.getInt(1);
-                    source.minScore = cursor.getInt(2);
-                    source.minComments = cursor.getInt(3);
-                    source.isEnabled = 0 != cursor.getInt(4);
+                    int columnIdx = 0;
+                    Source source = new Source(cursor.getString(columnIdx++));
+                    source.minUpvotePercentage = cursor.getInt(columnIdx++);
+                    source.minScore = cursor.getInt(columnIdx++);
+                    source.minComments = cursor.getInt(columnIdx++);
+                    source.imageMinWidth = cursor.getInt(columnIdx++);
+                    source.imageMinHeight = cursor.getInt(columnIdx++);
+                    source.imageOrientation = Source.Orientation.fromInt(cursor.getInt(columnIdx++));
+                    source.isEnabled = 0 != cursor.getInt(columnIdx++);
+                    //noinspection ConstantValue
+                    if (columnIdx != 8) throw new IllegalStateException("Invalid column count");
                     records.add(source);
 
                     cursor.moveToNext();
@@ -146,6 +155,9 @@ public class DBHelper {
         value.put(RedditDatabase.SUBREDDIT_MIN_UPVOTE_PERCENTAGE, source.minUpvotePercentage);
         value.put(RedditDatabase.SUBREDDIT_MIN_SCORE, source.minScore);
         value.put(RedditDatabase.SUBREDDIT_MIN_COMMENTS, source.minComments);
+        value.put(RedditDatabase.SUBREDDIT_IMAGE_MIN_WIDTH, source.imageMinWidth);
+        value.put(RedditDatabase.SUBREDDIT_IMAGE_MIN_HEIGHT, source.imageMinHeight);
+        value.put(RedditDatabase.SUBREDDIT_IMAGE_ORIENTATION, source.imageOrientation.toInt());
         value.put(RedditDatabase.SUBREDDIT_ENABLED, source.isEnabled);
         return -1
                 != db.insertWithOnConflict(
@@ -159,6 +171,9 @@ public class DBHelper {
         value.put(RedditDatabase.SUBREDDIT_MIN_UPVOTE_PERCENTAGE, source.minUpvotePercentage);
         value.put(RedditDatabase.SUBREDDIT_MIN_SCORE, source.minScore);
         value.put(RedditDatabase.SUBREDDIT_MIN_COMMENTS, source.minComments);
+        value.put(RedditDatabase.SUBREDDIT_IMAGE_MIN_WIDTH, source.imageMinWidth);
+        value.put(RedditDatabase.SUBREDDIT_IMAGE_MIN_HEIGHT, source.imageMinHeight);
+        value.put(RedditDatabase.SUBREDDIT_IMAGE_ORIENTATION, source.imageOrientation.toInt());
         value.put(RedditDatabase.SUBREDDIT_ENABLED, source.isEnabled);
         db.updateWithOnConflict(
                 RedditDatabase.TABLE_SUBREDDITS,
