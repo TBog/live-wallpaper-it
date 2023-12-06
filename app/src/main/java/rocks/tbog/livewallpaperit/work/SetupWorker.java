@@ -10,7 +10,9 @@ import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 import com.kirkbushman.araw.RedditClient;
+import com.kirkbushman.araw.helpers.AuthHelper;
 import com.kirkbushman.araw.helpers.AuthUserlessHelper;
+import com.kirkbushman.araw.helpers.NoAuthHelper;
 import java.util.List;
 import rocks.tbog.livewallpaperit.data.DBHelper;
 
@@ -25,13 +27,14 @@ public class SetupWorker extends Worker {
     @Override
     public Result doWork() {
         Context ctx = getApplicationContext();
-        String clientId = getInputData().getString(WorkerUtils.DATA_CLIENT_ID);
-        if (TextUtils.isEmpty(clientId))
-            return Result.failure(new Data.Builder()
-                    .putString(WorkerUtils.FAIL_REASON, "empty clientId")
-                    .build());
 
-        var helper = new AuthUserlessHelper(ctx, clientId, "DO_NOT_TRACK_THIS_DEVICE", false, true);
+        final AuthHelper helper;
+        String clientId = getInputData().getString(WorkerUtils.DATA_CLIENT_ID);
+        if (TextUtils.isEmpty(clientId)) {
+            helper = new NoAuthHelper(false, true);
+        } else {
+            helper = new AuthUserlessHelper(ctx, clientId, "DO_NOT_TRACK_THIS_DEVICE", false, true);
+        }
 
         // obtain a client
         RedditClient client = helper.getRedditClient();

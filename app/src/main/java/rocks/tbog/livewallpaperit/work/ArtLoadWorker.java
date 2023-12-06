@@ -16,7 +16,9 @@ import com.google.android.apps.muzei.api.provider.ProviderContract;
 import com.kirkbushman.araw.RedditClient;
 import com.kirkbushman.araw.fetcher.Fetcher;
 import com.kirkbushman.araw.fetcher.SubmissionsFetcher;
+import com.kirkbushman.araw.helpers.AuthHelper;
 import com.kirkbushman.araw.helpers.AuthUserlessHelper;
+import com.kirkbushman.araw.helpers.NoAuthHelper;
 import com.kirkbushman.araw.models.Submission;
 import com.kirkbushman.araw.models.enums.SubmissionsSorting;
 import com.kirkbushman.araw.models.enums.TimePeriod;
@@ -110,14 +112,14 @@ public class ArtLoadWorker extends Worker {
                     .putString(WorkerUtils.FAIL_REASON, "empty subreddit")
                     .build());
         }
+
+        final AuthHelper helper;
         String clientId = getInputData().getString(WorkerUtils.DATA_CLIENT_ID);
         if (TextUtils.isEmpty(clientId)) {
-            return Result.failure(new Data.Builder()
-                    .putString(WorkerUtils.FAIL_REASON, "empty clientId")
-                    .build());
+            helper = new NoAuthHelper(false, true);
+        } else {
+            helper = new AuthUserlessHelper(ctx, clientId, "DO_NOT_TRACK_THIS_DEVICE", false, true);
         }
-
-        var helper = new AuthUserlessHelper(ctx, clientId, "DO_NOT_TRACK_THIS_DEVICE", false, true);
         // obtain a client
         RedditClient client = helper.getRedditClient();
         if (client == null)
