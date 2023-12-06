@@ -22,6 +22,10 @@ public class LWIViewModel extends AndroidViewModel {
         super(application);
     }
 
+    public void setRedditAuthNow(@NonNull String clientId, boolean isVerified) {
+        mRedditAuth.setValue(new RedditAuth(clientId, isVerified));
+    }
+
     public void setRedditAuth(@NonNull String clientId, boolean isVerified) {
         mRedditAuth.postValue(new RedditAuth(clientId, isVerified));
     }

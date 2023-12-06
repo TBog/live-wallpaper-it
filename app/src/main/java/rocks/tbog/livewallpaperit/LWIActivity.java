@@ -73,7 +73,7 @@ public class LWIActivity extends AppCompatActivity {
             boolean isVerified = DataUtils.isRedditAuthVerified(getApplicationContext());
             String verifiedClientId = DataUtils.loadRedditAuth(getApplicationContext());
             mInput.setText(verifiedClientId);
-            mModel.setRedditAuth(verifiedClientId, isVerified);
+            mModel.setRedditAuthNow(verifiedClientId, isVerified);
         }
 
         mInput.addTextChangedListener(new TextWatcher() {
