@@ -9,13 +9,13 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.motion.widget.MotionLayout;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.work.Constraints;
 import androidx.work.Data;
@@ -43,9 +43,11 @@ public class LWIActivity extends AppCompatActivity {
     TextInputLayout mInputLayout;
     TextView mInput;
     MaterialButton mButtonVerify;
+    MaterialButton mButtonShowApi;
+    MaterialButton mButtonHideApi;
     MaterialButton mButtonActivate;
     MaterialButton mButtonSources;
-    ImageButton mButtonSettings;
+    MaterialButton mButtonSettings;
     CircularProgressIndicator mProgressVerify;
 
     private final ActivityResultLauncher<Intent> redirectLauncher =
@@ -60,6 +62,8 @@ public class LWIActivity extends AppCompatActivity {
         mInputLayout = findViewById(R.id.input_client_id);
         mInput = findViewById(R.id.client_id);
         mButtonVerify = findViewById(R.id.btn_verify);
+        mButtonShowApi = findViewById(R.id.btn_show_api);
+        mButtonHideApi = findViewById(R.id.btn_hide_api);
         mButtonSources = findViewById(R.id.btn_edit_source);
         mProgressVerify = findViewById(R.id.verify_progress);
         mButtonActivate = findViewById(R.id.btn_ok);
@@ -88,6 +92,7 @@ public class LWIActivity extends AppCompatActivity {
                 String text = s.toString();
                 if (text.isEmpty()) {
                     mModel.setRedditAuth("", false);
+                    ((MotionLayout) findViewById(R.id.activity_main)).transitionToState(R.id.state_api_key_empty);
                 } else {
                     String verifiedAuth = DataUtils.loadRedditAuth(getApplicationContext());
                     mModel.setRedditAuth(text, verifiedAuth.equals(s.toString()));
@@ -105,6 +110,8 @@ public class LWIActivity extends AppCompatActivity {
 
         mButtonSources.setOnClickListener(this::onClickSources);
         mButtonVerify.setOnClickListener(this::onClickVerify);
+        mButtonShowApi.setOnClickListener(this::onClickEnableApi);
+        mButtonHideApi.setOnClickListener(this::onClickDisableApi);
         mButtonActivate.setOnClickListener(this::onClickActivate);
         mButtonSettings.setOnClickListener(this::onClickSettings);
 
@@ -113,12 +120,18 @@ public class LWIActivity extends AppCompatActivity {
                 WorkManager workManager = WorkManager.getInstance(this);
                 workManager.cancelWorkById(mVerifyRequestID);
             }
-            if (auth != null && auth.mIsVerified) {
-                DataUtils.setRedditAuth(getApplicationContext(), auth.mClientId);
-                mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_VALID);
-            } else {
-                mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_NOT_DONE);
+            if (auth != null) {
+                if (auth.mIsVerified) {
+                    DataUtils.setRedditAuth(getApplicationContext(), auth.mClientId);
+                    mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_VALID);
+                }
+                if (auth.mClientId.isBlank()) {
+                    ((MotionLayout) findViewById(R.id.activity_main)).transitionToState(R.id.state_api_key_hidden);
+                    mButtonActivate.setEnabled(true);
+                }
+                return;
             }
+            mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_NOT_DONE);
         });
         mModel.getRedditAuthState().observe(this, state -> {
             if (LWIViewModel.RedditAuthState.AUTH_IN_PROGRESS.equals(state)) {
@@ -196,7 +209,12 @@ public class LWIActivity extends AppCompatActivity {
 
     private void onClickVerify(View v) {
         v.setEnabled(false);
-        // String clientId = mModel.getClientId().getValue();
+        var clientId = mInput.getText();
+        if (TextUtils.isEmpty(clientId)) {
+            onClickDisableApi(v);
+            return;
+        }
+
         WorkRequest request = new OneTimeWorkRequest.Builder(VerifyClientIdWorker.class)
                 .setInputData(new Data.Builder()
                         .putString(WorkerUtils.DATA_CLIENT_ID, mInput.getText().toString())
@@ -217,6 +235,7 @@ public class LWIActivity extends AppCompatActivity {
                         mVerifyRequestID = null;
                     }
                     String workerClientId = workInfo.getOutputData().getString(WorkerUtils.DATA_CLIENT_ID);
+                    if (workerClientId == null) workerClientId = "";
                     String modelClientId = mInput.getText().toString();
                     if (TextUtils.equals(workerClientId, modelClientId)) {
                         mModel.setRedditAuth(workerClientId, true);
@@ -238,5 +257,17 @@ public class LWIActivity extends AppCompatActivity {
                     break;
             }
         });
+    }
+
+    private void onClickEnableApi(View v) {
+        ((MotionLayout) findViewById(R.id.activity_main)).transitionToState(R.id.state_api_key_visible);
+        DataUtils.resetRedditAuth(getApplicationContext());
+        mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_NOT_DONE);
+    }
+
+    private void onClickDisableApi(View v) {
+        ((MotionLayout) findViewById(R.id.activity_main)).transitionToState(R.id.state_api_key_hidden);
+        DataUtils.setRedditAuth(getApplicationContext(), "");
+        mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_VALID);
     }
 }

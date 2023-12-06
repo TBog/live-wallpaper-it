@@ -25,7 +25,9 @@ import androidx.work.WorkManager;
 import com.google.android.material.divider.MaterialDividerItemDecoration;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Map;
 import rocks.tbog.livewallpaperit.ArtProvider;
+import rocks.tbog.livewallpaperit.BuildConfig;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.Source;
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
@@ -145,11 +147,20 @@ public class SubredditActivity extends AppCompatActivity {
 
             StringBuilder logWork = new StringBuilder("work.size=").append(workInfos.size());
             for (var workInfo : workInfos) {
-                logWork.append("\n\t")
-                        .append("id=")
+                logWork.append("\n\tid=")
                         .append(workInfo.getId())
                         .append(" state=")
                         .append(workInfo.getState());
+                if (BuildConfig.DEBUG) {
+                    if (workInfo.getState().isFinished()) {
+                        Map<String, Object> map = workInfo.getOutputData().getKeyValueMap();
+                        for (Map.Entry<String, Object> entry : map.entrySet()) {
+                            String key = entry.getKey();
+                            Object value = entry.getValue();
+                            logWork.append("\n\t\t[").append(key).append("]=").append(value);
+                        }
+                    }
+                }
             }
             Log.v(TAG, logWork.toString());
 

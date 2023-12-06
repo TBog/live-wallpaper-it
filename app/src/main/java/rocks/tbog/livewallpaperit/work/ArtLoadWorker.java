@@ -295,11 +295,11 @@ public class ArtLoadWorker extends Worker {
     public static boolean shouldSkipImage(@NonNull SubTopic.Image image, @NonNull Filter filter) {
         if (!image.isSource || image.isObfuscated) return true;
         if (filter.imageMinWidth > 0 && image.width < filter.imageMinWidth) {
-            Log.v(TAG, "imageMinWidth " + image.width + "<" + filter.imageMinWidth + " skipping " + image.mediaId);
+            Log.d(TAG, "imageMinWidth " + image.width + "<" + filter.imageMinWidth + " skipping " + image.mediaId);
             return true;
         }
         if (filter.imageMinHeight > 0 && image.height < filter.imageMinHeight) {
-            Log.v(TAG, "imageMinHeight " + image.height + "<" + filter.imageMinHeight + " skipping " + image.mediaId);
+            Log.d(TAG, "imageMinHeight " + image.height + "<" + filter.imageMinHeight + " skipping " + image.mediaId);
             return true;
         }
         float aspect = image.width / (float) image.height;
@@ -308,27 +308,27 @@ public class ArtLoadWorker extends Worker {
                 return false;
             case PORTRAIT:
                 if (aspect > 1.f) {
-                    Log.v(
+                    Log.d(
                             TAG,
-                            "image aspect " + aspect + ">1 (" + filter.imageOrientation + ") skipping "
+                            "image aspect " + aspect + ">1 (!" + filter.imageOrientation + ") skipping "
                                     + image.mediaId);
                     return true;
                 }
                 return false;
             case LANDSCAPE:
                 if (aspect < 1.f) {
-                    Log.v(
+                    Log.d(
                             TAG,
-                            "image aspect " + aspect + "<1 (" + filter.imageOrientation + ") skipping "
+                            "image aspect " + aspect + "<1 (!" + filter.imageOrientation + ") skipping "
                                     + image.mediaId);
                     return true;
                 }
                 return false;
             case SQUARE:
                 if (!(.9f <= aspect && aspect <= 1.1f)) {
-                    Log.v(
+                    Log.d(
                             TAG,
-                            "image aspect " + aspect + "!=1 (" + filter.imageOrientation + ") skipping "
+                            "image aspect " + aspect + "!=1 (!" + filter.imageOrientation + ") skipping "
                                     + image.mediaId);
                     return true;
                 }

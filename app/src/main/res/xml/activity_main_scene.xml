@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MotionScene xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:defaultDuration="@integer/material_motion_duration_medium_1">
+
+    <Transition
+        android:id="@+id/api_key_transition"
+        app:autoTransition="none"
+        app:constraintSetEnd="@id/state_api_key_hidden"
+        app:constraintSetStart="@id/state_api_key_visible" />
+
+    <ConstraintSet android:id="@+id/state_api_key_visible">
+        <Constraint
+            android:id="@id/hello_world"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/margin"
+            android:layout_marginStart="@dimen/margin"
+            android:layout_marginEnd="@dimen/margin"
+            app:layout_constraintBottom_toTopOf="@id/input_client_id"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"
+            app:layout_constraintWidth="wrap_content" />
+        <Constraint
+            android:id="@id/input_client_id"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/margin"
+            android:layout_marginBottom="@dimen/margin"
+            android:layout_marginStart="@dimen/margin"
+            android:layout_marginEnd="@dimen/margin"
+            android:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@id/btn_verify"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/hello_world" />
+        <Constraint
+            android:id="@id/btn_verify"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/margin"
+            android:layout_marginBottom="@dimen/margin"
+            android:layout_marginStart="@dimen/margin"
+            android:layout_marginEnd="@dimen/margin"
+            android:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@id/btn_ok"
+            app:layout_constraintEnd_toStartOf="@id/btn_edit_source"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/input_client_id"
+            app:layout_constraintWidth="wrap_content" />
+        <Constraint
+            android:id="@id/btn_show_api"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/btn_ok"
+            app:layout_constraintEnd_toStartOf="@id/btn_edit_source"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/input_client_id"
+            app:layout_constraintWidth="wrap_content" />
+        <Constraint
+            android:id="@id/btn_hide_api"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/btn_ok"
+            app:layout_constraintEnd_toStartOf="@id/btn_edit_source"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/input_client_id"
+            app:layout_constraintWidth="wrap_content" />
+        <Constraint
+            android:id="@id/verify_progress"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/btn_verify"
+            app:layout_constraintEnd_toEndOf="@id/btn_verify"
+            app:layout_constraintStart_toStartOf="@id/btn_verify"
+            app:layout_constraintTop_toTopOf="@id/btn_verify" />
+        <Constraint
+            android:id="@id/btn_edit_source"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/margin"
+            android:layout_marginBottom="@dimen/margin"
+            android:layout_marginStart="@dimen/margin"
+            android:layout_marginEnd="@dimen/margin"
+            app:layout_constraintBottom_toBottomOf="@id/btn_verify"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toEndOf="@id/btn_verify"
+            app:layout_constraintTop_toTopOf="@id/btn_verify"
+            app:layout_constraintWidth="wrap_content" />
+        <Constraint
+            android:id="@id/btn_ok"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/margin"
+            android:layout_marginBottom="@dimen/margin"
+            android:layout_marginStart="@dimen/margin"
+            android:layout_marginEnd="@dimen/margin"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btn_settings"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btn_verify" />
+    </ConstraintSet>
+
+    <ConstraintSet android:id="@+id/state_api_key_hidden">
+        <Constraint
+            android:id="@id/hello_world"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/margin"
+            android:layout_marginBottom="@dimen/margin"
+            android:layout_marginStart="@dimen/margin"
+            android:layout_marginEnd="@dimen/margin"
+            app:layout_constraintBottom_toTopOf="@id/btn_edit_source"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"
+            app:layout_constraintWidth="wrap_content" />
+        <Constraint
+            android:id="@id/input_client_id"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/btn_verify"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/hello_world" />
+        <Constraint
+            android:id="@id/btn_verify"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/btn_ok"
+            app:layout_constraintEnd_toStartOf="@id/btn_edit_source"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/input_client_id"
+            app:layout_constraintWidth="wrap_content" />
+        <Constraint
+            android:id="@id/btn_show_api"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/margin"
+            android:layout_marginBottom="@dimen/margin"
+            android:layout_marginStart="@dimen/margin"
+            android:layout_marginEnd="@dimen/margin"
+            android:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@id/btn_ok"
+            app:layout_constraintEnd_toStartOf="@id/btn_edit_source"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/hello_world"
+            app:layout_constraintWidth="wrap_content" />
+        <Constraint
+            android:id="@id/btn_hide_api"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/btn_ok"
+            app:layout_constraintEnd_toStartOf="@id/btn_edit_source"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/hello_world"
+            app:layout_constraintWidth="wrap_content" />
+        <Constraint
+            android:id="@id/verify_progress"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/btn_verify"
+            app:layout_constraintEnd_toEndOf="@id/btn_verify"
+            app:layout_constraintStart_toStartOf="@id/btn_verify"
+            app:layout_constraintTop_toTopOf="@id/btn_verify" />
+        <Constraint
+            android:id="@id/btn_edit_source"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/margin"
+            android:layout_marginBottom="@dimen/margin"
+            android:layout_marginStart="@dimen/margin"
+            android:layout_marginEnd="@dimen/margin"
+            android:text="@string/btn_edit_source"
+            app:layout_constraintBottom_toTopOf="@id/btn_ok"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toEndOf="@id/btn_show_api"
+            app:layout_constraintTop_toBottomOf="@id/hello_world"
+            app:layout_constraintWidth="wrap_content" />
+        <Constraint
+            android:id="@id/btn_ok"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginBottom="@dimen/margin"
+            android:layout_marginStart="@dimen/margin"
+            android:layout_marginEnd="@dimen/margin"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btn_settings"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btn_edit_source" />
+    </ConstraintSet>
+    <ConstraintSet
+        android:id="@+id/state_api_key_empty"
+        app:deriveConstraintsFrom="@id/state_api_key_visible">
+        <Constraint
+            android:id="@id/btn_verify"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toTopOf="@id/btn_ok"
+            app:layout_constraintEnd_toStartOf="@id/btn_edit_source"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/input_client_id"
+            app:layout_constraintWidth="wrap_content" />
+        <Constraint
+            android:id="@id/btn_hide_api"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/margin"
+            android:layout_marginBottom="@dimen/margin"
+            android:layout_marginStart="@dimen/margin"
+            android:layout_marginEnd="@dimen/margin"
+            android:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@id/btn_ok"
+            app:layout_constraintEnd_toStartOf="@id/btn_edit_source"
+            app:layout_constraintHeight="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/input_client_id"
+            app:layout_constraintWidth="wrap_content" />
+    </ConstraintSet>
+
+</MotionScene>

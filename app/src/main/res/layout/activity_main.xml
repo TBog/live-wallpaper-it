@@ -1,32 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.motion.widget.MotionLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    app:layoutDescription="@xml/activity_main_scene"
     tools:context=".LWIActivity">
 
     <TextView
         android:id="@+id/hello_world"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="@dimen/margin"
         android:text="@string/app_name"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         app:layout_constraintBottom_toTopOf="@id/input_client_id"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed" />
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintWidth="wrap_content" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/input_client_id"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:padding="8dp"
+        android:layout_height="0dp"
+        android:layout_margin="@dimen/margin"
+        android:padding="@dimen/margin"
+        android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@id/btn_verify"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/hello_world"
         app:passwordToggleEnabled="true">
@@ -44,24 +50,54 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_verify"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="@dimen/margin"
         android:text="@string/btn_verify"
         app:layout_constraintBottom_toTopOf="@id/btn_ok"
         app:layout_constraintEnd_toStartOf="@id/btn_edit_source"
+        app:layout_constraintHeight="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/input_client_id" />
+        app:layout_constraintTop_toBottomOf="@id/input_client_id"
+        app:layout_constraintWidth="wrap_content" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_show_api"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="@dimen/margin"
+        android:text="@string/btn_show_api"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/btn_ok"
+        app:layout_constraintEnd_toStartOf="@id/btn_edit_source"
+        app:layout_constraintHeight="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/input_client_id"
+        app:layout_constraintWidth="wrap_content" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_hide_api"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="@dimen/margin"
+        android:text="@string/btn_hide_api"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/btn_ok"
+        app:layout_constraintEnd_toStartOf="@id/btn_edit_source"
+        app:layout_constraintHeight="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/input_client_id"
+        app:layout_constraintWidth="wrap_content" />
 
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/verify_progress"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:elevation="8dp"
+        android:elevation="@dimen/margin"
         android:indeterminate="true"
         android:indeterminateTint="@android:color/white"
         android:indeterminateTintMode="src_in"
-        android:padding="8dp"
+        android:padding="@dimen/margin"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@id/btn_verify"
         app:layout_constraintEnd_toEndOf="@id/btn_verify"
@@ -71,36 +107,42 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_edit_source"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginHorizontal="8dp"
+        android:layout_marginHorizontal="@dimen/margin"
         android:text="@string/btn_edit_source"
         app:layout_constraintBottom_toBottomOf="@id/btn_verify"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight="wrap_content"
         app:layout_constraintStart_toEndOf="@id/btn_verify"
-        app:layout_constraintTop_toTopOf="@id/btn_verify" />
+        app:layout_constraintTop_toTopOf="@id/btn_verify"
+        app:layout_constraintWidth="wrap_content" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_ok"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_height="0dp"
+        android:layout_margin="@dimen/margin"
         android:text="@string/btn_ok"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/btn_settings"
+        app:layout_constraintHeight="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btn_verify" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_settings"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        style="@style/Widget.Material3.Button.IconButton.Filled"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="@dimen/margin"
         android:contentDescription="@string/settings_name"
+        app:icon="@drawable/ic_settings"
         app:layout_constraintBottom_toBottomOf="@id/btn_ok"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight="wrap_content"
         app:layout_constraintStart_toEndOf="@id/btn_ok"
         app:layout_constraintTop_toTopOf="@id/btn_ok"
-        app:srcCompat="@drawable/ic_settings" />
+        app:layout_constraintWidth="wrap_content" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.motion.widget.MotionLayout>

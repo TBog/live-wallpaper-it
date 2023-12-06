@@ -27,6 +27,14 @@ public class DataUtils {
         editor.apply();
     }
 
+    public static void resetRedditAuth(Context context) {
+        SharedPreferences.Editor editor =
+                PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.remove("RedditAuth");
+        editor.remove("RedditAuth-verified");
+        editor.apply();
+    }
+
     public static boolean isRedditAuthVerified(Context context) {
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
         return pref.getBoolean("RedditAuth-verified", false);

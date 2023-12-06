@@ -10,6 +10,8 @@
     <string name="label_client_id">Client ID or App ID</string>
     <string name="btn_ok">Activate Muzei source</string>
     <string name="btn_verify">Verify authentication</string>
+    <string name="btn_show_api">Use API key</string>
+    <string name="btn_hide_api">Disable API key</string>
     <string name="error_clientId_verify">Authentication failed</string>
     <string name="toast_enable">Select TWIt art in Muzei</string>
     <string name="toast_enable_source">Select TWIt art from the list of Sources in Muzei</string>
