@@ -1,5 +1,7 @@
 package rocks.tbog.livewallpaperit.preview;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -12,6 +14,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,6 +47,7 @@ public class SubredditActivity extends AppCompatActivity {
     private static final String TAG = SubredditActivity.class.getSimpleName();
 
     SubredditAdapter mAdapter;
+    TextView mText;
     Source mSource = null;
 
     @Override
@@ -77,6 +82,7 @@ public class SubredditActivity extends AppCompatActivity {
         topToolbar.setTitle(getString(R.string.subreddit_name, mSource.subreddit));
         setSupportActionBar(topToolbar);
 
+        mText = findViewById(R.id.source_list_text);
         mAdapter = new SubredditAdapter();
 
         RecyclerView recyclerView = findViewById(R.id.source_list);
@@ -119,6 +125,7 @@ public class SubredditActivity extends AppCompatActivity {
 
     private void loadSourceData() {
         if (mSource == null) return;
+        onStartLoadData();
         final ArrayList<SubTopic> topicList = new ArrayList<>();
         final ArrayList<String> ignoreList = new ArrayList<>();
         AsyncUtils.runAsync(
@@ -134,10 +141,41 @@ public class SubredditActivity extends AppCompatActivity {
                 t -> {
                     mAdapter.setItems(topicList);
                     mAdapter.setIgnoreList(ignoreList);
+                    onEndLoadData();
+                    if (mAdapter.getItemCount() == 0) {
+                        refreshSource();
+                    }
                 });
     }
 
+    private void onStartLoadData() {
+        mText.animate().cancel();
+        mText.setText(R.string.loading_subreddit);
+        mText.setVisibility(View.VISIBLE);
+        mText.animate().alpha(1f).start();
+    }
+
+    private void onStartRefresh() {
+        mText.animate().cancel();
+        mText.setText(R.string.refreshing_subreddit);
+        mText.setVisibility(View.VISIBLE);
+        mText.animate().alpha(1f).start();
+    }
+
+    private void onEndLoadData() {
+        mText.animate()
+                .alpha(0f)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        mText.setVisibility(View.GONE);
+                    }
+                })
+                .start();
+    }
+
     private void refreshSource() {
+        onStartRefresh();
         var workMgr = WorkManager.getInstance(this);
         workMgr.beginUniqueWork(mSource.subreddit, ExistingWorkPolicy.KEEP, ArtProvider.buildSetupWorkRequest(this))
                 .then(ArtProvider.buildSourceWorkRequest(mSource))
@@ -182,6 +220,7 @@ public class SubredditActivity extends AppCompatActivity {
                     loadSourceData();
                 } else {
                     Log.i(TAG, "refresh failed");
+                    onEndLoadData();
                     Toast.makeText(this, "Failed to get " + mSource.subreddit, Toast.LENGTH_SHORT)
                             .show();
                 }

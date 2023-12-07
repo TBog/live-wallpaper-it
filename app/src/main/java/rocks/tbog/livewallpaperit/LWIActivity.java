@@ -128,6 +128,8 @@ public class LWIActivity extends AppCompatActivity {
                 if (auth.mClientId.isBlank()) {
                     ((MotionLayout) findViewById(R.id.activity_main)).transitionToState(R.id.state_api_key_hidden);
                     mButtonActivate.setEnabled(true);
+                    mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_NOT_NEEDED);
+                    return;
                 }
                 return;
             }
@@ -153,6 +155,10 @@ public class LWIActivity extends AppCompatActivity {
                 mInputLayout.setError(null);
                 mButtonVerify.setEnabled(true);
                 mButtonActivate.setEnabled(false);
+            } else if (LWIViewModel.RedditAuthState.AUTH_NOT_NEEDED.equals(state)) {
+                mInputLayout.setError(null);
+                mButtonVerify.setEnabled(false);
+                mButtonActivate.setEnabled(true);
             }
         });
     }
@@ -268,6 +274,6 @@ public class LWIActivity extends AppCompatActivity {
     private void onClickDisableApi(View unused) {
         ((MotionLayout) findViewById(R.id.activity_main)).transitionToState(R.id.state_api_key_hidden);
         DataUtils.setRedditAuth(getApplicationContext(), "");
-        mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_VALID);
+        mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_NOT_NEEDED);
     }
 }

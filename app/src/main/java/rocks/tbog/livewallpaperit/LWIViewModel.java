@@ -13,6 +13,7 @@ public class LWIViewModel extends AndroidViewModel {
 
     enum RedditAuthState {
         AUTH_NOT_DONE,
+        AUTH_NOT_NEEDED,
         AUTH_IN_PROGRESS,
         AUTH_FAILED,
         AUTH_VALID

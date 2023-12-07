@@ -31,4 +31,17 @@
         app:layout_constraintTop_toBottomOf="@id/top_toolbar"
         tools:listitem="@layout/source_item" />
 
+    <TextView
+        android:id="@+id/source_list_text"
+        style="@style/TextAppearance.Material3.TitleMedium"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:textAlignment="center"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/top_toolbar"
+        tools:text="@tools:sample/lorem/random" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

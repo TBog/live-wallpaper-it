@@ -61,4 +61,8 @@
     <string name="upvote_ratio_tooltip">upvote ratio</string>
     <string name="score_tooltip">score</string>
     <string name="num_comments_tooltip">comment count</string>
+    <string name="loading_sources">Loading sources</string>
+    <string name="empty_sources">You have not added any subreddits.</string>
+    <string name="loading_subreddit">Loading subreddit submissions</string>
+    <string name="refreshing_subreddit">Loading from Reddit</string>
 </resources>

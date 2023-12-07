@@ -1,10 +1,14 @@
 package rocks.tbog.livewallpaperit.preview;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,6 +32,7 @@ import rocks.tbog.livewallpaperit.utils.ViewUtils;
 public class SourcesActivity extends AppCompatActivity {
 
     SourceAdapter mAdapter;
+    TextView mText;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -36,6 +41,8 @@ public class SourcesActivity extends AppCompatActivity {
         Toolbar topToolbar = findViewById(R.id.top_toolbar);
         topToolbar.setTitle(R.string.sources_name);
         setSupportActionBar(topToolbar);
+
+        mText = findViewById(R.id.source_list_text);
 
         mAdapter = new SourceAdapter(
                 source -> DBHelper.updateSource(getApplicationContext(), source),
@@ -90,6 +97,7 @@ public class SourcesActivity extends AppCompatActivity {
     }
 
     private void loadSources() {
+        onStartLoadSources();
         final ArrayList<Source> list = new ArrayList<>();
         AsyncUtils.runAsync(
                 getLifecycle(),
@@ -100,7 +108,40 @@ public class SourcesActivity extends AppCompatActivity {
                 task -> {
                     if (task.isCancelled()) return;
                     mAdapter.setItems(list);
+                    updateSourcesText();
                 });
+    }
+
+    private void updateSourcesText() {
+        if (mAdapter.getItemCount() == 0) {
+            onEmptySources();
+        } else {
+            onEndLoadSources();
+        }
+    }
+
+    private void onStartLoadSources() {
+        mText.setText(R.string.loading_sources);
+        mText.setVisibility(View.VISIBLE);
+        mText.animate().alpha(1f).start();
+    }
+
+    private void onEndLoadSources() {
+        mText.animate()
+                .alpha(0f)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        mText.setVisibility(View.GONE);
+                    }
+                })
+                .start();
+    }
+
+    private void onEmptySources() {
+        mText.setText(R.string.empty_sources);
+        mText.setVisibility(View.VISIBLE);
+        mText.animate().alpha(1f).start();
     }
 
     @Override
@@ -152,6 +193,7 @@ public class SourcesActivity extends AppCompatActivity {
                 task -> {
                     if (task.isCancelled()) return;
                     mAdapter.addItem(source);
+                    updateSourcesText();
                 });
     }
 }
