@@ -259,13 +259,13 @@ public class LWIActivity extends AppCompatActivity {
         });
     }
 
-    private void onClickEnableApi(View v) {
+    private void onClickEnableApi(View unused) {
         ((MotionLayout) findViewById(R.id.activity_main)).transitionToState(R.id.state_api_key_visible);
         DataUtils.resetRedditAuth(getApplicationContext());
         mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_NOT_DONE);
     }
 
-    private void onClickDisableApi(View v) {
+    private void onClickDisableApi(View unused) {
         ((MotionLayout) findViewById(R.id.activity_main)).transitionToState(R.id.state_api_key_hidden);
         DataUtils.setRedditAuth(getApplicationContext(), "");
         mModel.setRedditAuthState(LWIViewModel.RedditAuthState.AUTH_VALID);

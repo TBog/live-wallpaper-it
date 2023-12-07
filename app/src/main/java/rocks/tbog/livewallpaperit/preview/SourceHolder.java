@@ -163,21 +163,21 @@ public class SourceHolder extends RecycleAdapterBase.Holder {
         imageOrientation.setAdapter(
                 new ArrayAdapter<>(ctx, android.R.layout.simple_dropdown_item_1line, dropdownOptions));
 
-        final MotionLayout parent = (MotionLayout) itemView;
+        setTransitionFocusChangedListeners((MotionLayout) itemView);
+    }
+
+    private void setTransitionFocusChangedListeners(@NonNull MotionLayout parent) {
         minUpvotePercentage.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                parent.transitionToState(R.id.expanded_min_upvote_percent);
-            }
+            if (!hasFocus) return;
+            parent.transitionToState(R.id.expanded_min_upvote_percent);
         });
         minScore.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                parent.transitionToState(R.id.expanded_min_score);
-            }
+            if (!hasFocus) return;
+            parent.transitionToState(R.id.expanded_min_score);
         });
         minComments.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                parent.transitionToState(R.id.expanded_min_comments);
-            }
+            if (!hasFocus) return;
+            parent.transitionToState(R.id.expanded_min_comments);
         });
     }
 

@@ -293,48 +293,64 @@ public class ArtLoadWorker extends Worker {
      * Check if the image should be skipped while adding artworks
      */
     public static boolean shouldSkipImage(@NonNull SubTopic.Image image, @NonNull Filter filter) {
-        if (!image.isSource || image.isObfuscated) return true;
+        boolean isValid = image.isSource && !image.isObfuscated;
+        isValid = isValid && validImageSize(image, filter);
+        isValid = isValid && validImageAspect(image, filter);
+        return !isValid;
+    }
+
+    private static boolean validImageSize(@NonNull SubTopic.Image image, @NonNull Filter filter) {
         if (filter.imageMinWidth > 0 && image.width < filter.imageMinWidth) {
             Log.d(TAG, "imageMinWidth " + image.width + "<" + filter.imageMinWidth + " skipping " + image.mediaId);
-            return true;
+            return false;
         }
         if (filter.imageMinHeight > 0 && image.height < filter.imageMinHeight) {
             Log.d(TAG, "imageMinHeight " + image.height + "<" + filter.imageMinHeight + " skipping " + image.mediaId);
-            return true;
+            return false;
         }
-        float aspect = image.width / (float) image.height;
+        return true;
+    }
+
+    private static boolean validImageAspect(@NonNull SubTopic.Image image, @NonNull Filter filter) {
         switch (filter.imageOrientation) {
             case ANY:
-                return false;
-            case PORTRAIT:
+                return true;
+            case PORTRAIT: {
+                final float aspect = image.width / (float) image.height;
                 if (aspect > 1.f) {
                     Log.d(
                             TAG,
-                            "image aspect " + aspect + ">1 (!" + filter.imageOrientation + ") skipping "
-                                    + image.mediaId);
-                    return true;
+                            "image aspect " + String.format("%.3f", aspect) + ">1 (!" + filter.imageOrientation
+                                    + ") skipping " + image.mediaId);
+                    return false;
                 }
-                return false;
-            case LANDSCAPE:
+                return true;
+            }
+            case LANDSCAPE: {
+                final float aspect = image.width / (float) image.height;
                 if (aspect < 1.f) {
                     Log.d(
                             TAG,
-                            "image aspect " + aspect + "<1 (!" + filter.imageOrientation + ") skipping "
-                                    + image.mediaId);
-                    return true;
+                            "image aspect " + String.format("%.3f", aspect) + "<1 (!" + filter.imageOrientation
+                                    + ") skipping " + image.mediaId);
+                    return false;
                 }
-                return false;
-            case SQUARE:
+                return true;
+            }
+            case SQUARE: {
+                final float aspect = image.width / (float) image.height;
                 if (!(.9f <= aspect && aspect <= 1.1f)) {
                     Log.d(
                             TAG,
-                            "image aspect " + aspect + "!=1 (!" + filter.imageOrientation + ") skipping "
-                                    + image.mediaId);
-                    return true;
+                            "image aspect " + String.format("%.3f", aspect) + "!=1 (!" + filter.imageOrientation
+                                    + ") skipping " + image.mediaId);
+                    return false;
                 }
-                return false;
+                return true;
+            }
+            default:
+                throw new IllegalStateException("missing test for " + filter.imageOrientation);
         }
-        return false;
     }
 
     private void getArtworks(String subredditNamePrefixed, @NonNull SubTopic topic, @NonNull Filter filter) {
