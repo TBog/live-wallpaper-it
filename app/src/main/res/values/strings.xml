@@ -42,9 +42,9 @@
     <string name="action_delete">Delete</string>
     <string name="action_delete_description">Delete and add to ignore list</string>
     <string name="share_title_and_link">My Android wallpaper today is \'%1$s\' from reddit.com by %2$s.\n\n%3$s</string>
-    <string name="label_upvote_percent">upvote percentage</string>
-    <string name="label_min_comments">comments</string>
-    <string name="label_min_score">score</string>
+    <string name="label_upvote_percent">minimum upvote percentage</string>
+    <string name="label_min_comments">minimum comment count</string>
+    <string name="label_min_score">minimum score</string>
     <string name="allow_nsfw">Allow NSFW</string>
     <string name="clear_cache">Clear cache</string>
     <string name="clear_cache_summary">Delete downloaded artworks</string>

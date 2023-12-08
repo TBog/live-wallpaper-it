@@ -1,9 +1,8 @@
 package rocks.tbog.livewallpaperit.preview;
 
+import android.app.Activity;
 import android.content.Context;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.KeyEvent;
+import android.os.Build;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
@@ -11,10 +10,12 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.motion.widget.MotionLayout;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import java.util.stream.Collectors;
@@ -22,6 +23,8 @@ import java.util.stream.IntStream;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
 import rocks.tbog.livewallpaperit.Source;
+import rocks.tbog.livewallpaperit.dialog.EditTextDialog;
+import rocks.tbog.livewallpaperit.utils.ViewUtils;
 
 public class SourceHolder extends RecycleAdapterBase.Holder {
     @Nullable
@@ -32,39 +35,15 @@ public class SourceHolder extends RecycleAdapterBase.Holder {
     public final Button buttonRemove;
     public final Button buttonOpen;
     public final Button buttonPreview;
-    public final TextView minUpvotePercentage;
-    public final TextView minScore;
-    public final TextView minComments;
+    public final Button buttonMinUpvotes;
+    public final Button buttonMinScore;
+    public final Button buttonMinComments;
     public final AutoCompleteTextView imageMinWidth;
     public final AutoCompleteTextView imageMinHeight;
     public final AutoCompleteTextView imageOrientation;
 
     public Observer<Source> mSourceChangedObserver;
 
-    public final TextChangedWatcher mUpvotePercentageWatcher = new TextChangedWatcher() {
-        @Override
-        public void onIntChanged(@NonNull Source source, int newValue) {
-            if (newValue == source.minUpvotePercentage) return;
-            source.minUpvotePercentage = newValue;
-            mSourceChangedObserver.onChanged(source);
-        }
-    };
-    public final TextChangedWatcher mScoreWatcher = new TextChangedWatcher() {
-        @Override
-        public void onIntChanged(@NonNull Source source, int newValue) {
-            if (newValue == source.minScore) return;
-            source.minScore = newValue;
-            mSourceChangedObserver.onChanged(source);
-        }
-    };
-    public final TextChangedWatcher mCommentsWatcher = new TextChangedWatcher() {
-        @Override
-        public void onIntChanged(@NonNull Source source, int newValue) {
-            if (newValue == source.minComments) return;
-            source.minComments = newValue;
-            mSourceChangedObserver.onChanged(source);
-        }
-    };
     public final ToggleChangedListener mToggleListener = new ToggleChangedListener() {
         @Override
         void onToggleChanged(@NonNull Source source, boolean isChecked) {
@@ -112,6 +91,44 @@ public class SourceHolder extends RecycleAdapterBase.Holder {
             mSourceChangedObserver.onChanged(mSource);
         }
     };
+    public final View.OnLongClickListener mShowTooltipFromContentDescription = v -> {
+        Toast.makeText(v.getContext(), v.getContentDescription(), Toast.LENGTH_SHORT)
+                .show();
+        return true;
+    };
+    public final GetIntDialog mDialogSetMinUpvotes = new GetIntDialog() {
+        @Override
+        public int getInitialValue(@NonNull Source source) {
+            return source.minUpvotePercentage;
+        }
+
+        @Override
+        public void onIntChanged(@NonNull Source source, int value) {
+            source.minUpvotePercentage = value;
+        }
+    };
+    public final GetIntDialog mDialogSetMinScore = new GetIntDialog() {
+        @Override
+        public int getInitialValue(@NonNull Source source) {
+            return source.minScore;
+        }
+
+        @Override
+        public void onIntChanged(@NonNull Source source, int value) {
+            source.minScore = value;
+        }
+    };
+    public final GetIntDialog mDialogSetMinComments = new GetIntDialog() {
+        @Override
+        public int getInitialValue(@NonNull Source source) {
+            return source.minComments;
+        }
+
+        @Override
+        public void onIntChanged(@NonNull Source source, int value) {
+            source.minComments = value;
+        }
+    };
 
     public SourceHolder(@NonNull View itemView) {
         super(itemView);
@@ -121,12 +138,22 @@ public class SourceHolder extends RecycleAdapterBase.Holder {
         buttonRemove = itemView.findViewById(R.id.button_remove);
         buttonOpen = itemView.findViewById(R.id.button_open);
         buttonPreview = itemView.findViewById(R.id.button_preview);
-        minUpvotePercentage = itemView.findViewById(R.id.min_upvote_percent);
-        minScore = itemView.findViewById(R.id.min_score);
-        minComments = itemView.findViewById(R.id.min_comments);
+        buttonMinUpvotes = itemView.findViewById(R.id.button_min_upvote_percent);
+        buttonMinScore = itemView.findViewById(R.id.button_min_score);
+        buttonMinComments = itemView.findViewById(R.id.button_min_comments);
         imageMinWidth = itemView.findViewById(R.id.img_min_width);
         imageMinHeight = itemView.findViewById(R.id.img_min_height);
         imageOrientation = itemView.findViewById(R.id.img_orientation);
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            buttonMinUpvotes.setOnLongClickListener(mShowTooltipFromContentDescription);
+            buttonMinScore.setOnLongClickListener(mShowTooltipFromContentDescription);
+            buttonMinComments.setOnLongClickListener(mShowTooltipFromContentDescription);
+        }
+
+        buttonMinUpvotes.setOnClickListener(mDialogSetMinUpvotes::showDialogOnClick);
+        buttonMinScore.setOnClickListener(mDialogSetMinScore::showDialogOnClick);
+        buttonMinComments.setOnClickListener(mDialogSetMinComments::showDialogOnClick);
 
         Context ctx = itemView.getContext();
         var widthList = IntStream.range(108, 2160).boxed().collect(Collectors.toList());
@@ -162,73 +189,59 @@ public class SourceHolder extends RecycleAdapterBase.Holder {
         var dropdownOptions = ctx.getResources().getTextArray(R.array.image_orientation_display);
         imageOrientation.setAdapter(
                 new ArrayAdapter<>(ctx, android.R.layout.simple_dropdown_item_1line, dropdownOptions));
-
-        setTransitionFocusChangedListeners((MotionLayout) itemView);
-    }
-
-    private void setTransitionFocusChangedListeners(@NonNull MotionLayout parent) {
-        minUpvotePercentage.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) return;
-            parent.transitionToState(R.id.expanded_min_upvote_percent);
-        });
-        minScore.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) return;
-            parent.transitionToState(R.id.expanded_min_score);
-        });
-        minComments.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) return;
-            parent.transitionToState(R.id.expanded_min_comments);
-        });
     }
 
     public void bind(Source source, Observer<Source> sourceChangedObserver) {
         mSource = source;
         mSourceChangedObserver = sourceChangedObserver;
-
-        final MotionLayout parent = (MotionLayout) itemView;
-        final View.OnKeyListener blurOnEnter = (view, keyCode, event) -> {
-            if ((event == null || event.getAction() == KeyEvent.ACTION_DOWN) && keyCode == KeyEvent.KEYCODE_ENTER) {
-                view.clearFocus();
-                parent.transitionToState(R.id.base_state);
-            }
-            return false;
-        };
-
-        final TextView.OnEditorActionListener blurOnDone = (view, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                view.clearFocus();
-                parent.transitionToState(R.id.base_state);
-            }
-            return false;
-        };
-
-        minUpvotePercentage.setOnKeyListener(blurOnEnter);
-        minUpvotePercentage.setOnEditorActionListener(blurOnDone);
-        minScore.setOnKeyListener(blurOnEnter);
-        minScore.setOnEditorActionListener(blurOnDone);
-        minComments.setOnKeyListener(blurOnEnter);
-        minComments.setOnEditorActionListener(blurOnDone);
     }
 
-    public abstract class TextChangedWatcher implements TextWatcher {
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+    public void unbind() {
+        mSource = null;
+        mSourceChangedObserver = null;
+    }
 
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {}
-
-        @Override
-        public void afterTextChanged(Editable s) {
+    public abstract class GetIntDialog {
+        public void showDialogOnClick(View v) {
             if (mSource == null) return;
-            try {
-                int newValue = Integer.parseInt(s.toString());
-                onIntChanged(mSource, newValue);
-            } catch (Exception ignored) {
-                // ignore invalid text
+            EditTextDialog.Builder builder = new EditTextDialog.Builder(v.getContext())
+                    .setTitle(v.getContentDescription())
+                    .setInitialText(String.valueOf(getInitialValue(mSource)))
+                    .setPositiveButton(android.R.string.ok, (dialog, button) -> {
+                        EditText input = dialog.findViewById(R.id.rename);
+                        if (input != null) {
+                            input.setInputType(EditorInfo.TYPE_CLASS_NUMBER);
+                            dialog.onConfirm(input.getText());
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel, null);
+
+            EditTextDialog dialog = builder.getDialog();
+            dialog.setOnConfirmListener(newValue -> {
+                if (mSource == null) return;
+                int value = 0;
+                if (newValue != null) {
+                    try {
+                        value = Integer.parseInt(newValue.toString().trim());
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+                if (getInitialValue(mSource) != value) {
+                    onIntChanged(mSource, value);
+                    if (mSourceChangedObserver != null) {
+                        mSourceChangedObserver.onChanged(mSource);
+                    }
+                }
+            });
+            Activity activity = ViewUtils.getActivity(v);
+            if (activity instanceof AppCompatActivity) {
+                dialog.show(((AppCompatActivity) activity).getSupportFragmentManager(), "int_dialog");
             }
         }
 
-        abstract void onIntChanged(@NonNull Source source, int newValue);
+        public abstract int getInitialValue(@NonNull Source source);
+
+        public abstract void onIntChanged(@NonNull Source source, int newValue);
     }
 
     public abstract class ToggleChangedListener implements CompoundButton.OnCheckedChangeListener {

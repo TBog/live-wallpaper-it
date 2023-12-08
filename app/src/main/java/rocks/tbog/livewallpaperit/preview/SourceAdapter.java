@@ -49,17 +49,9 @@ public class SourceAdapter extends RecycleAdapterBase<Source, SourceHolder> {
         holder.toggleSwitch.setChecked(source.isEnabled);
         holder.toggleSwitch.setOnCheckedChangeListener(holder.mToggleListener);
 
-        // minUpvotePercentage
-        holder.minUpvotePercentage.setText(intToString(source.minUpvotePercentage));
-        holder.minUpvotePercentage.addTextChangedListener(holder.mUpvotePercentageWatcher);
-
-        // minScore
-        holder.minScore.setText(intToString(source.minScore));
-        holder.minScore.addTextChangedListener(holder.mScoreWatcher);
-
-        // minComments
-        holder.minComments.setText(intToString(source.minComments));
-        holder.minComments.addTextChangedListener(holder.mCommentsWatcher);
+        holder.buttonMinUpvotes.setText(intToString(source.minUpvotePercentage));
+        holder.buttonMinScore.setText(intToString(source.minScore));
+        holder.buttonMinComments.setText(intToString(source.minComments));
 
         // image
         holder.imageMinWidth.setText(intToString(source.imageMinWidth), false);
@@ -113,10 +105,11 @@ public class SourceAdapter extends RecycleAdapterBase<Source, SourceHolder> {
 
     @Override
     public void onViewRecycled(@NonNull SourceHolder holder) {
+        holder.unbind();
         holder.toggleSwitch.setOnCheckedChangeListener(null);
-        holder.minUpvotePercentage.removeTextChangedListener(holder.mUpvotePercentageWatcher);
-        holder.minScore.removeTextChangedListener(holder.mScoreWatcher);
-        holder.minComments.removeTextChangedListener(holder.mCommentsWatcher);
+        // holder.minUpvotePercentage.removeTextChangedListener(holder.mUpvotePercentageWatcher);
+        // holder.minScore.removeTextChangedListener(holder.mScoreWatcher);
+        // holder.minComments.removeTextChangedListener(holder.mCommentsWatcher);
         holder.imageMinWidth.setOnItemSelectedListener(null);
         holder.imageMinHeight.setOnItemSelectedListener(null);
         holder.imageOrientation.setOnItemSelectedListener(null);

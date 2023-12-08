@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.motion.widget.MotionLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:descendantFocusability="beforeDescendants"
     android:focusable="true"
-    android:focusableInTouchMode="true"
-    app:layoutDescription="@xml/source_item_scene"
-    tools:showIn="@layout/activity_sources">
+    android:focusableInTouchMode="true">
 
     <com.google.android.material.switchmaterial.SwitchMaterial
         android:id="@+id/toggle"
@@ -80,90 +78,74 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:barrierDirection="bottom"
-        app:constraint_referenced_ids="toggle,subreddit_name,button_remove" />
+        app:constraint_referenced_ids="toggle,subreddit_name,button_title_flow" />
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/wrap_min_upvote_percent"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        app:layout_constraintBottom_toTopOf="@id/barrier_bottom"
-        app:layout_constraintEnd_toStartOf="@id/wrap_min_score"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/barrier_top">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/min_upvote_percent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/label_upvote_percent"
-            android:imeOptions="actionDone"
-            android:importantForAutofill="no"
-            android:inputType="textAutoCorrect"
-            android:singleLine="true" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/wrap_min_score"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        app:layout_constraintBottom_toTopOf="@id/barrier_bottom"
-        app:layout_constraintEnd_toStartOf="@id/wrap_min_comments"
-        app:layout_constraintStart_toEndOf="@id/wrap_min_upvote_percent"
-        app:layout_constraintTop_toBottomOf="@id/barrier_top">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/min_score"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/label_min_score"
-            android:imeOptions="actionDone"
-            android:importantForAutofill="no"
-            android:inputType="textAutoCorrect"
-            android:singleLine="true" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/wrap_min_comments"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        app:layout_constraintBottom_toTopOf="@id/barrier_bottom"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/wrap_min_score"
-        app:layout_constraintTop_toBottomOf="@id/barrier_top">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/min_comments"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/label_min_comments"
-            android:imeOptions="actionDone"
-            android:importantForAutofill="no"
-            android:inputType="textAutoCorrect"
-            android:singleLine="true" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <androidx.constraintlayout.widget.Barrier
-        android:id="@+id/barrier_bottom"
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_min_upvote_percent"
+        style="@style/Widget.Material3.Button.ElevatedButton.Icon"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:barrierDirection="bottom"
-        app:constraint_referenced_ids="wrap_min_upvote_percent,wrap_min_score,wrap_min_comments" />
+        android:contentDescription="@string/label_upvote_percent"
+        android:gravity="start|center_vertical"
+        android:tooltipText="@string/label_upvote_percent"
+        app:icon="@drawable/ic_percent_24"
+        app:layout_constraintHeight="wrap_content"
+        app:layout_constraintWidth="wrap_content"
+        tools:text="@tools:sample/us_zipcodes" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_min_score"
+        style="@style/Widget.Material3.Button.ElevatedButton.Icon"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:contentDescription="@string/label_min_score"
+        android:gravity="start|center_vertical"
+        android:tooltipText="@string/label_min_score"
+        app:icon="@drawable/ic_star_24"
+        app:layout_constraintHeight="wrap_content"
+        app:layout_constraintWidth="wrap_content"
+        tools:text="@tools:sample/us_zipcodes" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_min_comments"
+        style="@style/Widget.Material3.Button.ElevatedButton.Icon"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:contentDescription="@string/label_min_comments"
+        android:gravity="start|center_vertical"
+        android:tooltipText="@string/label_min_comments"
+        app:icon="@drawable/ic_comment_24"
+        app:layout_constraintHeight="wrap_content"
+        app:layout_constraintWidth="wrap_content"
+        tools:text="@tools:sample/us_zipcodes" />
+
+    <androidx.constraintlayout.helper.widget.Flow
+        android:id="@+id/filter_submission_flow"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="@dimen/margin"
+        android:orientation="horizontal"
+        app:constraint_referenced_ids="button_min_upvote_percent,button_min_score,button_min_comments"
+        app:flow_horizontalGap="@dimen/margin"
+        app:flow_horizontalStyle="packed"
+        app:flow_wrapMode="chain"
+        app:layout_constraintHeight="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/barrier_top"
+        app:layout_constraintWidth="match_parent" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/wrap_img_min_width"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense.ExposedDropdownMenu"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginHorizontal="@dimen/margin"
+        android:layout_margin="@dimen/margin"
         android:hint="min width"
         android:labelFor="@id/img_min_width"
         app:layout_constraintEnd_toStartOf="@id/wrap_img_min_height"
         app:layout_constraintHeight="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/barrier_bottom">
+        app:layout_constraintTop_toBottomOf="@id/filter_submission_flow">
 
         <AutoCompleteTextView
             android:id="@+id/img_min_width"
@@ -176,16 +158,16 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/wrap_img_min_height"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense.ExposedDropdownMenu"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginHorizontal="@dimen/margin"
+        android:layout_margin="@dimen/margin"
         android:hint="min height"
         android:labelFor="@id/img_min_height"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight="wrap_content"
         app:layout_constraintStart_toEndOf="@id/wrap_img_min_width"
-        app:layout_constraintTop_toBottomOf="@id/barrier_bottom">
+        app:layout_constraintTop_toBottomOf="@id/filter_submission_flow">
 
         <AutoCompleteTextView
             android:id="@+id/img_min_height"
@@ -198,10 +180,10 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/wrap_img_orientation"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense.ExposedDropdownMenu"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginHorizontal="@dimen/margin"
+        android:layout_margin="@dimen/margin"
         android:hint="orientation"
         android:labelFor="@id/img_min_height"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -219,4 +201,4 @@
 
     </com.google.android.material.textfield.TextInputLayout>
 
-</androidx.constraintlayout.motion.widget.MotionLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
