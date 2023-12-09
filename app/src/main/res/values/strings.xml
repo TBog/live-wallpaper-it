@@ -65,4 +65,5 @@
     <string name="empty_sources">You have not added any subreddits.</string>
     <string name="loading_subreddit">Loading subreddit submissions</string>
     <string name="refreshing_subreddit">Loading from Reddit</string>
+    <string name="filter_invalid">Does not pass filter criteria</string>
 </resources>
