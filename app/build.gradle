@@ -18,8 +18,8 @@ android {
         minSdk min_sdk_ver
         targetSdk compile_sdk_ver
         multiDexEnabled true
-        versionCode 2
-        versionName "1.0"
+        versionCode 3
+        versionName "2.0"
 
         def lwiAuthorityValue = "rocks.tbog.livewallpaperit"
         manifestPlaceholders["lwiAuthority"] = lwiAuthorityValue

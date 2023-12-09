@@ -1,0 +1,9 @@
+* add share image command in Muzei
+* add tooltips for most buttons
+* add preview subreddits activity
+* cache submissions and image information
+* show obfuscated images when NSFW not allowed
+* add thumbnail width preference
+* import ARAW library code
+* update toggle for subreddits
+* don't request a Reddit API at startup
