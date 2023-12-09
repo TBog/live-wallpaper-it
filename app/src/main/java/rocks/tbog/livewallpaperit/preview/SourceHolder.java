@@ -224,6 +224,7 @@ public class SourceHolder extends RecycleAdapterBase.Holder {
                     try {
                         value = Integer.parseInt(newValue.toString().trim());
                     } catch (NumberFormatException ignored) {
+                        // keep value = 0
                     }
                 }
                 if (getInitialValue(mSource) != value) {
