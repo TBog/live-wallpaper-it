@@ -14,10 +14,10 @@ buildscript {
         java_target = JavaVersion.VERSION_11
         jvm_target = '11'
 
-        kotlin_ver = '1.7.10'
+        kotlin_ver = '1.9.10'
         coroutines_ver = '1.6.4'
 
-        ksp_ver = "$kotlin_ver-1.0.6"
+        ksp_ver = "$kotlin_ver-1.0.13"
 
         hilt_ver = "2.43.2"
         ax_hilt_ver = "1.0.0"
@@ -29,13 +29,13 @@ buildscript {
         ax_appcompat_ver = '1.6.1'
         ax_constraintlayout_ver = '2.1.4'
         ax_lifecycle_ver = '2.2.0'
-        ax_work_ver = '2.8.1'
+        ax_work_ver = '2.9.0'
         ax_preference_ver = '1.2.1'
-        ax_annot_ver = '1.4.0'
+        ax_annot_ver = '1.7.0'
 
         retrofit_ver = '2.9.0'
         moshi_ver = '1.13.0'
-        okhttp_ver = '4.10.0'
+        okhttp_ver = '4.11.0'
         mdc_ver = '1.6.1'
         epoxy_ver = '4.6.4'
 
@@ -57,11 +57,6 @@ buildscript {
         muzei_api_ver = '3.4.1'
         spotless_ver = '6.22.0'
     }
-
-//    dependencies {
-//        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_ver"
-//        classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:$detekt_ver"
-//    }
 }
 
 plugins {

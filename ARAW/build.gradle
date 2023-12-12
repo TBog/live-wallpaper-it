@@ -2,10 +2,7 @@ plugins {
     id "com.android.library"
     id "org.jetbrains.kotlin.android"
     id "org.jetbrains.kotlin.plugin.parcelize"
-//    id "org.jetbrains.dokka"
     id "com.google.devtools.ksp"
-//    id "io.gitlab.arturbosch.detekt"
-//    id "maven-publish"
 }
 
 android {
@@ -48,27 +45,6 @@ kotlin {
     explicitApi()
     explicitApiWarning()
 }
-
-//dokkaHtml {
-//    configure {
-//        dokkaSourceSets {
-//
-//            named("main") {
-//                noAndroidSdkLink.set(false)
-//            }
-//        }
-//    }
-//}
-
-//project.afterEvaluate {
-//    publishing {
-//        publications {
-//            release(MavenPublication) {
-//                from components.release
-//            }
-//        }
-//    }
-//}
 
 dependencies {
 
