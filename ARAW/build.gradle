@@ -38,6 +38,8 @@ android {
 
     kotlinOptions {
         jvmTarget = jvm_target
+        // see https://github.com/Kotlin/kotlinx.serialization/issues/2145
+        freeCompilerArgs = ["-Xstring-concat=inline"]
     }
 }
 
