@@ -18,20 +18,20 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
     protected final List<T> mItemList;
 
     @Nullable
-    private OnClickListener<T> mOnClickListener = null;
+    private OnClickListener<T, RecycleAdapterBase<T, VH>> mOnClickListener = null;
 
     @Nullable
-    private OnLongClickListener<T> mOnLongClickListener = null;
+    private OnLongClickListener<T, RecycleAdapterBase<T, VH>> mOnLongClickListener = null;
 
     public RecycleAdapterBase(@NonNull List<T> list) {
         mItemList = list;
     }
 
-    public void setOnClickListener(@Nullable OnClickListener<T> listener) {
+    public void setOnClickListener(@Nullable OnClickListener<T, RecycleAdapterBase<T, VH>> listener) {
         mOnClickListener = listener;
     }
 
-    public void setOnLongClickListener(@Nullable OnLongClickListener<T> listener) {
+    public void setOnLongClickListener(@Nullable OnLongClickListener<T, RecycleAdapterBase<T, VH>> listener) {
         mOnLongClickListener = listener;
     }
 
@@ -55,11 +55,11 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
         final T entry = getItem(position);
         if (entry == null) return;
 
-        if (mOnClickListener != null) holder.setOnClickListener(v -> mOnClickListener.onClick(entry, v));
+        if (mOnClickListener != null) holder.setOnClickListener(v -> mOnClickListener.onClick(this, entry, v));
         else holder.setOnClickListener(null);
 
         if (mOnLongClickListener != null)
-            holder.setOnLongClickListener(v -> mOnLongClickListener.onLongClick(entry, v));
+            holder.setOnLongClickListener(v -> mOnLongClickListener.onLongClick(this, entry, v));
         else holder.setOnLongClickListener(null);
 
         onBindViewHolder(holder, entry);
@@ -150,11 +150,11 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
         }
     }
 
-    public interface OnClickListener<ItemType> {
-        void onClick(ItemType entry, View view);
+    public interface OnClickListener<ItemType, Adapter> {
+        void onClick(Adapter adapter, ItemType entry, View view);
     }
 
-    public interface OnLongClickListener<ItemType> {
-        boolean onLongClick(ItemType entry, View view);
+    public interface OnLongClickListener<ItemType, Adapter> {
+        boolean onLongClick(Adapter adapter, ItemType entry, View view);
     }
 }

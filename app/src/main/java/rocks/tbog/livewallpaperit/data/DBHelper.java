@@ -39,6 +39,24 @@ public class DBHelper {
         return sqliteVersion = new Version("0.0.0");
     }
 
+    private static int delete(SQLiteDatabase db, @NonNull String table, ContentValues filter) {
+        StringBuilder where = new StringBuilder();
+        String[] args = new String[filter.size()];
+        int i = 0;
+        for (var field : filter.valueSet()) {
+            if (i == 0) where.append("\"");
+            else where.append(" AND \"");
+            where.append(field.getKey()).append("\"=?");
+            args[i++] = field.getValue().toString();
+        }
+
+        return db.delete(table, where.toString(), args);
+    }
+
+    private static int delete(SQLiteDatabase db, @NonNull String table, @NonNull String whereField, String whereValue) {
+        return db.delete(table, "\"" + whereField + "\"=?", new String[] {whereValue});
+    }
+
     public static boolean insertIgnoreToken(@NonNull Context context, @NonNull String token) {
         SQLiteDatabase db = getDatabase(context);
 
@@ -68,6 +86,11 @@ public class DBHelper {
         }
 
         return count;
+    }
+
+    public static void removeIgnoreToken(@NonNull Context context, @NonNull String token) {
+        SQLiteDatabase db = getDatabase(context);
+        delete(db, RedditDatabase.TABLE_IGNORE, RedditDatabase.ARTWORK_TOKEN, token);
     }
 
     @NonNull
@@ -185,17 +208,12 @@ public class DBHelper {
 
     public static void removeSource(Context context, Source source) {
         SQLiteDatabase db = getDatabase(context);
-
-        db.delete(
-                RedditDatabase.TABLE_SUBREDDITS, RedditDatabase.SUBREDDIT_NAME + "=?", new String[] {source.subreddit});
+        delete(db, RedditDatabase.TABLE_SUBREDDITS, RedditDatabase.SUBREDDIT_NAME, source.subreddit);
     }
 
     public static void removeSourceSubTopics(Context context, Source source) {
         SQLiteDatabase db = getDatabase(context);
-
-        db.delete(
-                RedditDatabase.TABLE_TOPICS, RedditDatabase.TOPIC_SUBREDDIT_NAME + "=?", new String[] {source.subreddit
-                });
+        delete(db, RedditDatabase.TABLE_TOPICS, RedditDatabase.TOPIC_SUBREDDIT_NAME, source.subreddit);
     }
 
     public static void insertOrUpdateSubTopic(Context context, String subreddit, SubTopic topic) {
@@ -308,11 +326,7 @@ public class DBHelper {
 
     public static boolean removeSubTopic(@NonNull Context context, @NonNull SubTopic topic) {
         SQLiteDatabase db = getDatabase(context);
-
-        return 0
-                <= db.delete(
-                        RedditDatabase.TABLE_TOPICS, "\"" + RedditDatabase.TOPIC_ID + "\" = ?", new String[] {topic.id
-                        });
+        return 0 <= delete(db, RedditDatabase.TABLE_TOPICS, RedditDatabase.TOPIC_ID, topic.id);
     }
 
     public static int removeSubTopicsNotMatching(
@@ -339,7 +353,7 @@ public class DBHelper {
         return db.delete(RedditDatabase.TABLE_TOPICS, where.toString(), args);
     }
 
-    public static List<SubTopic> getSubTopics(Context context, String subreddit) {
+    public static List<SubTopic> getSubTopics(@NonNull Context context, String subreddit) {
         SQLiteDatabase db = getDatabase(context);
         ArrayList<SubTopic> records = null;
 
@@ -454,7 +468,7 @@ public class DBHelper {
         }
     }
 
-    public static void removeImages(Context context, Collection<String> mediaIds) {
+    public static void removeImages(@NonNull Context context, @NonNull Collection<String> mediaIds) {
         if (mediaIds.isEmpty()) return;
         SQLiteDatabase db = getDatabase(context);
 
@@ -466,5 +480,54 @@ public class DBHelper {
         where.append(")");
         String[] args = mediaIds.toArray(new String[0]);
         db.delete(RedditDatabase.TABLE_TOPIC_IMAGES, where.toString(), args);
+    }
+
+    public static void insertFavorite(@NonNull Context context, @NonNull MediaInfo info) {
+        SQLiteDatabase db = getDatabase(context);
+
+        ContentValues values = new ContentValues();
+        info.fillValues(values);
+
+        db.insertWithOnConflict(RedditDatabase.TABLE_FAVORITE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+    }
+
+    public static void removeFavorite(@NonNull Context context, @NonNull MediaInfo info) {
+        SQLiteDatabase db = getDatabase(context);
+
+        ContentValues values = new ContentValues();
+        info.fillValues(values);
+
+        delete(db, RedditDatabase.TABLE_FAVORITE, values);
+    }
+
+    @NonNull
+    public static List<MediaInfo> getFavoriteMediaList(@NonNull Context context, String subreddit) {
+        SQLiteDatabase db = getDatabase(context);
+
+        ArrayList<MediaInfo> records = null;
+        try (Cursor cursor = db.query(
+                RedditDatabase.TABLE_FAVORITE,
+                new String[] {RedditDatabase.FAVORITE_MEDIA_ID, RedditDatabase.FAVORITE_TOPIC_ID},
+                RedditDatabase.FAVORITE_SUBREDDIT + "=?",
+                new String[] {subreddit},
+                null,
+                null,
+                null)) {
+            if (cursor != null) {
+                cursor.moveToFirst();
+                records = new ArrayList<>(cursor.getCount());
+                while (!cursor.isAfterLast()) {
+                    String mediaId = cursor.getString(0);
+                    String topicId = cursor.getString(1);
+                    records.add(new MediaInfo(mediaId, topicId, subreddit));
+
+                    cursor.moveToNext();
+                }
+            }
+        }
+        if (records == null) {
+            return Collections.emptyList();
+        }
+        return records;
     }
 }

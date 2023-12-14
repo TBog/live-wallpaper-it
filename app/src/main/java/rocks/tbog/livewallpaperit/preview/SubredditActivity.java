@@ -7,7 +7,6 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -36,6 +35,7 @@ import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.Source;
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
 import rocks.tbog.livewallpaperit.data.DBHelper;
+import rocks.tbog.livewallpaperit.data.MediaInfo;
 import rocks.tbog.livewallpaperit.data.SubTopic;
 import rocks.tbog.livewallpaperit.preference.SettingsActivity;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
@@ -95,10 +95,9 @@ public class SubredditActivity extends AppCompatActivity {
         decoration.setLastItemDecorated(false);
         recyclerView.addItemDecoration(decoration);
 
-        mAdapter.setOnLongClickListener((subTopic, view) -> {
-            Uri urlToOpen = Uri.parse("https://www.reddit.com" + subTopic.permalink);
+        mAdapter.setOnLongClickListener((a, subTopic, view) -> {
             ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData clip = ClipData.newPlainText(mSource.subreddit, urlToOpen.toString());
+            ClipData clip = ClipData.newPlainText(mSource.subreddit, subTopic.getPermalinkString());
             clipboard.setPrimaryClip(clip);
             // Only show a toast for Android 12 and lower.
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2)
@@ -116,7 +115,7 @@ public class SubredditActivity extends AppCompatActivity {
         mAdapter.setAllowNSFW(allowNSFW);
         int previewWidth = pref.getInt("image-thumbnail-width", 108);
         mAdapter.setPreviewWidth(previewWidth);
-        mAdapter.setFilterFromSource(mSource);
+        mAdapter.setSource(mSource);
 
         if (mAdapter.getItemCount() == 0) {
             loadSourceData();
@@ -128,6 +127,7 @@ public class SubredditActivity extends AppCompatActivity {
         onStartLoadData();
         final ArrayList<SubTopic> topicList = new ArrayList<>();
         final ArrayList<String> ignoreList = new ArrayList<>();
+        final ArrayList<MediaInfo> favoriteList = new ArrayList<>();
         AsyncUtils.runAsync(
                 getLifecycle(),
                 t -> {
@@ -137,10 +137,12 @@ public class SubredditActivity extends AppCompatActivity {
                     topicList.addAll(list);
 
                     ignoreList.addAll(DBHelper.getIgnoreTokenList(ctx));
+                    favoriteList.addAll(DBHelper.getFavoriteMediaList(ctx, mSource.subreddit));
                 },
                 t -> {
                     mAdapter.setItems(topicList);
                     mAdapter.setIgnoreList(ignoreList);
+                    mAdapter.setFavoriteList(favoriteList);
                     onEndLoadData();
                     if (mAdapter.getItemCount() == 0) {
                         refreshSource();

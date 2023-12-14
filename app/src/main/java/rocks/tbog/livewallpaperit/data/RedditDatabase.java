@@ -10,9 +10,10 @@ import androidx.annotation.NonNull;
 
 public class RedditDatabase extends SQLiteOpenHelper {
     private static final String DB_NAME = "reddit.s3db";
-    private static final int DB_VERSION = 5;
+    private static final int DB_VERSION = 6;
     private static final String TAG = "DB";
     static final String TABLE_IGNORE = "ignore_artwork";
+    static final String TABLE_FAVORITE = "favorite_artwork";
     static final String TABLE_SUBREDDITS = "subreddits";
     static final String TABLE_TOPICS = "sub_topics";
     static final String TABLE_TOPIC_IMAGES = "topic_images";
@@ -45,6 +46,9 @@ public class RedditDatabase extends SQLiteOpenHelper {
     public static final String IMAGE_HEIGHT = "height";
     public static final String IMAGE_IS_BLUR = "is_obfuscated";
     public static final String IMAGE_IS_SOURCE = "is_source";
+    public static final String FAVORITE_SUBREDDIT = "subreddit";
+    public static final String FAVORITE_TOPIC_ID = "topic_id";
+    public static final String FAVORITE_MEDIA_ID = "media_id";
 
     RedditDatabase(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -55,11 +59,12 @@ public class RedditDatabase extends SQLiteOpenHelper {
         try {
             database.execSQL("CREATE TABLE " + TABLE_IGNORE + " ( "
                     + "\"" + BaseColumns._ID + "\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
-                    + "\"" + ARTWORK_TOKEN + "\" TEXT UNIQUE);");
+                    + "\"" + ARTWORK_TOKEN + "\" TEXT UNIQUE)");
             createSubredditTable(database);
             createTopicTable(database);
             createTopicImageTable(database);
             addTopicImageTableIndex(database);
+            addFavoritesTable(database);
         } catch (SQLException e) {
             Log.e(TAG, "database failed to open", e);
         }
@@ -104,6 +109,9 @@ public class RedditDatabase extends SQLiteOpenHelper {
                                 + SUBREDDIT_IMAGE_ORIENTATION + "\" INTEGER NOT NULL DEFAULT 0");
                     }
                     // fall through
+                case 5:
+                    addFavoritesTable(db);
+                    // fall through
                 default:
                     break;
             }
@@ -136,7 +144,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 + "\"" + SUBREDDIT_IMAGE_MIN_WIDTH + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + SUBREDDIT_IMAGE_MIN_HEIGHT + "\" INTEGER NOT NULL DEFAULT 0,"
                 + "\"" + SUBREDDIT_IMAGE_ORIENTATION + "\" INTEGER NOT NULL DEFAULT 0,"
-                + "\"" + SUBREDDIT_ENABLED + "\" INTEGER NOT NULL DEFAULT 1);");
+                + "\"" + SUBREDDIT_ENABLED + "\" INTEGER NOT NULL DEFAULT 1)");
     }
 
     private void createTopicTable(@NonNull SQLiteDatabase db) {
@@ -157,7 +165,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 + "\"" + TOPIC_SELECTED + "\" INTEGER NOT NULL DEFAULT 1,"
                 + "CONSTRAINT fk_subreddit_name FOREIGN KEY(\"" + TOPIC_SUBREDDIT_NAME + "\") "
                 + "REFERENCES \"" + TABLE_SUBREDDITS + "\"(\"" + SUBREDDIT_NAME + "\") "
-                + "ON DELETE CASCADE ON UPDATE CASCADE);");
+                + "ON DELETE CASCADE ON UPDATE CASCADE)");
     }
 
     private void createTopicImageTable(@NonNull SQLiteDatabase db) {
@@ -172,7 +180,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 + "\"" + IMAGE_IS_SOURCE + "\" INTEGER NOT NULL DEFAULT 1,"
                 + "CONSTRAINT fk_topic_id FOREIGN KEY(\"" + IMAGE_TOPIC_ID + "\") "
                 + "REFERENCES \"" + TABLE_TOPICS + "\"(\"" + TOPIC_ID + "\") "
-                + "ON DELETE CASCADE ON UPDATE CASCADE);");
+                + "ON DELETE CASCADE ON UPDATE CASCADE)");
     }
 
     private void addTopicImageTableIndex(@NonNull SQLiteDatabase db) {
@@ -183,5 +191,13 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 + "\"" + IMAGE_HEIGHT + "\","
                 + "\"" + IMAGE_IS_BLUR + "\","
                 + "\"" + IMAGE_IS_SOURCE + "\")");
+    }
+
+    private void addFavoritesTable(@NonNull SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE " + TABLE_FAVORITE + " ( "
+                + "\"" + BaseColumns._ID + "\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
+                + "\"" + FAVORITE_MEDIA_ID + "\" TEXT NOT NULL,"
+                + "\"" + FAVORITE_TOPIC_ID + "\" TEXT NOT NULL,"
+                + "\"" + FAVORITE_SUBREDDIT + "\" TEXT NOT NULL)");
     }
 }

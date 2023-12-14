@@ -51,8 +51,8 @@
         style="@style/Widget.Material3.Button.IconButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:contentDescription="@string/button_remove_submission_tooltip"
-        android:tooltipText="@string/button_remove_submission_tooltip"
+        android:contentDescription="@string/button_ignore_submission_tooltip"
+        android:tooltipText="@string/button_ignore_submission_tooltip"
         app:icon="@drawable/ic_remove_48" />
 
     <androidx.constraintlayout.helper.widget.Flow

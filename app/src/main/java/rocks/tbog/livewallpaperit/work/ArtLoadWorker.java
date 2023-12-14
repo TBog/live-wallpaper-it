@@ -50,6 +50,9 @@ public class ArtLoadWorker extends Worker {
         @NonNull
         public final ArraySet<String> ignoreTokenList = new ArraySet<>();
 
+        @NonNull
+        public final ArraySet<String> favoriteList = new ArraySet<>();
+
         @Nullable
         public static Filter fromSource(@Nullable Source source) {
             if (source == null) return null;
@@ -135,6 +138,10 @@ public class ArtLoadWorker extends Worker {
         String[] ignoreTokens = getInputData().getStringArray(WorkerUtils.DATA_IGNORE_TOKEN_LIST);
         if (ignoreTokens != null) {
             filter.ignoreTokenList.addAll(Arrays.asList(ignoreTokens));
+        }
+        var favoriteList = DBHelper.getFavoriteMediaList(ctx, source.subreddit);
+        for (var info : favoriteList) {
+            filter.favoriteList.add(info.mediaId);
         }
 
         final int desiredArtworkCount = getInputData().getInt(WorkerUtils.DATA_DESIRED_ARTWORK_COUNT, 10);
@@ -257,6 +264,11 @@ public class ArtLoadWorker extends Worker {
     }
 
     public static boolean shouldSkipTopic(@NonNull SubTopic topic, @NonNull Filter filter) {
+        for (var image : topic.images) {
+            if (filter.favoriteList.contains(image.mediaId)) {
+                return false;
+            }
+        }
         if (filter.minUpvotePercentage > 0) {
             if (topic.upvoteRatio < filter.minUpvotePercentage) {
                 Log.v(
@@ -294,6 +306,9 @@ public class ArtLoadWorker extends Worker {
      */
     public static boolean shouldSkipImage(@NonNull SubTopic.Image image, @NonNull Filter filter) {
         boolean isValid = image.isSource && !image.isObfuscated;
+        if (filter.favoriteList.contains(image.mediaId)) {
+            return isValid;
+        }
         isValid = isValid && validImageSize(image, filter);
         isValid = isValid && validImageAspect(image, filter);
         return !isValid;
@@ -362,7 +377,7 @@ public class ArtLoadWorker extends Worker {
 
             Artwork artwork = new Artwork.Builder()
                     .persistentUri(Uri.parse(image.url))
-                    .webUri(Uri.parse("https://www.reddit.com" + topic.permalink))
+                    .webUri(topic.getPermalinkUri())
                     .token(image.mediaId)
                     .attribution(topic.author)
                     .byline(byline)

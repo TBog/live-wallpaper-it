@@ -3,11 +3,12 @@ package rocks.tbog.livewallpaperit.preview;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.text.format.DateUtils;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,6 +23,8 @@ import rocks.tbog.livewallpaperit.DeleteArtworkReceiver;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
 import rocks.tbog.livewallpaperit.Source;
+import rocks.tbog.livewallpaperit.data.DBHelper;
+import rocks.tbog.livewallpaperit.data.MediaInfo;
 import rocks.tbog.livewallpaperit.data.SubTopic;
 import rocks.tbog.livewallpaperit.dialog.DialogHelper;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
@@ -30,8 +33,10 @@ import rocks.tbog.livewallpaperit.work.ArtLoadWorker;
 public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHolder> {
     private boolean mAllowNSFW = true;
     private int mWidth = 108;
+    private String mSubreddit = null;
     private ArtLoadWorker.Filter mFilter = null;
     private final ArraySet<String> mIgnoreMediaIdSet = new ArraySet<>();
+    private final ArraySet<MediaInfo> mFavoriteMediaSet = new ArraySet<>();
 
     public SubredditAdapter() {
         super(new ArrayList<>());
@@ -53,19 +58,26 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
         notifyItemRangeChanged(0, getItemCount());
     }
 
-    public void setFilterFromSource(@Nullable Source source) {
+    public void setSource(@Nullable Source source) {
         ArtLoadWorker.Filter filter = ArtLoadWorker.Filter.fromSource(source);
         if (filter != null) {
             filter.allowNSFW = mAllowNSFW;
         }
         if (Objects.equals(mFilter, filter)) return;
         mFilter = filter;
+        mSubreddit = source != null ? source.subreddit : null;
         notifyItemRangeChanged(0, getItemCount());
     }
 
     public void setIgnoreList(@NonNull List<String> ignoreList) {
         mIgnoreMediaIdSet.clear();
         mIgnoreMediaIdSet.addAll(ignoreList);
+        notifyItemRangeChanged(0, getItemCount());
+    }
+
+    public void setFavoriteList(@NonNull List<MediaInfo> favoriteList) {
+        mFavoriteMediaSet.clear();
+        mFavoriteMediaSet.addAll(favoriteList);
         notifyItemRangeChanged(0, getItemCount());
     }
 
@@ -79,48 +91,21 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
                 DateUtils.MINUTE_IN_MILLIS,
                 DateUtils.DAY_IN_MILLIS,
                 DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE);
+
+        boolean showObfuscatedPreview = topic.over18 && !mAllowNSFW;
+        ThumbnailAdapter thumbnailAdapter =
+                new ThumbnailAdapter(topic, mWidth, showObfuscatedPreview, mIgnoreMediaIdSet, mFavoriteMediaSet);
+        thumbnailAdapter.setOnClickListener(
+                (a, t, v) -> ViewUtils.launchIntent(v, new Intent(Intent.ACTION_VIEW).setData(t.link)));
+        thumbnailAdapter.setOnLongClickListener(
+                (adapter, thumbnail, v) -> onLongClickThumbnail(adapter, thumbnail, v, topic));
+
         holder.mInfoView.setText(displayAgo);
         holder.mTitleView.setText(topic.title);
-        holder.mButtonOpen.setOnClickListener(v -> {
-            Uri urlToOpen = Uri.parse("https://www.reddit.com" + topic.permalink);
-            ViewUtils.launchIntent(v, new Intent(Intent.ACTION_VIEW).setData(urlToOpen));
-        });
-        holder.mButtonRemove.setOnClickListener(v -> {
-            Activity activity = ViewUtils.getActivity(v);
-            FragmentManager fragmentManager = null;
-            if (activity instanceof AppCompatActivity) {
-                fragmentManager = ((AppCompatActivity) activity).getSupportFragmentManager();
-            }
-            if (fragmentManager == null) return;
-            DialogHelper.makeConfirmDialog(
-                            activity.getString(R.string.confirm_remove_submission),
-                            activity.getString(R.string.confirm_remove_submission_description, topic.title),
-                            (dialog, button) -> {
-                                // add ignore list changes locally
-                                for (var image : topic.images) {
-                                    mIgnoreMediaIdSet.add(image.mediaId);
-                                }
-                                Intent intent = new Intent(activity, DeleteArtworkReceiver.class)
-                                        .putExtra(DeleteArtworkReceiver.ACTION, DeleteArtworkReceiver.ACTION_DELETE)
-                                        .putExtra(
-                                                DeleteArtworkReceiver.MEDIA_ID_ARRAY,
-                                                topic.images.stream()
-                                                        .map(image -> image.mediaId)
-                                                        .distinct()
-                                                        .toArray(String[]::new));
-                                activity.sendBroadcast(intent);
-                                Toast.makeText(
-                                                activity,
-                                                holder.mButtonRemove.getContentDescription(),
-                                                Toast.LENGTH_SHORT)
-                                        .show();
-                                notifyItemChanged(holder.getAdapterPosition());
-                            })
-                    .show(fragmentManager);
-        });
-        boolean showObfuscatedPreview = topic.over18 && !mAllowNSFW;
-        holder.mImageCarouselView.setAdapter(
-                new ThumbnailAdapter(topic, mWidth, showObfuscatedPreview, mIgnoreMediaIdSet));
+        holder.mButtonOpen.setOnClickListener(
+                v -> ViewUtils.launchIntent(v, new Intent(Intent.ACTION_VIEW).setData(topic.getPermalinkUri())));
+        holder.mButtonRemove.setOnClickListener(btnRemove -> onClickRemove(btnRemove, topic));
+        holder.mImageCarouselView.setAdapter(thumbnailAdapter);
         holder.mNsfwView.setVisibility(topic.over18 ? View.VISIBLE : View.GONE);
         holder.mScoreView.setText(String.valueOf(topic.score));
         holder.mUpvoteView.setText(String.valueOf(topic.upvoteRatio));
@@ -130,6 +115,102 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
         } else {
             holder.mInvalidView.setVisibility(View.GONE);
         }
+    }
+
+    private void onClickRemove(View btnRemove, @NonNull SubTopic topic) {
+        Activity activity = ViewUtils.getActivity(btnRemove);
+        FragmentManager fragmentManager = null;
+        if (activity instanceof AppCompatActivity) {
+            fragmentManager = ((AppCompatActivity) activity).getSupportFragmentManager();
+        }
+        if (fragmentManager == null) return;
+        DialogHelper.makeConfirmDialog(
+                        activity.getString(R.string.confirm_remove_submission),
+                        activity.getString(R.string.confirm_remove_submission_description, topic.title),
+                        (dialog, button) -> {
+                            // add ignore list changes locally
+                            for (var image : topic.images) {
+                                mIgnoreMediaIdSet.add(image.mediaId);
+                            }
+                            Intent intent = new Intent(activity, DeleteArtworkReceiver.class)
+                                    .putExtra(DeleteArtworkReceiver.ACTION, DeleteArtworkReceiver.ACTION_DELETE)
+                                    .putExtra(
+                                            DeleteArtworkReceiver.MEDIA_ID_ARRAY,
+                                            topic.images.stream()
+                                                    .map(image -> image.mediaId)
+                                                    .distinct()
+                                                    .toArray(String[]::new));
+                            activity.sendBroadcast(intent);
+                            Toast.makeText(activity, btnRemove.getContentDescription(), Toast.LENGTH_SHORT)
+                                    .show();
+                            notifyItemChanged(topic);
+                        })
+                .show(fragmentManager);
+    }
+
+    private boolean isFavoriteMedia(String mediaId) {
+        return mFavoriteMediaSet.stream().anyMatch(info -> info.mediaId.equals(mediaId));
+    }
+
+    private boolean onLongClickThumbnail(
+            RecycleAdapterBase<ThumbnailAdapter.Item, ThumbnailAdapter.ThumbnailHolder> adapter,
+            ThumbnailAdapter.Item thumbnail,
+            View v,
+            SubTopic topic) {
+        final Context ctx = v.getContext();
+        final String mediaId = thumbnail.image.mediaId;
+        PopupMenu popupMenu = new PopupMenu(ctx, v, Gravity.START | Gravity.TOP);
+        var menu = popupMenu.getMenu();
+        if (isFavoriteMedia(mediaId)) {
+            menu.add(R.string.unset_favorite).setOnMenuItemClickListener(item -> {
+                MediaInfo info = new MediaInfo(mediaId, topic.id, mSubreddit);
+                DBHelper.removeFavorite(ctx, info);
+                mFavoriteMediaSet.remove(info);
+                adapter.notifyItemChanged(thumbnail);
+                return true;
+            });
+        } else {
+            menu.add(R.string.set_favorite).setOnMenuItemClickListener(item -> {
+                MediaInfo info = new MediaInfo(mediaId, topic.id, mSubreddit);
+                DBHelper.insertFavorite(ctx, info);
+                DBHelper.removeIgnoreToken(ctx, mediaId);
+                mIgnoreMediaIdSet.remove(mediaId);
+                mFavoriteMediaSet.add(info);
+                adapter.notifyItemChanged(thumbnail);
+                return true;
+            });
+        }
+        if (mIgnoreMediaIdSet.contains(mediaId)) {
+            menu.add(R.string.clear_ignore).setOnMenuItemClickListener(item -> {
+                DBHelper.removeIgnoreToken(ctx, mediaId);
+                mIgnoreMediaIdSet.remove(mediaId);
+                adapter.notifyItemChanged(thumbnail);
+                return true;
+            });
+        } else {
+            menu.add(R.string.add_ignore).setOnMenuItemClickListener(item -> {
+                MediaInfo info = new MediaInfo(mediaId, topic.id, mSubreddit);
+                DBHelper.insertIgnoreToken(ctx, mediaId);
+                DBHelper.removeFavorite(ctx, info);
+                mFavoriteMediaSet.remove(info);
+                mIgnoreMediaIdSet.add(mediaId);
+                adapter.notifyItemChanged(thumbnail);
+                return true;
+            });
+        }
+        menu.add(R.string.action_share_link).setOnMenuItemClickListener(item -> {
+            Intent intent = new Intent(Intent.ACTION_SEND)
+                    .setType("text/plain")
+                    .putExtra(
+                            Intent.EXTRA_TEXT,
+                            ctx.getString(
+                                    R.string.title_and_link, topic.title, topic.author, topic.getPermalinkString()));
+            var chooser = Intent.createChooser(intent, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            ViewUtils.launchIntent(v, chooser);
+            return true;
+        });
+        popupMenu.show();
+        return true;
     }
 
     @NonNull

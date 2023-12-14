@@ -23,7 +23,18 @@
         android:layout_gravity="end|bottom"
         android:elevation="@dimen/cardview_default_elevation"
         android:visibility="gone"
-        app:srcCompat="@drawable/ic_invalid_24"
+        android:contentDescription="invalid"
+        app:srcCompat="@drawable/ic_invalid_24" />
+
+    <ImageView
+        android:id="@+id/favorite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:contentDescription="favorite"
+        android:elevation="@dimen/cardview_default_elevation"
+        android:visibility="gone"
+        app:srcCompat="@drawable/ic_validated_24"
         tools:visibility="visible" />
 
 </FrameLayout>

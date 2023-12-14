@@ -2,7 +2,6 @@ package rocks.tbog.livewallpaperit.preview;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -23,6 +22,7 @@ import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
 import rocks.tbog.livewallpaperit.WorkAsync.RunnableTask;
+import rocks.tbog.livewallpaperit.data.MediaInfo;
 import rocks.tbog.livewallpaperit.data.SubTopic;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
 
@@ -30,11 +30,18 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
     private static final String TAG = ThumbnailAdapter.class.getSimpleName();
     private final int mWidth;
     private final Set<String> mInvalidMediaIdSet;
+    private final Set<MediaInfo> mFavoriteMediaSet;
 
-    public ThumbnailAdapter(SubTopic topic, int width, boolean showObfuscated, @NonNull Set<String> invalidMediaIdSet) {
+    public ThumbnailAdapter(
+            SubTopic topic,
+            int width,
+            boolean showObfuscated,
+            @NonNull Set<String> invalidMediaIdSet,
+            @NonNull Set<MediaInfo> favoriteMediaSet) {
         super(new ArrayList<>());
         mWidth = width;
         mInvalidMediaIdSet = invalidMediaIdSet;
+        mFavoriteMediaSet = favoriteMediaSet;
         ArrayMap<String, Uri> links = new ArrayMap<>();
         for (var image : topic.images) {
             if (image.isObfuscated != showObfuscated) continue;
@@ -57,14 +64,20 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
         mItemList.addAll(map.values());
     }
 
+    private boolean isInvalidMedia(String mediaId) {
+        return mInvalidMediaIdSet.contains(mediaId);
+    }
+
+    private boolean isFavoriteMedia(String mediaId) {
+        return mFavoriteMediaSet.stream().anyMatch(info -> info.mediaId.equals(mediaId));
+    }
+
     @Override
     public void onBindViewHolder(@NonNull ThumbnailHolder holder, @NonNull Item item) {
         holder.mImageView.setImageResource(R.drawable.ic_launcher_background);
-        holder.mInvalidView.setVisibility(mInvalidMediaIdSet.contains(item.image.mediaId) ? View.VISIBLE : View.GONE);
-
-        holder.mImageView.setOnClickListener(
-                v -> ViewUtils.launchIntent(v, new Intent(Intent.ACTION_VIEW).setData(item.link)));
-
+        holder.mImageView.setScaleType(ImageView.ScaleType.FIT_XY);
+        holder.mInvalidView.setVisibility(isInvalidMedia(item.image.mediaId) ? View.VISIBLE : View.GONE);
+        holder.mFavoriteView.setVisibility(isFavoriteMedia(item.image.mediaId) ? View.VISIBLE : View.GONE);
         setImageViewSize(holder.mImageView, item.image);
 
         Activity activity = ViewUtils.getActivity(holder.itemView);
@@ -91,6 +104,7 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
                         if (task.isCancelled()) return;
                         if (bitmapWrapper[0] != null) {
                             holder.mImageView.setImageBitmap(bitmapWrapper[0]);
+                            holder.mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                         }
                         if (holder.loadImageTask == task) {
                             holder.loadImageTask = null;
@@ -129,12 +143,14 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
     public static class ThumbnailHolder extends RecycleAdapterBase.Holder {
         public ImageView mImageView;
         public ImageView mInvalidView;
+        public ImageView mFavoriteView;
         public RunnableTask loadImageTask = null;
 
         public ThumbnailHolder(@NonNull View itemView) {
             super(itemView);
             mImageView = itemView.findViewById(android.R.id.icon);
             mInvalidView = itemView.findViewById(R.id.invalid);
+            mFavoriteView = itemView.findViewById(R.id.favorite);
         }
     }
 

@@ -2,6 +2,7 @@ package rocks.tbog.livewallpaperit.data;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 import androidx.annotation.NonNull;
@@ -67,6 +68,14 @@ public final class SubTopic {
         this.upvoteRatio = upvoteRatio;
         this.numComments = numComments;
         this.over18 = over18;
+    }
+
+    public String getPermalinkString() {
+        return "https://www.reddit.com" + permalink;
+    }
+
+    public Uri getPermalinkUri() {
+        return Uri.parse(getPermalinkString());
     }
 
     public static SubTopic fromSubmission(Submission submission) {

@@ -26,7 +26,7 @@
     <string name="action_refresh">Refresh subreddit</string>
     <string name="action_reload">Reload subreddit</string>
     <string name="button_remove_subreddit_tooltip">Remove subreddit</string>
-    <string name="button_remove_submission_tooltip">Remove submission</string>
+    <string name="button_ignore_submission_tooltip">Remove submission images</string>
     <string name="confirm_remove_subreddit">Remove subreddit %s?</string>
     <string name="confirm_remove_subreddit_description">%s and all associated filters will be removed. Are you sure?</string>
     <string name="confirm_remove_submission">Delete and ignore images?</string>
@@ -35,13 +35,14 @@
     <string name="action_settings">Settings</string>
     <string name="title_add_subreddit">Add image source</string>
     <string name="hint_add_subreddit">subreddit name</string>
-    <string name="action_share">Share link</string>
+    <string name="action_share_link">Share link</string>
     <string name="action_share_description">Share name and link</string>
     <string name="action_share_image">Share image</string>
     <string name="action_share_image_description">Share image file</string>
     <string name="action_delete">Delete</string>
     <string name="action_delete_description">Delete and add to ignore list</string>
     <string name="share_title_and_link">My Android wallpaper today is \'%1$s\' from reddit.com by %2$s.\n\n%3$s</string>
+    <string name="title_and_link">\'%1$s\' from reddit.com by %2$s.\n\n%3$s</string>
     <string name="label_upvote_percent">minimum upvote percentage</string>
     <string name="label_min_comments">minimum comment count</string>
     <string name="label_min_score">minimum score</string>
@@ -66,4 +67,9 @@
     <string name="loading_subreddit">Loading subreddit submissions</string>
     <string name="refreshing_subreddit">Loading from Reddit</string>
     <string name="filter_invalid">Does not pass filter criteria</string>
+
+    <string name="set_favorite">Set favorite</string>
+    <string name="unset_favorite">Remove favorite</string>
+    <string name="add_ignore">Ignore</string>
+    <string name="clear_ignore">Restore</string>
 </resources>

@@ -47,7 +47,7 @@ public class CommandUtils {
         // create an action with a unique PendingIntent
         RemoteActionCompat action = new RemoteActionCompat(
                 IconCompat.createWithResource(ctx, R.drawable.ic_share_24),
-                ctx.getString(R.string.action_share),
+                ctx.getString(R.string.action_share_link),
                 ctx.getString(R.string.action_share_description),
                 PendingIntent.getActivity(
                         ctx,
