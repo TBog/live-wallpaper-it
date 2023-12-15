@@ -23,7 +23,8 @@
     <string name="rate_the_app">Rate the app</string>
     <string name="btn_edit_source">Edit sources</string>
     <string name="action_add">Add subreddit</string>
-    <string name="action_refresh">Refresh subreddit</string>
+    <string name="action_refresh_all">Refresh all</string>
+    <string name="action_refresh_subreddit">Refresh subreddit</string>
     <string name="action_reload">Reload subreddit</string>
     <string name="button_remove_subreddit_tooltip">Remove subreddit</string>
     <string name="button_ignore_submission_tooltip">Remove submission images</string>
@@ -63,6 +64,7 @@
     <string name="score_tooltip">score</string>
     <string name="num_comments_tooltip">comment count</string>
     <string name="loading_sources">Loading sources</string>
+    <string name="refresh_sources">Refresh sources</string>
     <string name="empty_sources">You have not added any subreddits.</string>
     <string name="loading_subreddit">Loading subreddit submissions</string>
     <string name="refreshing_subreddit">Loading from Reddit</string>

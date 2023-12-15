@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,10 +17,16 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.ExistingWorkPolicy;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 import com.google.android.material.divider.MaterialDividerItemDecoration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Map;
 import rocks.tbog.livewallpaperit.ArtProvider;
+import rocks.tbog.livewallpaperit.BuildConfig;
 import rocks.tbog.livewallpaperit.DeleteArtworkReceiver;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.Source;
@@ -28,9 +35,11 @@ import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.dialog.DialogHelper;
 import rocks.tbog.livewallpaperit.preference.SettingsActivity;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
+import rocks.tbog.livewallpaperit.work.WorkerUtils;
 
 public class SourcesActivity extends AppCompatActivity {
 
+    private static final String TAG = SourcesActivity.class.getSimpleName();
     SourceAdapter mAdapter;
     TextView mText;
 
@@ -126,6 +135,12 @@ public class SourcesActivity extends AppCompatActivity {
         mText.animate().alpha(1f).start();
     }
 
+    private void onStartRefreshSources() {
+        mText.setText(R.string.refresh_sources);
+        mText.setVisibility(View.VISIBLE);
+        mText.animate().alpha(1f).start();
+    }
+
     private void onEndLoadSources() {
         mText.animate()
                 .alpha(0f)
@@ -162,6 +177,9 @@ public class SourcesActivity extends AppCompatActivity {
             sendBroadcast(intent);
             Toast.makeText(this, item.getTitle(), Toast.LENGTH_SHORT).show();
             return true;
+        } else if (itemId == R.id.action_refresh) {
+            refreshSources();
+            return true;
         } else if (itemId == R.id.action_add) {
             return openAddSourceDialog();
         }
@@ -194,6 +212,73 @@ public class SourcesActivity extends AppCompatActivity {
                     if (task.isCancelled()) return;
                     mAdapter.addItem(source);
                     updateSourcesText();
+                });
+    }
+
+    private void refreshSources() {
+        onStartRefreshSources();
+        final var sources = mAdapter.getItems();
+
+        final var setupWork = ArtProvider.buildSetupWorkRequest(this);
+        final var workMgr = WorkManager.getInstance(this);
+        final var workQueue =
+                workMgr.beginUniqueWork(WorkerUtils.UNIQUE_WORK_REFRESH_ENABLED, ExistingWorkPolicy.KEEP, setupWork);
+        final ArrayList<OneTimeWorkRequest> sourceWorkList = new ArrayList<>();
+        for (Source source : sources) {
+            if (!source.isEnabled) continue;
+            sourceWorkList.add(ArtProvider.buildSourceWorkRequest(source));
+        }
+        workQueue.then(sourceWorkList).enqueue();
+
+        workMgr.getWorkInfosForUniqueWorkLiveData(WorkerUtils.UNIQUE_WORK_REFRESH_ENABLED)
+                .observe(SourcesActivity.this, workInfos -> {
+                    if (workInfos == null || workInfos.isEmpty()) return;
+
+                    StringBuilder logWork = new StringBuilder("work.size=").append(workInfos.size());
+                    for (var workInfo : workInfos) {
+                        logWork.append("\n\tid=")
+                                .append(workInfo.getId())
+                                .append(" state=")
+                                .append(workInfo.getState());
+                        if (BuildConfig.DEBUG) {
+                            if (workInfo.getState().isFinished()) {
+                                Map<String, Object> map =
+                                        workInfo.getOutputData().getKeyValueMap();
+                                for (Map.Entry<String, Object> entry : map.entrySet()) {
+                                    String key = entry.getKey();
+                                    Object value = entry.getValue();
+                                    logWork.append("\n\t\t[")
+                                            .append(key)
+                                            .append("]=")
+                                            .append(value);
+                                }
+                            }
+                        }
+                    }
+                    Log.v(TAG, logWork.toString());
+
+                    boolean allFinished = true;
+                    boolean allSucceeded = true;
+                    for (var workInfo : workInfos) {
+                        if (!workInfo.getState().isFinished()) {
+                            allFinished = false;
+                            allSucceeded = false;
+                            break;
+                        }
+                        if (!WorkInfo.State.SUCCEEDED.equals(workInfo.getState())) {
+                            allSucceeded = false;
+                        }
+                    }
+                    if (allFinished) {
+                        if (allSucceeded) {
+                            Log.i(TAG, "refresh succeeded");
+                        } else {
+                            Log.i(TAG, "refresh failed");
+                            Toast.makeText(this, "Failed to refresh enabled sources", Toast.LENGTH_SHORT)
+                                    .show();
+                        }
+                        onEndLoadSources();
+                    }
                 });
     }
 }

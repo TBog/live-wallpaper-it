@@ -13,6 +13,7 @@ import androidx.core.app.RemoteActionCompat;
 import androidx.lifecycle.Observer;
 import androidx.work.Constraints;
 import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.OutOfQuotaPolicy;
@@ -62,7 +63,8 @@ public class ArtProvider extends MuzeiArtProvider {
         if (ctx == null) return;
         final OneTimeWorkRequest setupWork = buildSetupWorkRequest(ctx);
         var workManager = WorkManager.getInstance(ctx);
-        var workQueue = workManager.beginWith(setupWork);
+        var workQueue = workManager.beginUniqueWork(
+                WorkerUtils.UNIQUE_WORK_REFRESH_ENABLED, ExistingWorkPolicy.KEEP, setupWork);
         final ArrayList<OneTimeWorkRequest> subredditWorkList = new ArrayList<>();
         var sources = DBHelper.loadSources(ctx);
         for (Source source : sources) {
