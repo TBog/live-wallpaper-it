@@ -7,8 +7,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 import com.google.android.apps.muzei.api.provider.ProviderContract;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.stream.Collectors;
 import rocks.tbog.livewallpaperit.data.DBHelper;
+import rocks.tbog.livewallpaperit.data.MediaInfo;
 
 public class DeleteArtworkReceiver extends BroadcastReceiver {
 
@@ -19,13 +22,21 @@ public class DeleteArtworkReceiver extends BroadcastReceiver {
     public static final String ARTWORK_ID = "delete.artwork.ID";
     public static final String ARTWORK_TOKEN = "delete.artwork.token";
     public static final String MEDIA_ID_ARRAY = "delete.media_id.array";
+    public static final String MEDIA_TOPIC_ID = "delete.topic_id";
+    public static final String MEDIA_SUBREDDIT = "delete.subreddit";
 
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getStringExtra(ACTION);
         if (ACTION_DELETE.equals(action)) {
-            if (intent.hasExtra(MEDIA_ID_ARRAY)) {
-                deleteMedia(context, intent.getStringArrayExtra(MEDIA_ID_ARRAY));
+            if (intent.hasExtra(MEDIA_ID_ARRAY)
+                    && intent.hasExtra(MEDIA_TOPIC_ID)
+                    && intent.hasExtra(MEDIA_SUBREDDIT)) {
+                deleteMedia(
+                        context,
+                        intent.getStringArrayExtra(MEDIA_ID_ARRAY),
+                        intent.getStringExtra(MEDIA_TOPIC_ID),
+                        intent.getStringExtra(MEDIA_SUBREDDIT));
             } else {
                 deleteArtwork(context, intent);
             }
@@ -36,7 +47,7 @@ public class DeleteArtworkReceiver extends BroadcastReceiver {
         }
     }
 
-    private void deleteMedia(Context context, String[] mediaArray) {
+    private void deleteMedia(Context context, String[] mediaArray, String topicId, String subreddit) {
         if (mediaArray == null) {
             Log.e(TAG, "mediaId array is null");
             return;
@@ -54,7 +65,10 @@ public class DeleteArtworkReceiver extends BroadcastReceiver {
         int count = content.delete(contentUri, whereFilter, mediaArray);
         Log.d(TAG, "deleted " + count + "/" + mediaArray.length);
 
-        if ((count = DBHelper.insertIgnoreTokens(context, mediaArray)) != -1) {
+        var collection = Arrays.stream(mediaArray)
+                .map(mediaId -> new MediaInfo(mediaId, topicId, subreddit))
+                .collect(Collectors.toSet());
+        if ((count = DBHelper.insertIgnoreTokens(context, collection)) != -1) {
             Log.d(TAG, "ignored " + count + "/" + mediaArray.length);
         }
     }
@@ -82,8 +96,11 @@ public class DeleteArtworkReceiver extends BroadcastReceiver {
         int count = content.delete(contentUri, whereFilter, whereArgs);
         Log.d(TAG, "delete count=" + count);
 
-        if (DBHelper.insertIgnoreToken(context, artworkToken)) {
-            Log.d(TAG, "ignored " + artworkToken);
+        var mediaInfo = DBHelper.getMediaByToken(context, artworkToken);
+        if (mediaInfo != null) {
+            if (DBHelper.insertIgnoreMedia(context, mediaInfo)) {
+                Log.d(TAG, "ignored " + mediaInfo.mediaId + " from " + mediaInfo.subreddit);
+            }
         }
     }
 

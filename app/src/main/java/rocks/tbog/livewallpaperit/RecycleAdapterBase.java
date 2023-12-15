@@ -35,14 +35,6 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
         mOnLongClickListener = listener;
     }
 
-    //    @Override
-    //    public int getItemViewType(int position) {
-    //        final T entry = getItem(position);
-    //        if (entry == null)
-    //            return -1; // this is invalid and will throw later on
-    //        return ResultHelper.getItemViewType(entry, mDrawFlags);
-    //    }
-
     @Override
     public long getItemId(int position) {
         final T entry = getItem(position);

@@ -27,6 +27,7 @@ public class SourceAdapter extends RecycleAdapterBase<Source, SourceHolder> {
         super(new ArrayList<>());
         mSourceChangedObserver = changeObserver;
         mSourceRemovedObserver = removeObserver;
+        setHasStableIds(true);
     }
 
     @NonNull
@@ -107,9 +108,6 @@ public class SourceAdapter extends RecycleAdapterBase<Source, SourceHolder> {
     public void onViewRecycled(@NonNull SourceHolder holder) {
         holder.unbind();
         holder.toggleSwitch.setOnCheckedChangeListener(null);
-        // holder.minUpvotePercentage.removeTextChangedListener(holder.mUpvotePercentageWatcher);
-        // holder.minScore.removeTextChangedListener(holder.mScoreWatcher);
-        // holder.minComments.removeTextChangedListener(holder.mCommentsWatcher);
         holder.imageMinWidth.setOnItemSelectedListener(null);
         holder.imageMinHeight.setOnItemSelectedListener(null);
         holder.imageOrientation.setOnItemSelectedListener(null);

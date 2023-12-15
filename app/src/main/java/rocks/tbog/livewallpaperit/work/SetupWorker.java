@@ -13,8 +13,6 @@ import com.kirkbushman.araw.RedditClient;
 import com.kirkbushman.araw.helpers.AuthHelper;
 import com.kirkbushman.araw.helpers.AuthUserlessHelper;
 import com.kirkbushman.araw.helpers.NoAuthHelper;
-import java.util.List;
-import rocks.tbog.livewallpaperit.data.DBHelper;
 
 public class SetupWorker extends Worker {
     private static final String TAG = SetupWorker.class.getSimpleName();
@@ -58,11 +56,8 @@ public class SetupWorker extends Worker {
         int desiredArtworkCount = pref.getInt("desired-artwork-count", 1);
         boolean allowNSFW = pref.getBoolean("allow-nsfw", false);
 
-        List<String> list = DBHelper.getIgnoreTokenList(ctx);
-
         return Result.success(new Data.Builder()
                 .putAll(getInputData())
-                .putStringArray(WorkerUtils.DATA_IGNORE_TOKEN_LIST, list.toArray(new String[0]))
                 .putBoolean(WorkerUtils.DATA_ALLOW_NSFW, allowNSFW)
                 .putInt(WorkerUtils.DATA_DESIRED_ARTWORK_COUNT, desiredArtworkCount)
                 .build());

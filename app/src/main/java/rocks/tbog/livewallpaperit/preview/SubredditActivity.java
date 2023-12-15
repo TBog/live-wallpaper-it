@@ -16,6 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -126,7 +127,7 @@ public class SubredditActivity extends AppCompatActivity {
         if (mSource == null) return;
         onStartLoadData();
         final ArrayList<SubTopic> topicList = new ArrayList<>();
-        final ArrayList<String> ignoreList = new ArrayList<>();
+        final ArrayList<MediaInfo> ignoreList = new ArrayList<>();
         final ArrayList<MediaInfo> favoriteList = new ArrayList<>();
         AsyncUtils.runAsync(
                 getLifecycle(),
@@ -136,7 +137,7 @@ public class SubredditActivity extends AppCompatActivity {
                     DBHelper.loadSubTopicImages(ctx, list);
                     topicList.addAll(list);
 
-                    ignoreList.addAll(DBHelper.getIgnoreTokenList(ctx));
+                    ignoreList.addAll(DBHelper.getIgnoreMediaList(ctx, mSource.subreddit));
                     favoriteList.addAll(DBHelper.getFavoriteMediaList(ctx, mSource.subreddit));
                 },
                 t -> {
@@ -244,7 +245,7 @@ public class SubredditActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
         if (itemId == R.id.action_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);

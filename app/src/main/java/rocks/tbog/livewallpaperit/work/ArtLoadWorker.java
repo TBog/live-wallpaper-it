@@ -23,9 +23,9 @@ import com.kirkbushman.araw.models.Submission;
 import com.kirkbushman.araw.models.enums.SubmissionsSorting;
 import com.kirkbushman.araw.models.enums.TimePeriod;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import rocks.tbog.livewallpaperit.ArtProvider;
 import rocks.tbog.livewallpaperit.Source;
 import rocks.tbog.livewallpaperit.data.DBHelper;
@@ -135,10 +135,9 @@ public class ArtLoadWorker extends Worker {
             filter = new Filter();
         }
         filter.allowNSFW = getInputData().getBoolean(WorkerUtils.DATA_ALLOW_NSFW, false);
-        String[] ignoreTokens = getInputData().getStringArray(WorkerUtils.DATA_IGNORE_TOKEN_LIST);
-        if (ignoreTokens != null) {
-            filter.ignoreTokenList.addAll(Arrays.asList(ignoreTokens));
-        }
+        final var ignoreList = DBHelper.getIgnoreMediaList(ctx, source.subreddit);
+        filter.ignoreTokenList.addAll(
+                ignoreList.stream().map(info -> info.mediaId).collect(Collectors.toList()));
         var favoriteList = DBHelper.getFavoriteMediaList(ctx, source.subreddit);
         for (var info : favoriteList) {
             filter.favoriteList.add(info.mediaId);

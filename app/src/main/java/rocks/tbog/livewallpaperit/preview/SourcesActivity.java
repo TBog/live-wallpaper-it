@@ -56,7 +56,6 @@ public class SourcesActivity extends AppCompatActivity {
         mAdapter = new SourceAdapter(
                 source -> DBHelper.updateSource(getApplicationContext(), source),
                 source -> DBHelper.removeSource(getApplicationContext(), source));
-        mAdapter.setHasStableIds(true);
 
         loadSourcesFromPreferences();
 
@@ -66,6 +65,7 @@ public class SourcesActivity extends AppCompatActivity {
         var layout = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         recyclerView.setLayoutManager(layout);
         var decoration = new MaterialDividerItemDecoration(recyclerView.getContext(), layout.getOrientation());
+        decoration.setLastItemDecorated(false);
         recyclerView.addItemDecoration(decoration);
     }
 

@@ -10,7 +10,7 @@ import androidx.annotation.NonNull;
 
 public class RedditDatabase extends SQLiteOpenHelper {
     private static final String DB_NAME = "reddit.s3db";
-    private static final int DB_VERSION = 6;
+    private static final int DB_VERSION = 7;
     private static final String TAG = "DB";
     static final String TABLE_IGNORE = "ignore_artwork";
     static final String TABLE_FAVORITE = "favorite_artwork";
@@ -50,6 +50,10 @@ public class RedditDatabase extends SQLiteOpenHelper {
     public static final String FAVORITE_TOPIC_ID = "topic_id";
     public static final String FAVORITE_MEDIA_ID = "media_id";
 
+    public static final String IGNORE_SUBREDDIT = "subreddit";
+    public static final String IGNORE_TOPIC_ID = "topic_id";
+    public static final String IGNORE_MEDIA_ID = "media_id";
+
     RedditDatabase(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
     }
@@ -57,9 +61,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase database) {
         try {
-            database.execSQL("CREATE TABLE " + TABLE_IGNORE + " ( "
-                    + "\"" + BaseColumns._ID + "\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
-                    + "\"" + ARTWORK_TOKEN + "\" TEXT UNIQUE)");
+            createIgnoreTable(database);
             createSubredditTable(database);
             createTopicTable(database);
             createTopicImageTable(database);
@@ -112,6 +114,10 @@ public class RedditDatabase extends SQLiteOpenHelper {
                 case 5:
                     addFavoritesTable(db);
                     // fall through
+                case 6:
+                    db.execSQL("DROP TABLE IF EXISTS \"" + TABLE_IGNORE + "\"");
+                    createIgnoreTable(db);
+                    // fall through
                 default:
                     break;
             }
@@ -126,16 +132,24 @@ public class RedditDatabase extends SQLiteOpenHelper {
         if (oldVersion <= newVersion) return;
         try {
             if (newVersion <= 2) {
-                db.execSQL("DROP TABLE IF EXISTS " + TABLE_TOPICS);
-                db.execSQL("DROP TABLE IF EXISTS " + TABLE_TOPIC_IMAGES);
+                db.execSQL("DROP TABLE IF EXISTS \"" + TABLE_TOPICS + "\"");
+                db.execSQL("DROP TABLE IF EXISTS \"" + TABLE_TOPIC_IMAGES + "\"");
             }
         } catch (SQLException e) {
             Log.e(TAG, "downgrade from " + oldVersion + " to " + newVersion + " failed", e);
         }
     }
 
+    private void createIgnoreTable(@NonNull SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE \"" + TABLE_IGNORE + "\" ( "
+                + "\"" + BaseColumns._ID + "\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
+                + "\"" + IGNORE_SUBREDDIT + "\" TEXT NOT NULL,"
+                + "\"" + IGNORE_TOPIC_ID + "\" TEXT NOT NULL,"
+                + "\"" + IGNORE_MEDIA_ID + "\" TEXT)");
+    }
+
     private void createSubredditTable(@NonNull SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE " + TABLE_SUBREDDITS + " ( "
+        db.execSQL("CREATE TABLE \"" + TABLE_SUBREDDITS + "\" ( "
                 + "\"" + BaseColumns._ID + "\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
                 + "\"" + SUBREDDIT_NAME + "\" TEXT UNIQUE,"
                 + "\"" + SUBREDDIT_MIN_UPVOTE_PERCENTAGE + "\" INTEGER NOT NULL DEFAULT 0,"
@@ -148,7 +162,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
     }
 
     private void createTopicTable(@NonNull SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE " + TABLE_TOPICS + " ( "
+        db.execSQL("CREATE TABLE \"" + TABLE_TOPICS + "\" ( "
                 + "\"" + BaseColumns._ID + "\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
                 + "\"" + TOPIC_ID + "\" TEXT UNIQUE,"
                 + "\"" + TOPIC_SUBREDDIT_NAME + "\" TEXT NOT NULL,"
@@ -169,7 +183,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
     }
 
     private void createTopicImageTable(@NonNull SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE " + TABLE_TOPIC_IMAGES + " ( "
+        db.execSQL("CREATE TABLE \"" + TABLE_TOPIC_IMAGES + "\" ( "
                 + "\"" + BaseColumns._ID + "\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
                 + "\"" + IMAGE_MEDIA_ID + "\" TEXT NOT NULL,"
                 + "\"" + IMAGE_TOPIC_ID + "\" TEXT,"
@@ -194,7 +208,7 @@ public class RedditDatabase extends SQLiteOpenHelper {
     }
 
     private void addFavoritesTable(@NonNull SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE " + TABLE_FAVORITE + " ( "
+        db.execSQL("CREATE TABLE \"" + TABLE_FAVORITE + "\" ( "
                 + "\"" + BaseColumns._ID + "\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
                 + "\"" + FAVORITE_MEDIA_ID + "\" TEXT NOT NULL,"
                 + "\"" + FAVORITE_TOPIC_ID + "\" TEXT NOT NULL,"

@@ -57,24 +57,24 @@ public class DBHelper {
         return db.delete(table, "\"" + whereField + "\"=?", new String[] {whereValue});
     }
 
-    public static boolean insertIgnoreToken(@NonNull Context context, @NonNull String token) {
+    public static boolean insertIgnoreMedia(@NonNull Context context, @NonNull MediaInfo info) {
         SQLiteDatabase db = getDatabase(context);
 
         ContentValues values = new ContentValues();
-        values.put(RedditDatabase.ARTWORK_TOKEN, token);
+        info.fillValues(values);
 
         return -1 != db.insertWithOnConflict(RedditDatabase.TABLE_IGNORE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
-    public static int insertIgnoreTokens(@NonNull Context context, @NonNull String[] mediaIdArray) {
+    public static int insertIgnoreTokens(@NonNull Context context, @NonNull Collection<MediaInfo> mediaList) {
         SQLiteDatabase db = getDatabase(context);
 
         int count = 0;
         ContentValues values = new ContentValues();
         db.beginTransaction();
         try {
-            for (var mediaId : mediaIdArray) {
-                values.put(RedditDatabase.ARTWORK_TOKEN, mediaId);
+            for (var info : mediaList) {
+                info.fillValues(values);
                 if (db.insertWithOnConflict(RedditDatabase.TABLE_IGNORE, null, values, SQLiteDatabase.CONFLICT_IGNORE)
                         != -1) {
                     count += 1;
@@ -88,21 +88,25 @@ public class DBHelper {
         return count;
     }
 
-    public static void removeIgnoreToken(@NonNull Context context, @NonNull String token) {
+    public static void removeIgnoreMedia(@NonNull Context context, @NonNull MediaInfo info) {
         SQLiteDatabase db = getDatabase(context);
-        delete(db, RedditDatabase.TABLE_IGNORE, RedditDatabase.ARTWORK_TOKEN, token);
+
+        ContentValues values = new ContentValues();
+        info.fillValues(values);
+
+        delete(db, RedditDatabase.TABLE_IGNORE, values);
     }
 
     @NonNull
-    public static List<String> getIgnoreTokenList(@NonNull Context context) {
+    public static List<MediaInfo> getIgnoreMediaList(@NonNull Context context, String subreddit) {
         SQLiteDatabase db = getDatabase(context);
 
-        ArrayList<String> records = null;
+        ArrayList<MediaInfo> records = null;
         try (Cursor cursor = db.query(
                 RedditDatabase.TABLE_IGNORE,
-                new String[] {RedditDatabase.ARTWORK_TOKEN},
-                null,
-                null,
+                new String[] {RedditDatabase.IGNORE_MEDIA_ID, RedditDatabase.IGNORE_TOPIC_ID},
+                "\"" + RedditDatabase.IGNORE_SUBREDDIT + "\"=?",
+                new String[] {subreddit},
                 null,
                 null,
                 null)) {
@@ -110,7 +114,10 @@ public class DBHelper {
                 cursor.moveToFirst();
                 records = new ArrayList<>(cursor.getCount());
                 while (!cursor.isAfterLast()) {
-                    records.add(cursor.getString(0));
+                    String mediaId = cursor.getString(0);
+                    String topicId = cursor.getString(1);
+                    records.add(new MediaInfo(mediaId, topicId, subreddit));
+
                     cursor.moveToNext();
                 }
             }
@@ -529,5 +536,34 @@ public class DBHelper {
             return Collections.emptyList();
         }
         return records;
+    }
+
+    @Nullable
+    public static MediaInfo getMediaByToken(@NonNull Context context, String artworkToken) {
+        SQLiteDatabase db = getDatabase(context);
+
+        try (Cursor cursor = db.rawQuery(
+                "SELECT "
+                        + "\"" + RedditDatabase.TABLE_TOPIC_IMAGES + "\".\"" + RedditDatabase.IMAGE_MEDIA_ID + "\","
+                        + "\"" + RedditDatabase.TABLE_TOPIC_IMAGES + "\".\"" + RedditDatabase.IMAGE_TOPIC_ID + "\","
+                        + "\"" + RedditDatabase.TABLE_TOPICS + "\".\"" + RedditDatabase.TOPIC_SUBREDDIT_NAME + "\" "
+                        + "FROM "
+                        + "\"" + RedditDatabase.TABLE_TOPIC_IMAGES + "\",\"" + RedditDatabase.TABLE_TOPICS + "\" "
+                        + "WHERE "
+                        + "\"" + RedditDatabase.TABLE_TOPIC_IMAGES + "\".\"" + RedditDatabase.IMAGE_TOPIC_ID + "\"="
+                        + "\"" + RedditDatabase.TABLE_TOPICS + "\".\"" + RedditDatabase.TOPIC_ID + "\" "
+                        + "AND "
+                        + "\"" + RedditDatabase.TABLE_TOPIC_IMAGES + "\".\"" + RedditDatabase.IMAGE_MEDIA_ID + "\"=?",
+                new String[] {artworkToken})) {
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    String mediaId = cursor.getString(0);
+                    String topicId = cursor.getString(1);
+                    String subreddit = cursor.getString(2);
+                    return new MediaInfo(mediaId, topicId, subreddit);
+                }
+            }
+        }
+        return null;
     }
 }

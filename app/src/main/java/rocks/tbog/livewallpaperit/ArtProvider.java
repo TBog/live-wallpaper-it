@@ -138,7 +138,12 @@ public class ArtProvider extends MuzeiArtProvider {
         Context ctx = getContext();
         String token = artwork.getToken();
         if (ctx != null && token != null) {
-            DBHelper.insertIgnoreToken(ctx, token);
+            var mediaInfo = DBHelper.getMediaByToken(ctx, token);
+            if (mediaInfo != null) {
+                if (DBHelper.insertIgnoreMedia(ctx, mediaInfo)) {
+                    Log.d(TAG, "ignored " + mediaInfo.mediaId + " from " + mediaInfo.subreddit);
+                }
+            }
         }
 
         super.onInvalidArtwork(artwork);

@@ -61,12 +61,24 @@ public class Source implements Serializable {
         return minUpvotePercentage == source.minUpvotePercentage
                 && minScore == source.minScore
                 && minComments == source.minComments
-                && subreddit.equals(source.subreddit);
+                && imageMinWidth == source.imageMinWidth
+                && imageMinHeight == source.imageMinHeight
+                && isEnabled == source.isEnabled
+                && Objects.equals(subreddit, source.subreddit)
+                && imageOrientation == source.imageOrientation;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(subreddit, minUpvotePercentage, minScore, minComments);
+        return Objects.hash(
+                subreddit,
+                minUpvotePercentage,
+                minScore,
+                minComments,
+                imageMinWidth,
+                imageMinHeight,
+                imageOrientation,
+                isEnabled);
     }
 
     @NonNull
