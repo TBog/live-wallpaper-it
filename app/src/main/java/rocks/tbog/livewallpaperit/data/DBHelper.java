@@ -97,21 +97,24 @@ public class DBHelper {
         delete(db, RedditDatabase.TABLE_IGNORE, values);
     }
 
-    public static void removeIgnoreMedia(@NonNull Context context, @NonNull Collection<MediaInfo> infoList) {
+    public static int removeIgnoreMedia(@NonNull Context context, @NonNull Collection<MediaInfo> infoList) {
         SQLiteDatabase db = getDatabase(context);
 
+        int count = 0;
         ContentValues values = new ContentValues();
 
         db.beginTransaction();
         try {
             for (var info : infoList) {
                 info.fillValues(values);
-                delete(db, RedditDatabase.TABLE_IGNORE, values);
+                count += delete(db, RedditDatabase.TABLE_IGNORE, values);
             }
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
         }
+
+        return count;
     }
 
     @NonNull

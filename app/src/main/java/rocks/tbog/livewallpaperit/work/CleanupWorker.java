@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import rocks.tbog.livewallpaperit.ArtProvider;
 import rocks.tbog.livewallpaperit.Source;
 import rocks.tbog.livewallpaperit.data.DBHelper;
@@ -30,10 +31,21 @@ public class CleanupWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        Context ctx = getApplicationContext();
-
-        Set<String> cachedImages = new HashSet<>();
+        final Context ctx = getApplicationContext();
         final List<Source> sources = DBHelper.getSources(ctx);
+
+        Set<String> keepImages = getImagesInCache(ctx, sources);
+        Set<MediaInfo> favorites = getImagesInFavorite(ctx, sources);
+        keepImages.addAll(favorites.stream().map(info -> info.mediaId).collect(Collectors.toList()));
+
+        removeFromIgnoreAllExcept(ctx, sources, keepImages);
+        removeFromMuzeiAllExcept(ctx, keepImages);
+
+        return Result.success();
+    }
+
+    private Set<String> getImagesInCache(Context ctx, Collection<Source> sources) {
+        Set<String> cachedImages = new HashSet<>();
         for (var source : sources) {
             final List<SubTopic> topics = DBHelper.getSubTopics(ctx, source.subreddit);
             for (var topic : topics) {
@@ -44,11 +56,17 @@ public class CleanupWorker extends Worker {
             }
         }
         Log.v(TAG, "found " + cachedImages.size() + " image(s) in cache");
+        return cachedImages;
+    }
 
-        removeFromIgnoreAllExcept(ctx, sources, cachedImages);
-        removeFromMuzeiAllExcept(ctx, cachedImages);
-
-        return Result.success();
+    private Set<MediaInfo> getImagesInFavorite(Context ctx, Collection<Source> sources) {
+        Set<MediaInfo> mediaInFavorite = new ArraySet<>();
+        for (var source : sources) {
+            final var favoriteList = DBHelper.getFavoriteMediaList(ctx, source.subreddit);
+            mediaInFavorite.addAll(favoriteList);
+        }
+        Log.v(TAG, "found " + mediaInFavorite.size() + " image(s) in favorite list");
+        return mediaInFavorite;
     }
 
     private void removeFromIgnoreAllExcept(Context ctx, Collection<Source> sources, Set<String> keepImages) {
@@ -60,11 +78,14 @@ public class CleanupWorker extends Worker {
         Log.v(TAG, "found " + mediaToRemove.size() + " image(s) in ignore list");
 
         mediaToRemove.removeIf(info -> !keepImages.contains(info.mediaId));
-        DBHelper.removeIgnoreMedia(ctx, mediaToRemove);
+        if (mediaToRemove.isEmpty()) return;
+        int count = DBHelper.removeIgnoreMedia(ctx, mediaToRemove);
+        Log.d(TAG, "deleted " + count + "/" + mediaToRemove.size() + " from ignore list");
     }
 
     private void removeFromMuzeiAllExcept(Context ctx, Set<String> keepImages) {
-        Set<String> tokensToRemove = new ArraySet<>();
+        Set<String> tokensToRemove = new HashSet<>();
+        int tokensInMuzei = 0;
 
         final ContentResolver content = ctx.getContentResolver();
         final Uri contentUri =
@@ -73,6 +94,7 @@ public class CleanupWorker extends Worker {
                 content.query(contentUri, new String[] {ProviderContract.Artwork.TOKEN}, null, null, null)) {
             if (cursor != null) {
                 while (cursor.moveToNext()) {
+                    tokensInMuzei += 1;
                     String token = cursor.getString(0);
                     if (!keepImages.contains(token)) {
                         tokensToRemove.add(token);
@@ -80,6 +102,8 @@ public class CleanupWorker extends Worker {
                 }
             }
         }
+        Log.v(TAG, "found " + tokensInMuzei + " image(s) in Muzei");
+        if (tokensToRemove.isEmpty()) return;
 
         final String whereFilter;
         if (tokensToRemove.size() > 1) {
