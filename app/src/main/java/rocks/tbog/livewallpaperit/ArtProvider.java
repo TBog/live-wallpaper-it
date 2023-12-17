@@ -39,6 +39,7 @@ public class ArtProvider extends MuzeiArtProvider {
     public static final String PREF_SOURCES_SET = "subreddit_sources";
 
     final Observer<WorkInfo> debugLogWork = workInfo -> {
+        if (workInfo == null) return;
         Log.d(TAG, "work " + workInfo.getId() + " state " + workInfo.getState());
         if (workInfo.getState() == WorkInfo.State.FAILED) {
             String reason = workInfo.getOutputData().getString(WorkerUtils.FAIL_REASON);

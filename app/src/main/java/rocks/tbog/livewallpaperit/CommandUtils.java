@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import android.text.TextUtils;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.core.app.RemoteActionCompat;
 import androidx.core.content.FileProvider;
@@ -12,11 +14,50 @@ import androidx.core.graphics.drawable.IconCompat;
 import com.google.android.apps.muzei.api.provider.Artwork;
 import java.io.File;
 import java.util.ArrayList;
+import rocks.tbog.livewallpaperit.data.DBHelper;
+import rocks.tbog.livewallpaperit.data.MediaInfo;
 
 public class CommandUtils {
+    private static final String TAG = CommandUtils.class.getSimpleName();
 
     public static ArrayList<RemoteActionCompat> artworkCommandActions(@NonNull Context ctx, @NonNull Artwork artwork) {
         ArrayList<RemoteActionCompat> commandActions = new ArrayList<>();
+
+        final MediaInfo mediaInfo = DBHelper.getMediaByToken(ctx, artwork.getToken());
+        if (mediaInfo == null) {
+            Log.i(TAG, "token " + artwork.getToken() + " not found");
+        } else {
+            String title = artwork.getTitle();
+            if (TextUtils.isEmpty(title)) title = mediaInfo.mediaId;
+
+            Uri linkComment = Uri.parse(
+                    "https://www.reddit.com/r/" + mediaInfo.subreddit + "/comments/" + mediaInfo.topicId + "/");
+            Intent openComment = new Intent(Intent.ACTION_VIEW).setData(linkComment);
+            RemoteActionCompat titleCommand = new RemoteActionCompat(
+                    IconCompat.createWithResource(
+                            ctx, com.google.android.apps.muzei.api.R.drawable.muzei_launch_command),
+                    title,
+                    title,
+                    PendingIntent.getActivity(
+                            ctx, 0, openComment, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+            titleCommand.setEnabled(false);
+            titleCommand.setShouldShowIcon(false);
+
+            Uri linkSubreddit = Uri.parse("https://www.reddit.com/r/" + mediaInfo.subreddit + "/");
+            // Intent openLWI = ctx.getPackageManager().getLaunchIntentForPackage(ctx.getPackageName());
+            Intent openSubreddit = new Intent(Intent.ACTION_VIEW).setData(linkSubreddit);
+            RemoteActionCompat subredditCommand = new RemoteActionCompat(
+                    IconCompat.createWithResource(
+                            ctx, com.google.android.apps.muzei.api.R.drawable.muzei_launch_command),
+                    "r/" + mediaInfo.subreddit,
+                    mediaInfo.subreddit,
+                    PendingIntent.getActivity(
+                            ctx, 0, openSubreddit, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+            subredditCommand.setShouldShowIcon(false);
+
+            commandActions.add(titleCommand);
+            commandActions.add(subredditCommand);
+        }
 
         commandActions.add(obtainActionShareTitleAndLink(ctx, artwork));
         commandActions.add(obtainActionShareImage(ctx, artwork));

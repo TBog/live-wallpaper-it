@@ -360,6 +360,43 @@ public class DBHelper {
         return db.delete(RedditDatabase.TABLE_TOPICS, where.toString(), args);
     }
 
+    @Nullable
+    public static SubTopic getSubTopic(@NonNull Context context, String topicId) {
+        SQLiteDatabase db = getDatabase(context);
+
+        try (Cursor cursor = db.query(
+                RedditDatabase.TABLE_TOPICS,
+                new String[] {
+                    RedditDatabase.TOPIC_ID,
+                    RedditDatabase.TOPIC_TITLE,
+                    RedditDatabase.TOPIC_AUTHOR,
+                    RedditDatabase.TOPIC_LINK_FLAIR_TEXT,
+                    RedditDatabase.TOPIC_PERMALINK,
+                    RedditDatabase.TOPIC_THUMBNAIL,
+                    RedditDatabase.TOPIC_CREATED_UTC,
+                    RedditDatabase.TOPIC_SCORE,
+                    RedditDatabase.TOPIC_UPVOTE_RATIO,
+                    RedditDatabase.TOPIC_NUM_COMMENTS,
+                    RedditDatabase.TOPIC_OVER_18,
+                    RedditDatabase.TOPIC_SELECTED,
+                },
+                "\"" + RedditDatabase.TOPIC_ID + "\" = ?",
+                new String[] {topicId},
+                null,
+                null,
+                null,
+                "1")) {
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    return SubTopic.fromCursor(cursor);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @NonNull
     public static List<SubTopic> getSubTopics(@NonNull Context context, String subreddit) {
         SQLiteDatabase db = getDatabase(context);
         ArrayList<SubTopic> records = null;
@@ -553,10 +590,11 @@ public class DBHelper {
                         + "\"" + RedditDatabase.TABLE_TOPIC_IMAGES + "\".\"" + RedditDatabase.IMAGE_TOPIC_ID + "\"="
                         + "\"" + RedditDatabase.TABLE_TOPICS + "\".\"" + RedditDatabase.TOPIC_ID + "\" "
                         + "AND "
-                        + "\"" + RedditDatabase.TABLE_TOPIC_IMAGES + "\".\"" + RedditDatabase.IMAGE_MEDIA_ID + "\"=?",
+                        + "\"" + RedditDatabase.TABLE_TOPIC_IMAGES + "\".\"" + RedditDatabase.IMAGE_MEDIA_ID + "\"=?"
+                        + " LIMIT 1",
                 new String[] {artworkToken})) {
             if (cursor != null) {
-                while (cursor.moveToNext()) {
+                if (cursor.moveToFirst()) {
                     String mediaId = cursor.getString(0);
                     String topicId = cursor.getString(1);
                     String subreddit = cursor.getString(2);

@@ -40,8 +40,8 @@
     <string name="action_share_description">Share name and link</string>
     <string name="action_share_image">Share image</string>
     <string name="action_share_image_description">Share image file</string>
-    <string name="action_delete">Delete</string>
-    <string name="action_delete_description">Delete and add to ignore list</string>
+    <string name="action_delete">Remove</string>
+    <string name="action_delete_description">Remove and add to ignore list</string>
     <string name="share_title_and_link">My Android wallpaper today is \'%1$s\' from reddit.com by %2$s.\n\n%3$s</string>
     <string name="title_and_link">\'%1$s\' from reddit.com by %2$s.\n\n%3$s</string>
     <string name="label_upvote_percent">minimum upvote percentage</string>
