@@ -64,6 +64,16 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
         mItemList.addAll(map.values());
     }
 
+    public void addInvalidMedia(ThumbnailAdapter.Item thumbnail) {
+        mInvalidMediaIdSet.add(thumbnail.image.mediaId);
+        notifyItemChanged(thumbnail);
+    }
+
+    public void removeInvalidMedia(ThumbnailAdapter.Item thumbnail) {
+        mInvalidMediaIdSet.remove(thumbnail.image.mediaId);
+        notifyItemChanged(thumbnail);
+    }
+
     private boolean isInvalidMedia(String mediaId) {
         return mInvalidMediaIdSet.contains(mediaId);
     }

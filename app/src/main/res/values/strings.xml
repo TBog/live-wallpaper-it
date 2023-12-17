@@ -72,6 +72,6 @@
 
     <string name="set_favorite">Set favorite</string>
     <string name="unset_favorite">Remove favorite</string>
-    <string name="add_ignore">Ignore</string>
-    <string name="clear_ignore">Restore</string>
+    <string name="ignore_and_remove">Ignore and remove</string>
+    <string name="clear_ignore">Don\'t ignore</string>
 </resources>

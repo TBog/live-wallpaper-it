@@ -21,6 +21,7 @@ public class DeleteArtworkReceiver extends BroadcastReceiver {
     public static final String ACTION_CLEAR_CACHE = "clear_cache";
     public static final String ARTWORK_ID = "delete.artwork.ID";
     public static final String ARTWORK_TOKEN = "delete.artwork.token";
+    public static final String MEDIA_ID = "delete.media_id";
     public static final String MEDIA_ID_ARRAY = "delete.media_id.array";
     public static final String MEDIA_TOPIC_ID = "delete.topic_id";
     public static final String MEDIA_SUBREDDIT = "delete.subreddit";
@@ -29,12 +30,16 @@ public class DeleteArtworkReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getStringExtra(ACTION);
         if (ACTION_DELETE.equals(action)) {
-            if (intent.hasExtra(MEDIA_ID_ARRAY)
-                    && intent.hasExtra(MEDIA_TOPIC_ID)
-                    && intent.hasExtra(MEDIA_SUBREDDIT)) {
+            String[] mediaIdArray = null;
+            if (intent.hasExtra(MEDIA_ID)) {
+                mediaIdArray = new String[] {intent.getStringExtra(MEDIA_ID)};
+            } else if (intent.hasExtra(MEDIA_ID_ARRAY)) {
+                mediaIdArray = intent.getStringArrayExtra(MEDIA_ID_ARRAY);
+            }
+            if (mediaIdArray != null && intent.hasExtra(MEDIA_TOPIC_ID) && intent.hasExtra(MEDIA_SUBREDDIT)) {
                 deleteMedia(
                         context,
-                        intent.getStringArrayExtra(MEDIA_ID_ARRAY),
+                        mediaIdArray,
                         intent.getStringExtra(MEDIA_TOPIC_ID),
                         intent.getStringExtra(MEDIA_SUBREDDIT));
             } else {

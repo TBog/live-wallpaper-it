@@ -102,8 +102,7 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
                 new ThumbnailAdapter(topic, mWidth, showObfuscatedPreview, invalidMediaIdSet, mFavoriteMediaSet);
         thumbnailAdapter.setOnClickListener(
                 (a, t, v) -> ViewUtils.launchIntent(v, new Intent(Intent.ACTION_VIEW).setData(t.link)));
-        thumbnailAdapter.setOnLongClickListener(
-                (adapter, thumbnail, v) -> onLongClickThumbnail(adapter, thumbnail, v, topic));
+        thumbnailAdapter.setOnLongClickListener((a, t, v) -> onLongClickThumbnail((ThumbnailAdapter) a, t, v, topic));
 
         holder.mInfoView.setText(displayAgo);
         holder.mTitleView.setText(topic.title);
@@ -150,16 +149,13 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
                             activity.sendBroadcast(intent);
                             Toast.makeText(activity, btnRemove.getContentDescription(), Toast.LENGTH_SHORT)
                                     .show();
-                            notifyItemChanged(topic);
+                            SubredditAdapter.this.notifyItemChanged(topic);
                         })
                 .show(fragmentManager);
     }
 
     private boolean onLongClickThumbnail(
-            RecycleAdapterBase<ThumbnailAdapter.Item, ThumbnailAdapter.ThumbnailHolder> adapter,
-            ThumbnailAdapter.Item thumbnail,
-            View v,
-            SubTopic topic) {
+            ThumbnailAdapter adapter, ThumbnailAdapter.Item thumbnail, View v, SubTopic topic) {
         final Context ctx = v.getContext();
         final MediaInfo media = new MediaInfo(thumbnail.image.mediaId, topic.id, mSubreddit);
         PopupMenu popupMenu = new PopupMenu(ctx, v, Gravity.START | Gravity.TOP);
@@ -177,7 +173,7 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
                 DBHelper.removeIgnoreMedia(ctx, media);
                 mIgnoreMediaSet.remove(media);
                 mFavoriteMediaSet.add(media);
-                adapter.notifyItemChanged(thumbnail);
+                adapter.removeInvalidMedia(thumbnail);
                 return true;
             });
         }
@@ -185,16 +181,26 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
             menu.add(R.string.clear_ignore).setOnMenuItemClickListener(item -> {
                 DBHelper.removeIgnoreMedia(ctx, media);
                 mIgnoreMediaSet.remove(media);
-                adapter.notifyItemChanged(thumbnail);
+                adapter.removeInvalidMedia(thumbnail);
                 return true;
             });
         } else {
-            menu.add(R.string.add_ignore).setOnMenuItemClickListener(item -> {
+            menu.add(R.string.ignore_and_remove).setOnMenuItemClickListener(item -> {
                 DBHelper.insertIgnoreMedia(ctx, media);
                 DBHelper.removeFavorite(ctx, media);
                 mFavoriteMediaSet.remove(media);
                 mIgnoreMediaSet.add(media);
-                adapter.notifyItemChanged(thumbnail);
+                adapter.addInvalidMedia(thumbnail);
+
+                Activity activity = ViewUtils.getActivity(ctx);
+                if (activity != null) {
+                    Intent intent = new Intent(activity, DeleteArtworkReceiver.class)
+                            .putExtra(DeleteArtworkReceiver.ACTION, DeleteArtworkReceiver.ACTION_DELETE)
+                            .putExtra(DeleteArtworkReceiver.MEDIA_ID, media.mediaId)
+                            .putExtra(DeleteArtworkReceiver.MEDIA_TOPIC_ID, media.topicId)
+                            .putExtra(DeleteArtworkReceiver.MEDIA_SUBREDDIT, media.subreddit);
+                    activity.sendBroadcast(intent);
+                }
                 return true;
             });
         }
