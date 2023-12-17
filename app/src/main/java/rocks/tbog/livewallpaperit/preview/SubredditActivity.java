@@ -182,6 +182,7 @@ public class SubredditActivity extends AppCompatActivity {
         var workMgr = WorkManager.getInstance(this);
         workMgr.beginUniqueWork(mSource.subreddit, ExistingWorkPolicy.KEEP, ArtProvider.buildSetupWorkRequest(this))
                 .then(ArtProvider.buildSourceWorkRequest(mSource))
+                .then(ArtProvider.buildCleanupWorkRequest())
                 .enqueue();
         workMgr.getWorkInfosForUniqueWorkLiveData(mSource.subreddit).observe(SubredditActivity.this, workInfos -> {
             if (workInfos == null || workInfos.isEmpty()) return;

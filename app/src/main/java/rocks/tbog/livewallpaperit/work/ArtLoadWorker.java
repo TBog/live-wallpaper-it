@@ -35,8 +35,9 @@ public class ArtLoadWorker extends Worker {
     private static final String TAG = ArtLoadWorker.class.getSimpleName();
     private static final int FETCH_AMOUNT = 100;
     private static final int MAX_FETCHES = 3;
-    private int mArtworkNotFoundCount = 0;
-    private final ArrayList<Artwork> mArtworkFound = new ArrayList<>();
+    private int mNotFoundCount = 0;
+    private int mArtworkFoundNotFav = 0;
+    private final ArrayList<Artwork> mArtworks = new ArrayList<>();
 
     public static final class Filter {
         public int minUpvotePercentage = 0;
@@ -162,7 +163,7 @@ public class ArtLoadWorker extends Worker {
                 final SubTopic topic = SubTopic.fromSubmission(submission);
                 foundTopicIds.add(topic.id);
                 if (topic.images.isEmpty() || isRemovedOrDeleted(submission)) {
-                    mArtworkNotFoundCount += 1;
+                    mNotFoundCount += 1;
                     // get cached images and mark for removal in Muzei
                     DBHelper.loadSubTopicImages(ctx, topic);
                     for (var image : topic.images) {
@@ -190,16 +191,16 @@ public class ArtLoadWorker extends Worker {
                         filteredOutImages.add(image.mediaId);
                     }
                 }
-                if (mArtworkFound.size() < desiredArtworkCount) {
+                if (mArtworkFoundNotFav < desiredArtworkCount) {
                     getArtworks(submission.getSubredditNamePrefixed(), topic, filter);
                 }
             }
 
-            if (mArtworkFound.size() < desiredArtworkCount && submissionsFetcher.hasNext()) {
+            if (mArtworkFoundNotFav < desiredArtworkCount && submissionsFetcher.hasNext()) {
                 Log.d(
                         TAG,
-                        "#" + fetchIndex + " fetchNext " + submissionsFetcher.getSubreddit() + "; artworkSubmitCount="
-                                + mArtworkFound.size());
+                        "#" + fetchIndex + " fetchNext " + submissionsFetcher.getSubreddit() + "; artworkCount="
+                                + mArtworks.size());
                 submissions = submissionsFetcher.fetchNext();
             } else {
                 submissions = null;
@@ -213,19 +214,22 @@ public class ArtLoadWorker extends Worker {
         if (source.isEnabled) {
             // provide found artworks to Muzei
             var uriList =
-                    ProviderContract.getProviderClient(ctx, ArtProvider.class).addArtwork(mArtworkFound);
-            Log.v(TAG, uriList.size() + "/" + mArtworkFound.size() + " artwork(s) added to Muzei");
+                    ProviderContract.getProviderClient(ctx, ArtProvider.class).addArtwork(mArtworks);
+            Log.v(TAG, uriList.size() + "/" + mArtworks.size() + " artwork(s) added to Muzei");
         } else {
             Log.v(
                     TAG,
-                    "source " + source.subreddit + " not enabled. " + mArtworkFound.size()
+                    "source " + source.subreddit + " not enabled. " + mArtworks.size()
                             + " artwork(s) not added to Muzei");
         }
 
-        Log.i(TAG, "artworkSubmitCount=" + mArtworkFound.size() + " artworkNotFoundCount=" + mArtworkNotFoundCount);
+        Log.i(
+                TAG,
+                "artworkCount=" + mArtworks.size() + " artworkNotFav=" + mArtworkFoundNotFav + " notFoundCount="
+                        + mNotFoundCount);
         return Result.success(new Data.Builder()
-                .putInt(WorkerUtils.DATA_ARTWORK_SUBMIT_COUNT, mArtworkFound.size())
-                .putInt(WorkerUtils.DATA_ARTWORK_NOT_FOUND_COUNT, mArtworkNotFoundCount)
+                .putInt(WorkerUtils.DATA_ARTWORK_SUBMIT_COUNT, mArtworks.size())
+                .putInt(WorkerUtils.DATA_NOT_FOUND_COUNT, mNotFoundCount)
                 .build());
     }
 
@@ -388,7 +392,10 @@ public class ArtLoadWorker extends Worker {
                 continue;
             }
             Log.v(TAG, "addArtwork " + artwork.getToken() + " `" + artwork.getTitle() + "`");
-            mArtworkFound.add(artwork);
+            if (!filter.favoriteList.contains(artwork.getToken())) {
+                mArtworkFoundNotFav += 1;
+            }
+            mArtworks.add(artwork);
         }
     }
 }
