@@ -1,10 +1,10 @@
 package rocks.tbog.livewallpaperit;
 
-import android.annotation.SuppressLint;
 import android.util.Log;
 import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,8 +38,17 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
     @Override
     public long getItemId(int position) {
         final T entry = getItem(position);
-        if (entry == null) return -1;
-        return entry.hashCode();
+        return getItemId(entry);
+    }
+
+    public static <T> long getItemId(@Nullable T item) {
+        if (item == null) {
+            return -1;
+        }
+        if (item instanceof AdapterDiff) {
+            return ((AdapterDiff) item).getAdapterItemId();
+        }
+        return item.hashCode();
     }
 
     @Override
@@ -111,11 +120,13 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
         notifyItemRangeChanged(0, itemCount);
     }
 
-    @SuppressLint("NotifyDataSetChanged")
-    public void setItems(Collection<? extends T> results) {
-        this.mItemList.clear();
-        this.mItemList.addAll(results);
-        notifyDataSetChanged();
+    public void setItems(List<? extends T> newItems) {
+        final BaseDiffCallback<T> diffCb = new BaseDiffCallback<>(mItemList, newItems);
+        final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCb);
+
+        mItemList.clear();
+        mItemList.addAll(newItems);
+        diffResult.dispatchUpdatesTo(this);
     }
 
     public void notifyItemChanged(T result) {
@@ -139,6 +150,46 @@ public abstract class RecycleAdapterBase<T, VH extends RecycleAdapterBase.Holder
         public void setOnLongClickListener(@Nullable View.OnLongClickListener listener) {
             itemView.setOnLongClickListener(listener);
             if (listener == null) itemView.setLongClickable(false);
+        }
+    }
+
+    public interface AdapterDiff {
+        long getAdapterItemId();
+    }
+
+    public static class BaseDiffCallback<T> extends DiffUtil.Callback {
+        private final List<T> mOldItemList;
+        private final List<? extends T> mNewItemList;
+
+        public BaseDiffCallback(List<T> oldItemList, List<? extends T> newItemList) {
+            mOldItemList = oldItemList;
+            mNewItemList = newItemList;
+        }
+
+        @Override
+        public int getOldListSize() {
+            return mOldItemList.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return mNewItemList.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            final T oldItem = mOldItemList.get(oldItemPosition);
+            final T newItem = mNewItemList.get(newItemPosition);
+            final long oldId = getItemId(oldItem);
+            final long newId = getItemId(newItem);
+            return oldId == newId;
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            final T oldItem = mOldItemList.get(oldItemPosition);
+            final T newItem = mNewItemList.get(newItemPosition);
+            return oldItem.equals(newItem);
         }
     }
 

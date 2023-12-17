@@ -9,7 +9,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class Source implements Serializable {
+public class Source implements Serializable, RecycleAdapterBase.AdapterDiff {
     private static final long serialVersionUID = 1L;
 
     @NonNull
@@ -22,6 +22,11 @@ public class Source implements Serializable {
     public int imageMinHeight = 0;
     public Orientation imageOrientation = Orientation.ANY;
     public boolean isEnabled = true;
+
+    @Override
+    public long getAdapterItemId() {
+        return subreddit.hashCode();
+    }
 
     public enum Orientation {
         ANY(0),

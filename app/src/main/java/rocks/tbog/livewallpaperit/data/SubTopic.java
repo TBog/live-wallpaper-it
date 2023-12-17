@@ -18,8 +18,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import rocks.tbog.livewallpaperit.RecycleAdapterBase;
 
-public final class SubTopic {
+public final class SubTopic implements RecycleAdapterBase.AdapterDiff {
     private static final String TAG = SubTopic.class.getSimpleName();
 
     @NonNull
@@ -295,6 +297,49 @@ public final class SubTopic {
     public boolean isSelected() {
         if (isSelected == null) return true;
         return isSelected;
+    }
+
+    @Override
+    public long getAdapterItemId() {
+        return id.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SubTopic subTopic = (SubTopic) o;
+        return createdUTC == subTopic.createdUTC
+                && score == subTopic.score
+                && upvoteRatio == subTopic.upvoteRatio
+                && numComments == subTopic.numComments
+                && over18 == subTopic.over18
+                && Objects.equals(id, subTopic.id)
+                && Objects.equals(title, subTopic.title)
+                && Objects.equals(author, subTopic.author)
+                && Objects.equals(linkFlairText, subTopic.linkFlairText)
+                && Objects.equals(permalink, subTopic.permalink)
+                && Objects.equals(thumbnail, subTopic.thumbnail)
+                && Objects.equals(isSelected, subTopic.isSelected)
+                && Objects.equals(images, subTopic.images);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                id,
+                title,
+                author,
+                linkFlairText,
+                permalink,
+                thumbnail,
+                createdUTC,
+                score,
+                upvoteRatio,
+                numComments,
+                over18,
+                isSelected,
+                images);
     }
 
     public static class Image {

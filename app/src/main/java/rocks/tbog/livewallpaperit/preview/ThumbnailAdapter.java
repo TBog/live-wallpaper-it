@@ -154,7 +154,7 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
         }
     }
 
-    public static class Item {
+    public static class Item implements AdapterDiff {
         @NonNull
         final SubTopic.Image image;
 
@@ -163,6 +163,11 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
         public Item(@NonNull SubTopic.Image image, Uri uri) {
             this.image = image;
             this.link = uri;
+        }
+
+        @Override
+        public long getAdapterItemId() {
+            return image.mediaId.hashCode();
         }
     }
 }
