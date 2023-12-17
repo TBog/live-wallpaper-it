@@ -77,7 +77,7 @@ public class CleanupWorker extends Worker {
         }
         Log.v(TAG, "found " + mediaToRemove.size() + " image(s) in ignore list");
 
-        mediaToRemove.removeIf(info -> !keepImages.contains(info.mediaId));
+        mediaToRemove.removeIf(info -> keepImages.contains(info.mediaId));
         if (mediaToRemove.isEmpty()) return;
         int count = DBHelper.removeIgnoreMedia(ctx, mediaToRemove);
         Log.d(TAG, "deleted " + count + "/" + mediaToRemove.size() + " from ignore list");
