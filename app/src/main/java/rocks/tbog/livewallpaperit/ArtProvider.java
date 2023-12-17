@@ -30,11 +30,11 @@ import java.util.Map;
 import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.utils.DataUtils;
 import rocks.tbog.livewallpaperit.work.ArtLoadWorker;
+import rocks.tbog.livewallpaperit.work.CleanupWorker;
 import rocks.tbog.livewallpaperit.work.SetupWorker;
 import rocks.tbog.livewallpaperit.work.WorkerUtils;
 
 public class ArtProvider extends MuzeiArtProvider {
-
     private static final String TAG = ArtProvider.class.getSimpleName();
     public static final String PREF_SOURCES_SET = "subreddit_sources";
 
@@ -63,16 +63,19 @@ public class ArtProvider extends MuzeiArtProvider {
         Context ctx = getContext();
         if (ctx == null) return;
         final OneTimeWorkRequest setupWork = buildSetupWorkRequest(ctx);
-        var workManager = WorkManager.getInstance(ctx);
-        var workQueue = workManager.beginUniqueWork(
-                WorkerUtils.UNIQUE_WORK_REFRESH_ENABLED, ExistingWorkPolicy.KEEP, setupWork);
+        final OneTimeWorkRequest removeOldArtwork = buildCleanupWorkRequest();
         final ArrayList<OneTimeWorkRequest> subredditWorkList = new ArrayList<>();
-        var sources = DBHelper.loadSources(ctx);
+        var sources = DBHelper.getSources(ctx);
         for (Source source : sources) {
             if (!source.isEnabled) continue;
             subredditWorkList.add(buildSourceWorkRequest(source));
         }
-        workQueue.then(subredditWorkList).enqueue();
+        final var workManager = WorkManager.getInstance(ctx);
+        workManager
+                .beginUniqueWork(WorkerUtils.UNIQUE_WORK_REFRESH_ENABLED, ExistingWorkPolicy.KEEP, setupWork)
+                .then(subredditWorkList)
+                .then(removeOldArtwork)
+                .enqueue();
         if (BuildConfig.DEBUG) {
             new Handler(Looper.getMainLooper()).post(() -> {
                 workManager.getWorkInfoByIdLiveData(setupWork.getId()).observeForever(debugLogWork);
@@ -94,6 +97,13 @@ public class ArtProvider extends MuzeiArtProvider {
                 .setConstraints(new Constraints.Builder()
                         .setRequiredNetworkType(NetworkType.CONNECTED)
                         .build())
+                .build();
+    }
+
+    @NonNull
+    public static OneTimeWorkRequest buildCleanupWorkRequest() {
+        return new OneTimeWorkRequest.Builder(CleanupWorker.class)
+                .setInputMerger(OverwritingInputMerger.class)
                 .build();
     }
 

@@ -86,7 +86,7 @@ public class SourcesActivity extends AppCompatActivity {
         AsyncUtils.runAsync(
                 getLifecycle(),
                 task -> {
-                    list.addAll(DBHelper.loadSources(getApplicationContext()));
+                    list.addAll(DBHelper.getSources(getApplicationContext()));
                     for (String subreddit : sourcesSet) {
                         Source source = new Source(subreddit);
                         if (DBHelper.insertSource(getApplicationContext(), source)) {
@@ -111,7 +111,7 @@ public class SourcesActivity extends AppCompatActivity {
         AsyncUtils.runAsync(
                 getLifecycle(),
                 task -> {
-                    list.addAll(DBHelper.loadSources(getApplicationContext()));
+                    list.addAll(DBHelper.getSources(getApplicationContext()));
                     Collections.sort(list, (o1, o2) -> o1.subreddit.compareToIgnoreCase(o2.subreddit));
                 },
                 task -> {

@@ -97,6 +97,23 @@ public class DBHelper {
         delete(db, RedditDatabase.TABLE_IGNORE, values);
     }
 
+    public static void removeIgnoreMedia(@NonNull Context context, @NonNull Collection<MediaInfo> infoList) {
+        SQLiteDatabase db = getDatabase(context);
+
+        ContentValues values = new ContentValues();
+
+        db.beginTransaction();
+        try {
+            for (var info : infoList) {
+                info.fillValues(values);
+                delete(db, RedditDatabase.TABLE_IGNORE, values);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
     @NonNull
     public static List<MediaInfo> getIgnoreMediaList(@NonNull Context context, String subreddit) {
         SQLiteDatabase db = getDatabase(context);
@@ -128,7 +145,7 @@ public class DBHelper {
         return records;
     }
 
-    public static List<Source> loadSources(@NonNull Context context) {
+    public static List<Source> getSources(@NonNull Context context) {
         SQLiteDatabase db = getDatabase(context);
 
         ArrayList<Source> records = null;
