@@ -73,9 +73,11 @@ public class DeleteArtworkReceiver extends BroadcastReceiver {
         var collection = Arrays.stream(mediaArray)
                 .map(mediaId -> new MediaInfo(mediaId, topicId, subreddit))
                 .collect(Collectors.toSet());
-        if ((count = DBHelper.insertIgnoreTokens(context, collection)) != -1) {
-            Log.d(TAG, "ignored " + count + "/" + mediaArray.length);
-        }
+        count = DBHelper.insertIgnoreMedia(context, collection);
+        Log.d(TAG, "ignored " + count + "/" + mediaArray.length);
+
+        count = DBHelper.removeFavorite(context, collection);
+        Log.d(TAG, "removed favorite count=" + count);
     }
 
     private void deleteArtwork(Context context, Intent intent) {

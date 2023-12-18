@@ -66,7 +66,7 @@ public class DBHelper {
         return -1 != db.insertWithOnConflict(RedditDatabase.TABLE_IGNORE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
-    public static int insertIgnoreTokens(@NonNull Context context, @NonNull Collection<MediaInfo> mediaList) {
+    public static int insertIgnoreMedia(@NonNull Context context, @NonNull Collection<MediaInfo> mediaList) {
         SQLiteDatabase db = getDatabase(context);
 
         int count = 0;
@@ -562,6 +562,26 @@ public class DBHelper {
         info.fillValues(values);
 
         delete(db, RedditDatabase.TABLE_FAVORITE, values);
+    }
+
+    public static int removeFavorite(@NonNull Context context, @NonNull Collection<MediaInfo> mediaInfos) {
+        SQLiteDatabase db = getDatabase(context);
+
+        int count = 0;
+        ContentValues values = new ContentValues();
+
+        db.beginTransaction();
+        try {
+            for (var info : mediaInfos) {
+                info.fillValues(values);
+                count += delete(db, RedditDatabase.TABLE_FAVORITE, values);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+
+        return count;
     }
 
     @NonNull
