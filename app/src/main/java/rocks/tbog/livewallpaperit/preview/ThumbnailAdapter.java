@@ -126,7 +126,7 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
     @Override
     public void onViewRecycled(@NonNull ThumbnailHolder holder) {
         if (holder.loadImageTask != null) {
-            holder.loadImageTask.cancel();
+            holder.loadImageTask.cancel(true);
             holder.loadImageTask = null;
         }
     }

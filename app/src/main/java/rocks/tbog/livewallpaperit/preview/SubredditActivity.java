@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -27,9 +28,10 @@ import androidx.work.ExistingWorkPolicy;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import com.google.android.material.divider.MaterialDividerItemDecoration;
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import rocks.tbog.livewallpaperit.ArtProvider;
 import rocks.tbog.livewallpaperit.BuildConfig;
 import rocks.tbog.livewallpaperit.R;
@@ -44,7 +46,8 @@ import rocks.tbog.livewallpaperit.utils.ViewUtils;
 public class SubredditActivity extends AppCompatActivity {
 
     public static final String EXTRA_SUBREDDIT = "subreddit.name";
-    public static final String EXTRA_SOURCE = "serializable.source";
+    public static final String EXTRA_SOURCE = "parcelable.source";
+    public static final String STATE_ADAPTER_ITEMS = "adapterItems";
     private static final String TAG = SubredditActivity.class.getSimpleName();
 
     SubredditAdapter mAdapter;
@@ -55,15 +58,17 @@ public class SubredditActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mAdapter = new SubredditAdapter();
+
         if (getIntent() != null) {
             var extras = getIntent().getExtras();
             if (extras != null) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    mSource = extras.getSerializable(EXTRA_SOURCE, Source.class);
+                    mSource = extras.getParcelable(EXTRA_SOURCE, Source.class);
                 } else {
-                    Serializable serializable = extras.getSerializable(EXTRA_SOURCE);
-                    if (serializable instanceof Source) {
-                        mSource = (Source) serializable;
+                    Parcelable parcelable = extras.getParcelable(EXTRA_SOURCE);
+                    if (parcelable instanceof Source) {
+                        mSource = (Source) parcelable;
                     }
                 }
 
@@ -73,6 +78,26 @@ public class SubredditActivity extends AppCompatActivity {
                 }
             }
         }
+
+        if (savedInstanceState != null) {
+            savedInstanceState.setClassLoader(SubTopic.class.getClassLoader());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                var topics = savedInstanceState.getParcelableArrayList(STATE_ADAPTER_ITEMS, SubTopic.class);
+                if (topics != null) {
+                    mAdapter.setItems(topics);
+                }
+            } else {
+                ArrayList<Parcelable> parcelables = savedInstanceState.getParcelableArrayList(STATE_ADAPTER_ITEMS);
+                if (parcelables != null) {
+                    var topics = parcelables.stream()
+                            .filter(p -> p instanceof SubTopic)
+                            .map(p -> (SubTopic) p)
+                            .collect(Collectors.toList());
+                    mAdapter.setItems(topics);
+                }
+            }
+        }
+
         if (mSource == null) {
             finish();
             return;
@@ -84,7 +109,6 @@ public class SubredditActivity extends AppCompatActivity {
         setSupportActionBar(topToolbar);
 
         mText = findViewById(R.id.source_list_text);
-        mAdapter = new SubredditAdapter();
 
         RecyclerView recyclerView = findViewById(R.id.source_list);
         recyclerView.setHasFixedSize(true);
@@ -121,6 +145,13 @@ public class SubredditActivity extends AppCompatActivity {
         if (mAdapter.getItemCount() == 0) {
             loadSourceData();
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        List<SubTopic> adapterItems = mAdapter.getItems();
+        outState.putParcelableArrayList(STATE_ADAPTER_ITEMS, new ArrayList<>(adapterItems));
     }
 
     private void loadSourceData() {

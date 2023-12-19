@@ -3,6 +3,8 @@ package rocks.tbog.livewallpaperit.data;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.text.TextUtils;
 import android.util.Log;
 import androidx.annotation.NonNull;
@@ -21,7 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
 
-public final class SubTopic implements RecycleAdapterBase.AdapterDiff {
+public final class SubTopic implements RecycleAdapterBase.AdapterDiff, Parcelable {
     private static final String TAG = SubTopic.class.getSimpleName();
 
     @NonNull
@@ -71,6 +73,34 @@ public final class SubTopic implements RecycleAdapterBase.AdapterDiff {
         this.numComments = numComments;
         this.over18 = over18;
     }
+
+    private SubTopic(Parcel in) {
+        id = Objects.requireNonNull(in.readString());
+        title = Objects.requireNonNull(in.readString());
+        author = Objects.requireNonNull(in.readString());
+        linkFlairText = in.readString();
+        permalink = in.readString();
+        thumbnail = in.readString();
+        createdUTC = in.readLong();
+        score = in.readInt();
+        upvoteRatio = in.readInt();
+        numComments = in.readInt();
+        over18 = in.readByte() != 0;
+        byte tmpIsSelected = in.readByte();
+        isSelected = tmpIsSelected == 0 ? null : tmpIsSelected == 1;
+    }
+
+    public static final Creator<SubTopic> CREATOR = new Creator<>() {
+        @Override
+        public SubTopic createFromParcel(Parcel in) {
+            return new SubTopic(in);
+        }
+
+        @Override
+        public SubTopic[] newArray(int size) {
+            return new SubTopic[size];
+        }
+    };
 
     public String getPermalinkString() {
         return "https://www.reddit.com" + permalink;
@@ -340,6 +370,27 @@ public final class SubTopic implements RecycleAdapterBase.AdapterDiff {
                 over18,
                 isSelected,
                 images);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(@NonNull Parcel dest, int flags) {
+        dest.writeString(id);
+        dest.writeString(title);
+        dest.writeString(author);
+        dest.writeString(linkFlairText);
+        dest.writeString(permalink);
+        dest.writeString(thumbnail);
+        dest.writeLong(createdUTC);
+        dest.writeInt(score);
+        dest.writeInt(upvoteRatio);
+        dest.writeInt(numComments);
+        dest.writeByte((byte) (over18 ? 1 : 0));
+        dest.writeByte((byte) (isSelected == null ? 0 : isSelected ? 1 : 2));
     }
 
     public static class Image {

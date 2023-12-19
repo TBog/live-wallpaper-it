@@ -3,7 +3,9 @@ package rocks.tbog.livewallpaperit.preview;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -11,6 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -24,7 +27,9 @@ import androidx.work.WorkManager;
 import com.google.android.material.divider.MaterialDividerItemDecoration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import rocks.tbog.livewallpaperit.ArtProvider;
 import rocks.tbog.livewallpaperit.BuildConfig;
 import rocks.tbog.livewallpaperit.DeleteArtworkReceiver;
@@ -40,6 +45,7 @@ import rocks.tbog.livewallpaperit.work.WorkerUtils;
 public class SourcesActivity extends AppCompatActivity {
 
     private static final String TAG = SourcesActivity.class.getSimpleName();
+    private static final String STATE_ADAPTER_ITEMS = "adapterItems";
     SourceAdapter mAdapter;
     TextView mText;
 
@@ -57,7 +63,26 @@ public class SourcesActivity extends AppCompatActivity {
                 source -> DBHelper.updateSource(getApplicationContext(), source),
                 source -> DBHelper.removeSource(getApplicationContext(), source));
 
-        loadSourcesFromPreferences();
+        if (savedInstanceState != null) {
+            savedInstanceState.setClassLoader(Source.class.getClassLoader());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                var topics = savedInstanceState.getParcelableArrayList(STATE_ADAPTER_ITEMS, Source.class);
+                if (topics != null) {
+                    mAdapter.setItems(topics);
+                }
+            } else {
+                ArrayList<Parcelable> parcelables = savedInstanceState.getParcelableArrayList(STATE_ADAPTER_ITEMS);
+                if (parcelables != null) {
+                    var topics = parcelables.stream()
+                            .filter(p -> p instanceof Source)
+                            .map(p -> (Source) p)
+                            .collect(Collectors.toList());
+                    mAdapter.setItems(topics);
+                }
+            }
+        } else {
+            loadSourcesFromPreferences();
+        }
 
         RecyclerView recyclerView = findViewById(R.id.source_list);
         recyclerView.setHasFixedSize(true);
@@ -72,7 +97,17 @@ public class SourcesActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        loadSources();
+
+        if (mAdapter.getItemCount() == 0) {
+            loadSources();
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        List<Source> adapterItems = mAdapter.getItems();
+        outState.putParcelableArrayList(STATE_ADAPTER_ITEMS, new ArrayList<>(adapterItems));
     }
 
     /**
@@ -102,6 +137,7 @@ public class SourcesActivity extends AppCompatActivity {
                             .edit()
                             .remove(ArtProvider.PREF_SOURCES_SET)
                             .apply();
+                    updateSourcesText();
                 });
     }
 

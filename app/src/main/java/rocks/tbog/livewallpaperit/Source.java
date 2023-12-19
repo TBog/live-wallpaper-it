@@ -1,17 +1,12 @@
 package rocks.tbog.livewallpaperit;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.Objects;
 
-public class Source implements Serializable, RecycleAdapterBase.AdapterDiff {
-    private static final long serialVersionUID = 1L;
-
+public class Source implements RecycleAdapterBase.AdapterDiff, Parcelable {
     @NonNull
     public String subreddit;
 
@@ -22,6 +17,46 @@ public class Source implements Serializable, RecycleAdapterBase.AdapterDiff {
     public int imageMinHeight = 0;
     public Orientation imageOrientation = Orientation.ANY;
     public boolean isEnabled = true;
+
+    protected Source(Parcel in) {
+        subreddit = Objects.requireNonNull(in.readString());
+        minUpvotePercentage = in.readInt();
+        minScore = in.readInt();
+        minComments = in.readInt();
+        imageMinWidth = in.readInt();
+        imageMinHeight = in.readInt();
+        imageOrientation = Orientation.fromInt(in.readByte());
+        isEnabled = in.readByte() != 0;
+    }
+
+    public static final Creator<Source> CREATOR = new Creator<>() {
+        @Override
+        public Source createFromParcel(Parcel in) {
+            return new Source(in);
+        }
+
+        @Override
+        public Source[] newArray(int size) {
+            return new Source[size];
+        }
+    };
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(@NonNull Parcel dest, int flags) {
+        dest.writeString(subreddit);
+        dest.writeInt(minUpvotePercentage);
+        dest.writeInt(minScore);
+        dest.writeInt(minComments);
+        dest.writeInt(imageMinWidth);
+        dest.writeInt(imageMinHeight);
+        dest.writeByte((byte) imageOrientation.toInt());
+        dest.writeByte((byte) (isEnabled ? 1 : 0));
+    }
 
     @Override
     public long getAdapterItemId() {
@@ -88,28 +123,21 @@ public class Source implements Serializable, RecycleAdapterBase.AdapterDiff {
 
     @NonNull
     public static byte[] toByteArray(@NonNull Source source) {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try {
-            ObjectOutputStream oos = new ObjectOutputStream(outputStream);
-            oos.writeObject(source);
-            oos.close();
-        } catch (Exception ignored) {
-            // ignored
-        }
-        return outputStream.toByteArray();
+        Parcel p = Parcel.obtain();
+        source.writeToParcel(p, 0);
+        byte[] data = p.marshall();
+        p.recycle();
+        return data;
     }
 
     @Nullable
     public static Source fromByteArray(byte[] data) {
         if (data == null) return null;
-        Source source;
-        try {
-            ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
-            source = (Source) ois.readObject();
-            ois.close();
-        } catch (Exception ignored) {
-            source = null;
-        }
+        Parcel p = Parcel.obtain();
+        p.unmarshall(data, 0, data.length);
+        p.setDataPosition(0);
+        Source source = Source.CREATOR.createFromParcel(p);
+        p.recycle();
         return source;
     }
 }
