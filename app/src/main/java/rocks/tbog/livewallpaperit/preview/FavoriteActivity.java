@@ -4,10 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
-import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -17,13 +14,12 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
 import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.data.Image;
-import rocks.tbog.livewallpaperit.data.SubTopic;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
 
 public class FavoriteActivity extends AppCompatActivity {
@@ -47,32 +43,28 @@ public class FavoriteActivity extends AppCompatActivity {
                 (a, i, v) -> ViewUtils.launchIntent(v, new Intent(Intent.ACTION_VIEW).setData(i.link)));
 
         if (savedInstanceState != null) {
-            savedInstanceState.setClassLoader(SubTopic.class.getClassLoader());
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                var images = savedInstanceState.getParcelableArrayList(STATE_ADAPTER_ITEMS, Image.class);
-                if (images != null) {
-                    var items = images.stream()
-                            .map(p -> new ThumbnailAdapter.Item((Image) p, Uri.parse(((Image) p).url)))
-                            .collect(Collectors.toList());
-                    mAdapter.setItems(items);
-                }
-            } else {
-                ArrayList<Parcelable> parcelables = savedInstanceState.getParcelableArrayList(STATE_ADAPTER_ITEMS);
-                if (parcelables != null) {
-                    var items = parcelables.stream()
+            Bundle bundle = savedInstanceState.getBundle(STATE_ADAPTER_ITEMS);
+            if (bundle != null) {
+                bundle.setClassLoader(Image.class.getClassLoader());
+                for (var link : bundle.keySet()) {
+                    var parcelableArrayList = bundle.getParcelableArrayList(link);
+                    if (parcelableArrayList == null || parcelableArrayList.isEmpty()) continue;
+                    var images = parcelableArrayList.stream()
                             .filter(p -> p instanceof Image)
-                            .map(p -> new ThumbnailAdapter.Item((Image) p, Uri.parse(((Image) p).url)))
+                            .map(p -> (Image) p)
                             .collect(Collectors.toList());
-                    mAdapter.setItems(items);
+                    var item = new FavoriteAdapter.Item(images, Uri.parse(link));
+                    mAdapter.addItem(item);
                 }
             }
         }
 
+        final int columnCount = 3;
         RecyclerView recyclerView = findViewById(R.id.favorite_list);
-        ViewUtils.doOnLayout(recyclerView, (view) -> mAdapter.setWidth(view.getWidth() / 2));
+        ViewUtils.doOnLayout(recyclerView, (view) -> mAdapter.setWidth(view.getWidth() / columnCount));
         recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(mAdapter);
-        var layout = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        var layout = new StaggeredGridLayoutManager(columnCount, StaggeredGridLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(layout);
     }
 
@@ -87,24 +79,37 @@ public class FavoriteActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        List<Image> adapterItems =
-                mAdapter.getItems().stream().map(i -> i.image).collect(Collectors.toList());
-        outState.putParcelableArrayList(STATE_ADAPTER_ITEMS, new ArrayList<>(adapterItems));
+        Bundle bundle = new Bundle();
+        for (var item : mAdapter.getItems()) {
+            bundle.putParcelableArrayList(item.link.toString(), new ArrayList<>(item.images));
+        }
+        outState.putBundle(STATE_ADAPTER_ITEMS, bundle);
     }
 
     private void loadFavorites() {
         onStartLoading();
-        final ArrayList<ThumbnailAdapter.Item> list = new ArrayList<>();
+        final ArrayList<FavoriteAdapter.Item> list = new ArrayList<>();
         AsyncUtils.runAsync(
                 getLifecycle(),
                 task -> {
                     var favoriteImages = DBHelper.getFavoriteImages(getApplicationContext());
-                    list.addAll(favoriteImages.stream()
-                            .filter(i -> i.width == 108)
-                            .map(i -> new ThumbnailAdapter.Item(i, Uri.parse(i.url)))
-                            .collect(Collectors.toList()));
-                    for (var item : list) {
-                        Log.d(TAG, item.image.width + "x" + item.image.height + " " + item.link);
+                    HashMap<String, ArrayList<Image>> imageById = new HashMap<>(favoriteImages.size());
+                    for (var image : favoriteImages) {
+                        var mediaList = imageById.get(image.mediaId);
+                        if (mediaList == null) {
+                            imageById.put(image.mediaId, mediaList = new ArrayList<>());
+                        }
+                        mediaList.add(image);
+                    }
+                    for (var mediaId : imageById.keySet()) {
+                        var mediaList = imageById.get(mediaId);
+                        if (mediaList == null || mediaList.isEmpty()) continue;
+                        var sourceImage = mediaList.stream()
+                                .filter(i -> i.isSource && !i.isObfuscated)
+                                .findAny()
+                                .orElse(mediaList.get(0));
+                        var item = new FavoriteAdapter.Item(mediaList, Uri.parse(sourceImage.url));
+                        list.add(item);
                     }
                 },
                 task -> {

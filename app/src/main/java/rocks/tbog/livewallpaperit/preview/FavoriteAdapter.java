@@ -4,17 +4,20 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
+import androidx.collection.ArraySet;
 import androidx.recyclerview.widget.RecyclerView;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
@@ -22,7 +25,7 @@ import rocks.tbog.livewallpaperit.WorkAsync.RunnableTask;
 import rocks.tbog.livewallpaperit.data.Image;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
 
-public class FavoriteAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, FavoriteAdapter.ItemHolder> {
+public class FavoriteAdapter extends RecycleAdapterBase<FavoriteAdapter.Item, FavoriteAdapter.ItemHolder> {
     private static final String TAG = FavoriteAdapter.class.getSimpleName();
     private int mWidth = 108;
 
@@ -36,11 +39,27 @@ public class FavoriteAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, F
     }
 
     @Override
-    public void onBindViewHolder(@NonNull FavoriteAdapter.ItemHolder holder, @NonNull ThumbnailAdapter.Item item) {
+    public void onBindViewHolder(@NonNull FavoriteAdapter.ItemHolder holder, @NonNull FavoriteAdapter.Item item) {
         holder.mImageView.setImageResource(R.drawable.ic_launcher_background);
         holder.mImageView.setScaleType(ImageView.ScaleType.FIT_XY);
-        setImageViewSize(holder.mImageView, item.image);
 
+        Image thumbnail = null;
+        int delta = Integer.MAX_VALUE;
+        for (var image : item.images) {
+            if (image.isSource) continue;
+            if (image.isObfuscated) continue;
+            if (thumbnail == null || delta > Math.abs(thumbnail.width - image.width)) {
+                delta = Math.abs(mWidth - image.width);
+                thumbnail = image;
+            }
+        }
+        if (thumbnail != null) {
+            setImageViewSize(holder.mImageView, thumbnail);
+            asyncLoadImage(holder, thumbnail);
+        }
+    }
+
+    private void asyncLoadImage(@NonNull FavoriteAdapter.ItemHolder holder, @NonNull Image image) {
         Activity activity = ViewUtils.getActivity(holder.itemView);
         final Bitmap[] bitmapWrapper = new Bitmap[] {null};
         if (activity instanceof ComponentActivity) {
@@ -49,10 +68,10 @@ public class FavoriteAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, F
                     task -> {
                         InputStream inputStream = null;
                         try {
-                            URL url = new URL(item.image.url);
+                            URL url = new URL(image.url);
                             inputStream = url.openConnection().getInputStream();
                         } catch (IOException e) {
-                            Log.e(TAG, "image " + item.image.mediaId + " failed to open connection", e);
+                            Log.e(TAG, "image " + image.mediaId + " failed to open connection to " + image.url, e);
                         }
                         if (task.isCancelled()) return;
                         if (inputStream == null) {
@@ -62,13 +81,13 @@ public class FavoriteAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, F
                         bitmapWrapper[0] = BitmapFactory.decodeStream(inputStream);
                     },
                     task -> {
+                        if (holder.loadImageTask == task) {
+                            holder.loadImageTask = null;
+                        }
                         if (task.isCancelled()) return;
                         if (bitmapWrapper[0] != null) {
                             holder.mImageView.setImageBitmap(bitmapWrapper[0]);
-                            holder.mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                        }
-                        if (holder.loadImageTask == task) {
-                            holder.loadImageTask = null;
+                            holder.mImageView.setScaleType(ImageView.ScaleType.CENTER);
                         }
                     });
         }
@@ -110,6 +129,23 @@ public class FavoriteAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, F
         public ItemHolder(@NonNull View itemView) {
             super(itemView);
             mImageView = itemView.findViewById(android.R.id.icon);
+        }
+    }
+
+    public static class Item implements AdapterDiff {
+        @NonNull
+        public final ArraySet<Image> images = new ArraySet<>();
+
+        public final Uri link;
+
+        public Item(@NonNull List<Image> imageList, Uri uri) {
+            images.addAll(imageList);
+            link = uri;
+        }
+
+        @Override
+        public long getAdapterItemId() {
+            return images.valueAt(0).mediaId.hashCode();
         }
     }
 }
