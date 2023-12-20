@@ -4,6 +4,9 @@
     <string name="sources_name">Subreddits</string>
     <string name="subreddit_name">r/%s</string>
     <string name="sources_summary">Update subreddits and filters</string>
+    <string name="favorite_title">Favorite images</string>
+    <string name="favorite_name">Favorites</string>
+    <string name="favorite_summary">View favorite images</string>
 
     <string name="name_art_provider">LWIt art</string>
     <string name="desc_art_provider">LiveWallpaperIt art provider</string>
@@ -74,4 +77,6 @@
     <string name="unset_favorite">Remove favorite</string>
     <string name="ignore_and_remove">Ignore and remove</string>
     <string name="clear_ignore">Don\'t ignore</string>
+    <string name="empty_favorite">No favorite images</string>
+    <string name="loading_favorite">Loading favorite images</string>
 </resources>

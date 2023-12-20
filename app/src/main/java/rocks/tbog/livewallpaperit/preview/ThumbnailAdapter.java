@@ -90,7 +90,10 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
         holder.mInvalidView.setVisibility(isInvalidMedia(item.image.mediaId) ? View.VISIBLE : View.GONE);
         holder.mFavoriteView.setVisibility(isFavoriteMedia(item.image.mediaId) ? View.VISIBLE : View.GONE);
         setImageViewSize(holder.mImageView, item.image);
+        asyncLoadImage(holder, item.image);
+    }
 
+    private void asyncLoadImage(@NonNull ThumbnailHolder holder, @NonNull Image image) {
         Activity activity = ViewUtils.getActivity(holder.itemView);
         final Bitmap[] bitmapWrapper = new Bitmap[] {null};
         if (activity instanceof ComponentActivity) {
@@ -99,10 +102,10 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
                     task -> {
                         InputStream inputStream = null;
                         try {
-                            URL url = new URL(item.image.url);
+                            URL url = new URL(image.url);
                             inputStream = url.openConnection().getInputStream();
                         } catch (IOException e) {
-                            Log.e(TAG, "image " + item.image.mediaId + " failed to open connection", e);
+                            Log.e(TAG, "image " + image.mediaId + " failed to open connection to " + image.url, e);
                         }
                         if (task.isCancelled()) return;
                         if (inputStream == null) {
@@ -112,13 +115,13 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
                         bitmapWrapper[0] = BitmapFactory.decodeStream(inputStream);
                     },
                     task -> {
+                        if (holder.loadImageTask == task) {
+                            holder.loadImageTask = null;
+                        }
                         if (task.isCancelled()) return;
                         if (bitmapWrapper[0] != null) {
                             holder.mImageView.setImageBitmap(bitmapWrapper[0]);
                             holder.mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                        }
-                        if (holder.loadImageTask == task) {
-                            holder.loadImageTask = null;
                         }
                     });
         }

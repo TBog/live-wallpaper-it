@@ -3,9 +3,7 @@ package rocks.tbog.livewallpaperit.data;
 import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
-
 import androidx.annotation.NonNull;
-
 import java.util.Objects;
 
 public class Image implements Parcelable {
@@ -21,12 +19,7 @@ public class Image implements Parcelable {
     public final boolean isSource;
 
     public Image(
-            @NonNull String url,
-            @NonNull String mediaId,
-            int width,
-            int height,
-            boolean obfuscated,
-            boolean isSource) {
+            @NonNull String url, @NonNull String mediaId, int width, int height, boolean obfuscated, boolean isSource) {
         this.url = url;
         this.mediaId = mediaId;
         this.width = width;

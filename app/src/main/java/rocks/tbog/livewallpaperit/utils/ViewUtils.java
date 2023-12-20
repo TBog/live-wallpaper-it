@@ -11,8 +11,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
 
 public class ViewUtils {
     private static final int[] ON_SCREEN_POS = new int[2];
@@ -96,5 +98,52 @@ public class ViewUtils {
                     .toBundle();
         }
         return opts;
+    }
+
+    public interface ViewAction<T extends View> {
+        void run(T view);
+    }
+
+    public static <T extends View> void doOnNextLayout(@NonNull T view, @NonNull ViewAction<T> action) {
+        view.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(
+                    View v,
+                    int left,
+                    int top,
+                    int right,
+                    int bottom,
+                    int oldLeft,
+                    int oldTop,
+                    int oldRight,
+                    int oldBottom) {
+                view.removeOnLayoutChangeListener(this);
+                action.run(view);
+            }
+        });
+    }
+
+    public static <T extends View> void doOnLayout(@NonNull T view, @NonNull ViewAction<T> action) {
+        if (ViewCompat.isLaidOut(view) && !view.isLayoutRequested()) {
+            action.run(view);
+        } else {
+            doOnNextLayout(view, action);
+        }
+    }
+
+    public static <T extends View> void doOnPreDraw(@NonNull T view, @NonNull ViewAction<T> action) {
+        final ViewTreeObserver vto = view.getViewTreeObserver();
+        vto.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                action.run(view);
+                if (vto.isAlive()) {
+                    vto.removeOnPreDrawListener(this);
+                } else {
+                    view.getViewTreeObserver().removeOnPreDrawListener(this);
+                }
+                return true;
+            }
+        });
     }
 }

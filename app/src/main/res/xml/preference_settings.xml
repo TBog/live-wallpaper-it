@@ -15,6 +15,14 @@
             android:targetPackage="rocks.tbog.livewallpaperit" />
     </Preference>
 
+    <Preference
+        android:summary="@string/favorite_summary"
+        android:title="@string/favorite_name">
+        <intent
+            android:targetClass="rocks.tbog.livewallpaperit.preview.FavoriteActivity"
+            android:targetPackage="rocks.tbog.livewallpaperit" />
+    </Preference>
+
     <rocks.tbog.livewallpaperit.preference.CustomDialogPreference
         android:defaultValue="5"
         android:dialogLayout="@layout/number_picker"

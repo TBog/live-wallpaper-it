@@ -585,7 +585,7 @@ public class DBHelper {
     }
 
     @NonNull
-    public static List<MediaInfo> getFavoriteMediaList(@NonNull Context context, String subreddit) {
+    public static List<MediaInfo> getFavoriteMediaList(@NonNull Context context, @NonNull String subreddit) {
         SQLiteDatabase db = getDatabase(context);
 
         ArrayList<MediaInfo> records = null;
@@ -604,6 +604,40 @@ public class DBHelper {
                     String mediaId = cursor.getString(0);
                     String topicId = cursor.getString(1);
                     records.add(new MediaInfo(mediaId, topicId, subreddit));
+
+                    cursor.moveToNext();
+                }
+            }
+        }
+        if (records == null) {
+            return Collections.emptyList();
+        }
+        return records;
+    }
+
+    @NonNull
+    public static List<Image> getFavoriteImages(@NonNull Context context) {
+        SQLiteDatabase db = getDatabase(context);
+
+        ArrayList<Image> records = null;
+        try (Cursor cursor = db.rawQuery(
+                "SELECT "
+                        + "\"" + RedditDatabase.TABLE_TOPIC_IMAGES + "\".*,"
+                        + "\"" + RedditDatabase.TABLE_TOPICS + "\".\"" + RedditDatabase.TOPIC_SUBREDDIT_NAME + "\" "
+                        + "FROM "
+                        + "\"" + RedditDatabase.TABLE_TOPIC_IMAGES + "\",\"" + RedditDatabase.TABLE_TOPICS
+                        + "\",\"" + RedditDatabase.TABLE_FAVORITE + "\" "
+                        + "WHERE "
+                        + "\"" + RedditDatabase.TABLE_FAVORITE + "\".\"" + RedditDatabase.FAVORITE_TOPIC_ID + "\"="
+                        + "\"" + RedditDatabase.TABLE_TOPICS + "\".\"" + RedditDatabase.TOPIC_ID + "\" "
+                        + "AND "
+                        + "\"" + RedditDatabase.TABLE_FAVORITE + "\".\"" + RedditDatabase.FAVORITE_MEDIA_ID + "\"="
+                        + "\"" + RedditDatabase.TABLE_TOPIC_IMAGES + "\".\"" + RedditDatabase.IMAGE_MEDIA_ID + "\" ",
+                null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                records = new ArrayList<>(cursor.getCount());
+                while (!cursor.isAfterLast()) {
+                    records.add(Image.fromCursor(cursor));
 
                     cursor.moveToNext();
                 }
