@@ -22,6 +22,7 @@ import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
 import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
 import rocks.tbog.livewallpaperit.WorkAsync.RunnableTask;
+import rocks.tbog.livewallpaperit.data.Image;
 import rocks.tbog.livewallpaperit.data.MediaInfo;
 import rocks.tbog.livewallpaperit.data.SubTopic;
 import rocks.tbog.livewallpaperit.utils.ViewUtils;
@@ -131,7 +132,7 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
         }
     }
 
-    public void setImageViewSize(@NonNull ImageView view, @NonNull SubTopic.Image image) {
+    public void setImageViewSize(@NonNull ImageView view, @NonNull Image image) {
         float ratio = image.width / (float) image.height;
         var params = view.getLayoutParams();
         params.width = mWidth;
@@ -166,11 +167,11 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
 
     public static class Item implements AdapterDiff {
         @NonNull
-        final SubTopic.Image image;
+        final Image image;
 
         final Uri link;
 
-        public Item(@NonNull SubTopic.Image image, Uri uri) {
+        public Item(@NonNull Image image, Uri uri) {
             this.image = image;
             this.link = uri;
         }

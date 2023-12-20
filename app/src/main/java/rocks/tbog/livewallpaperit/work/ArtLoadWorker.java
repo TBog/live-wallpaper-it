@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import rocks.tbog.livewallpaperit.ArtProvider;
 import rocks.tbog.livewallpaperit.Source;
 import rocks.tbog.livewallpaperit.data.DBHelper;
+import rocks.tbog.livewallpaperit.data.Image;
 import rocks.tbog.livewallpaperit.data.SubTopic;
 
 public class ArtLoadWorker extends Worker {
@@ -307,7 +308,7 @@ public class ArtLoadWorker extends Worker {
     /**
      * Check if the image should be skipped while adding artworks
      */
-    public static boolean shouldSkipImage(@NonNull SubTopic.Image image, @NonNull Filter filter) {
+    public static boolean shouldSkipImage(@NonNull Image image, @NonNull Filter filter) {
         boolean isValid = image.isSource && !image.isObfuscated;
         if (filter.favoriteList.contains(image.mediaId)) {
             return isValid;
@@ -317,7 +318,7 @@ public class ArtLoadWorker extends Worker {
         return !isValid;
     }
 
-    private static boolean validImageSize(@NonNull SubTopic.Image image, @NonNull Filter filter) {
+    private static boolean validImageSize(@NonNull Image image, @NonNull Filter filter) {
         if (filter.imageMinWidth > 0 && image.width < filter.imageMinWidth) {
             Log.d(TAG, "imageMinWidth " + image.width + "<" + filter.imageMinWidth + " skipping " + image.mediaId);
             return false;
@@ -329,7 +330,7 @@ public class ArtLoadWorker extends Worker {
         return true;
     }
 
-    private static boolean validImageAspect(@NonNull SubTopic.Image image, @NonNull Filter filter) {
+    private static boolean validImageAspect(@NonNull Image image, @NonNull Filter filter) {
         switch (filter.imageOrientation) {
             case ANY:
                 return true;

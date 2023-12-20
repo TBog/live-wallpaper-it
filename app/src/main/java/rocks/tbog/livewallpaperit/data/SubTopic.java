@@ -88,6 +88,29 @@ public final class SubTopic implements RecycleAdapterBase.AdapterDiff, Parcelabl
         over18 = in.readByte() != 0;
         byte tmpIsSelected = in.readByte();
         isSelected = tmpIsSelected == 0 ? null : tmpIsSelected == 1;
+        images.addAll(Objects.requireNonNull(in.createTypedArrayList(Image.CREATOR)));
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(id);
+        dest.writeString(title);
+        dest.writeString(author);
+        dest.writeString(linkFlairText);
+        dest.writeString(permalink);
+        dest.writeString(thumbnail);
+        dest.writeLong(createdUTC);
+        dest.writeInt(score);
+        dest.writeInt(upvoteRatio);
+        dest.writeInt(numComments);
+        dest.writeByte((byte) (over18 ? 1 : 0));
+        dest.writeByte((byte) (isSelected == null ? 0 : isSelected ? 1 : 2));
+        dest.writeTypedList(images);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
     }
 
     public static final Creator<SubTopic> CREATOR = new Creator<>() {
@@ -176,14 +199,14 @@ public final class SubTopic implements RecycleAdapterBase.AdapterDiff, Parcelabl
     }
 
     @NonNull
-    private static String getStringFromCursor(Cursor cursor, @NonNull String column) {
+    static String getStringFromCursor(Cursor cursor, @NonNull String column) {
         int index = cursor.getColumnIndex(column);
         if (index != -1) return cursor.getString(index);
         Log.e(TAG, "cursor missing `" + column + "` (string) in " + Arrays.toString(cursor.getColumnNames()));
         return "";
     }
 
-    private static int getIntFromCursor(Cursor cursor, @NonNull String column) {
+    static int getIntFromCursor(Cursor cursor, @NonNull String column) {
         int index = cursor.getColumnIndex(column);
         if (index != -1) return cursor.getInt(index);
         Log.e(TAG, "cursor missing `" + column + "` (int) in " + Arrays.toString(cursor.getColumnNames()));
@@ -370,64 +393,5 @@ public final class SubTopic implements RecycleAdapterBase.AdapterDiff, Parcelabl
                 over18,
                 isSelected,
                 images);
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(@NonNull Parcel dest, int flags) {
-        dest.writeString(id);
-        dest.writeString(title);
-        dest.writeString(author);
-        dest.writeString(linkFlairText);
-        dest.writeString(permalink);
-        dest.writeString(thumbnail);
-        dest.writeLong(createdUTC);
-        dest.writeInt(score);
-        dest.writeInt(upvoteRatio);
-        dest.writeInt(numComments);
-        dest.writeByte((byte) (over18 ? 1 : 0));
-        dest.writeByte((byte) (isSelected == null ? 0 : isSelected ? 1 : 2));
-    }
-
-    public static class Image {
-        @NonNull
-        public final String url;
-
-        @NonNull
-        public final String mediaId;
-
-        public final int width;
-        public final int height;
-        public final boolean isObfuscated;
-        public final boolean isSource;
-
-        public Image(
-                @NonNull String url,
-                @NonNull String mediaId,
-                int width,
-                int height,
-                boolean obfuscated,
-                boolean isSource) {
-            this.url = url;
-            this.mediaId = mediaId;
-            this.width = width;
-            this.height = height;
-            this.isObfuscated = obfuscated;
-            this.isSource = isSource;
-        }
-
-        public static Image fromCursor(Cursor cursor) {
-            String url = getStringFromCursor(cursor, RedditDatabase.IMAGE_URL);
-            String mediaId = getStringFromCursor(cursor, RedditDatabase.IMAGE_MEDIA_ID);
-            int width = getIntFromCursor(cursor, RedditDatabase.IMAGE_WIDTH);
-            int height = getIntFromCursor(cursor, RedditDatabase.IMAGE_HEIGHT);
-            boolean isObfuscated = 0 != getIntFromCursor(cursor, RedditDatabase.IMAGE_IS_BLUR);
-            boolean isSource = 0 != getIntFromCursor(cursor, RedditDatabase.IMAGE_IS_SOURCE);
-            return new Image(url, mediaId, width, height, isObfuscated, isSource);
-        }
     }
 }

@@ -467,7 +467,7 @@ public class DBHelper {
     }
 
     private static void loadSubTopicImages(
-            SQLiteDatabase db, @NonNull String topicId, @NonNull Collection<SubTopic.Image> outImages) {
+            SQLiteDatabase db, @NonNull String topicId, @NonNull Collection<Image> outImages) {
         try (Cursor cursor = db.query(
                 RedditDatabase.TABLE_TOPIC_IMAGES,
                 new String[] {
@@ -486,7 +486,7 @@ public class DBHelper {
                 null)) {
             if (cursor != null) {
                 while (cursor.moveToNext()) {
-                    SubTopic.Image image = SubTopic.Image.fromCursor(cursor);
+                    Image image = Image.fromCursor(cursor);
                     outImages.add(image);
                 }
             }
@@ -521,7 +521,7 @@ public class DBHelper {
             if (cursor != null) {
                 final int columnTopicId = cursor.getColumnIndex(RedditDatabase.IMAGE_TOPIC_ID);
                 while (cursor.moveToNext()) {
-                    final SubTopic.Image image = SubTopic.Image.fromCursor(cursor);
+                    final Image image = Image.fromCursor(cursor);
                     final String topicId = cursor.getString(columnTopicId);
                     topics.stream()
                             .filter(topic -> topic.id.equals(topicId))
