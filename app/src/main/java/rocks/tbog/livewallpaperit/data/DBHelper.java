@@ -555,13 +555,13 @@ public class DBHelper {
         db.insertWithOnConflict(RedditDatabase.TABLE_FAVORITE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
-    public static void removeFavorite(@NonNull Context context, @NonNull MediaInfo info) {
+    public static boolean removeFavorite(@NonNull Context context, @NonNull MediaInfo info) {
         SQLiteDatabase db = getDatabase(context);
 
         ContentValues values = new ContentValues();
         info.fillValues(values);
 
-        delete(db, RedditDatabase.TABLE_FAVORITE, values);
+        return delete(db, RedditDatabase.TABLE_FAVORITE, values) > 0;
     }
 
     public static int removeFavorite(@NonNull Context context, @NonNull Collection<MediaInfo> mediaInfos) {

@@ -3,6 +3,7 @@ package rocks.tbog.livewallpaperit.preview;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -15,11 +16,14 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.collection.ArraySet;
 import androidx.fragment.app.FragmentManager;
+import com.google.android.apps.muzei.api.provider.Artwork;
+import com.google.android.apps.muzei.api.provider.ProviderContract;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import rocks.tbog.livewallpaperit.ArtProvider;
 import rocks.tbog.livewallpaperit.DeleteArtworkReceiver;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
@@ -169,6 +173,12 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
             });
         } else {
             menu.add(R.string.set_favorite).setOnMenuItemClickListener(item -> {
+                String byline = topic.linkFlairText;
+                if (TextUtils.isEmpty(byline)) byline = "r/" + mSubreddit;
+                Artwork artwork = ArtLoadWorker.buildArtwork(topic, media.mediaId, thumbnail.link)
+                        .byline(byline)
+                        .build();
+                ProviderContract.getProviderClient(ctx, ArtProvider.class).addArtwork(artwork);
                 DBHelper.insertFavorite(ctx, media);
                 DBHelper.removeIgnoreMedia(ctx, media);
                 mIgnoreMediaSet.remove(media);
@@ -186,8 +196,6 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
             });
         } else {
             menu.add(R.string.ignore_and_remove).setOnMenuItemClickListener(item -> {
-                DBHelper.insertIgnoreMedia(ctx, media);
-                DBHelper.removeFavorite(ctx, media);
                 mFavoriteMediaSet.remove(media);
                 mIgnoreMediaSet.add(media);
                 adapter.addInvalidMedia(thumbnail);
@@ -200,6 +208,9 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
                             .putExtra(DeleteArtworkReceiver.MEDIA_TOPIC_ID, media.topicId)
                             .putExtra(DeleteArtworkReceiver.MEDIA_SUBREDDIT, media.subreddit);
                     activity.sendBroadcast(intent);
+                } else {
+                    DBHelper.insertIgnoreMedia(ctx, media);
+                    DBHelper.removeFavorite(ctx, media);
                 }
                 return true;
             });

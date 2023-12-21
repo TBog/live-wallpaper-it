@@ -379,13 +379,8 @@ public class ArtLoadWorker extends Worker {
             String byline = topic.linkFlairText;
             if (TextUtils.isEmpty(byline)) byline = subredditNamePrefixed;
 
-            Artwork artwork = new Artwork.Builder()
-                    .persistentUri(Uri.parse(image.url))
-                    .webUri(topic.getPermalinkUri())
-                    .token(image.mediaId)
-                    .attribution(topic.author)
+            Artwork artwork = buildArtwork(topic, image.mediaId, Uri.parse(image.url))
                     .byline(byline)
-                    .title(topic.title)
                     .build();
 
             if (filter.ignoreTokenList.contains(artwork.getToken())) {
@@ -398,5 +393,15 @@ public class ArtLoadWorker extends Worker {
             }
             mArtworks.add(artwork);
         }
+    }
+
+    public static Artwork.Builder buildArtwork(@NonNull SubTopic topic, String mediaId, Uri uri) {
+        return new Artwork.Builder()
+                .persistentUri(uri)
+                .webUri(topic.getPermalinkUri())
+                .token(mediaId)
+                .attribution(topic.author)
+                .byline(topic.linkFlairText)
+                .title(topic.title);
     }
 }

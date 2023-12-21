@@ -105,6 +105,9 @@ public class DeleteArtworkReceiver extends BroadcastReceiver {
 
         var mediaInfo = DBHelper.getMediaByToken(context, artworkToken);
         if (mediaInfo != null) {
+            if (DBHelper.removeFavorite(context, mediaInfo)) {
+                Log.d(TAG, "removed favorite " + mediaInfo.mediaId + " from " + mediaInfo.subreddit);
+            }
             if (DBHelper.insertIgnoreMedia(context, mediaInfo)) {
                 Log.d(TAG, "ignored " + mediaInfo.mediaId + " from " + mediaInfo.subreddit);
             }
