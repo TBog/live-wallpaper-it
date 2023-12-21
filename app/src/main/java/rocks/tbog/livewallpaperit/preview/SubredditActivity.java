@@ -28,6 +28,7 @@ import androidx.work.ExistingWorkPolicy;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import com.google.android.material.divider.MaterialDividerItemDecoration;
+import com.google.common.base.Equivalence;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,7 @@ public class SubredditActivity extends AppCompatActivity {
     public static final String EXTRA_SOURCE = "parcelable.source";
     public static final String STATE_ADAPTER_ITEMS = "adapterItems";
     private static final String TAG = SubredditActivity.class.getSimpleName();
+    private static final int TOPIC_COUNT = 50;
 
     SubredditAdapter mAdapter;
     TextView mText;
@@ -151,7 +153,9 @@ public class SubredditActivity extends AppCompatActivity {
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         List<SubTopic> adapterItems = mAdapter.getItems();
-        outState.putParcelableArrayList(STATE_ADAPTER_ITEMS, new ArrayList<>(adapterItems));
+        if (adapterItems.size() <= 100) {
+            outState.putParcelableArrayList(STATE_ADAPTER_ITEMS, new ArrayList<>(adapterItems));
+        }
     }
 
     private void loadSourceData() {
@@ -164,15 +168,25 @@ public class SubredditActivity extends AppCompatActivity {
                 getLifecycle(),
                 t -> {
                     Context ctx = getApplicationContext();
-                    var list = DBHelper.getSubTopics(ctx, mSource.subreddit);
-                    DBHelper.loadSubTopicImages(ctx, list);
-                    topicList.addAll(list);
+                    var list = DBHelper.getSubTopics(ctx, mSource.subreddit, TOPIC_COUNT);
+                    Log.d(TAG, "found " + list.size() + " topic(s)");
+                    var favorites = DBHelper.getSubTopicsWithFavorites(ctx, mSource.subreddit);
+                    Log.d(TAG, "found " + favorites.size() + " topic(s) with favorite image(s)");
+                    list.addAll(favorites);
+                    topicList.addAll(list.stream()
+                            .map(Equivalence.equals().onResultOf((SubTopic st) -> st.id)::wrap)
+                            .distinct()
+                            .map(Equivalence.Wrapper::get)
+                            .sorted((o1, o2) -> (int) (o2.createdUTC - o1.createdUTC))
+                            .collect(Collectors.toList()));
+                    DBHelper.loadSubTopicImages(ctx, topicList);
 
                     ignoreList.addAll(DBHelper.getIgnoreMediaList(ctx, mSource.subreddit));
                     favoriteList.addAll(DBHelper.getFavoriteMediaList(ctx, mSource.subreddit));
                 },
                 t -> {
                     mAdapter.setItems(topicList);
+                    Log.d(TAG, "adapter has " + topicList.size() + " topic(s)");
                     mAdapter.setIgnoreList(ignoreList);
                     mAdapter.setFavoriteList(favoriteList);
                     onEndLoadData();

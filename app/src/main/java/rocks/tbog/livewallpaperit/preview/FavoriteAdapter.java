@@ -1,29 +1,20 @@
 package rocks.tbog.livewallpaperit.preview;
 
-import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
 import androidx.collection.ArraySet;
 import androidx.recyclerview.widget.RecyclerView;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
+import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.List;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
-import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
 import rocks.tbog.livewallpaperit.WorkAsync.RunnableTask;
 import rocks.tbog.livewallpaperit.data.Image;
-import rocks.tbog.livewallpaperit.utils.ViewUtils;
 
 public class FavoriteAdapter extends RecycleAdapterBase<FavoriteAdapter.Item, FavoriteAdapter.ItemHolder> {
     private static final String TAG = FavoriteAdapter.class.getSimpleName();
@@ -55,41 +46,12 @@ public class FavoriteAdapter extends RecycleAdapterBase<FavoriteAdapter.Item, Fa
         }
         if (thumbnail != null) {
             setImageViewSize(holder.mImageView, thumbnail);
-            asyncLoadImage(holder, thumbnail);
-        }
-    }
-
-    private void asyncLoadImage(@NonNull FavoriteAdapter.ItemHolder holder, @NonNull Image image) {
-        Activity activity = ViewUtils.getActivity(holder.itemView);
-        final Bitmap[] bitmapWrapper = new Bitmap[] {null};
-        if (activity instanceof ComponentActivity) {
-            holder.loadImageTask = AsyncUtils.runAsync(
-                    ((ComponentActivity) activity).getLifecycle(),
-                    task -> {
-                        InputStream inputStream = null;
-                        try {
-                            URL url = new URL(image.url);
-                            inputStream = url.openConnection().getInputStream();
-                        } catch (IOException e) {
-                            Log.e(TAG, "image " + image.mediaId + " failed to open connection to " + image.url, e);
-                        }
-                        if (task.isCancelled()) return;
-                        if (inputStream == null) {
-                            task.cancel();
-                            return;
-                        }
-                        bitmapWrapper[0] = BitmapFactory.decodeStream(inputStream);
-                    },
-                    task -> {
-                        if (holder.loadImageTask == task) {
-                            holder.loadImageTask = null;
-                        }
-                        if (task.isCancelled()) return;
-                        if (bitmapWrapper[0] != null) {
-                            holder.mImageView.setImageBitmap(bitmapWrapper[0]);
-                            holder.mImageView.setScaleType(ImageView.ScaleType.CENTER);
-                        }
-                    });
+            Picasso.get()
+                    .load(thumbnail.url)
+                    .noPlaceholder()
+                    .resize(thumbnail.width, 0)
+                    .centerCrop()
+                    .into(holder.mImageView);
         }
     }
 
@@ -108,8 +70,11 @@ public class FavoriteAdapter extends RecycleAdapterBase<FavoriteAdapter.Item, Fa
 
         View itemView = new ImageView(context);
         itemView.setId(android.R.id.icon);
-        itemView.setLayoutParams(new RecyclerView.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        var params =
+                new RecyclerView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        var m = context.getResources().getDimensionPixelSize(R.dimen.margin) / 2;
+        params.setMargins(m, m, m, m);
+        itemView.setLayoutParams(params);
 
         return new FavoriteAdapter.ItemHolder(itemView);
     }

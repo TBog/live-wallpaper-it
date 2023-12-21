@@ -1,31 +1,22 @@
 package rocks.tbog.livewallpaperit.preview;
 
-import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.util.ArrayMap;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
+import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.Set;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
-import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
 import rocks.tbog.livewallpaperit.WorkAsync.RunnableTask;
 import rocks.tbog.livewallpaperit.data.Image;
 import rocks.tbog.livewallpaperit.data.MediaInfo;
 import rocks.tbog.livewallpaperit.data.SubTopic;
-import rocks.tbog.livewallpaperit.utils.ViewUtils;
 
 public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, ThumbnailAdapter.ThumbnailHolder> {
     private static final String TAG = ThumbnailAdapter.class.getSimpleName();
@@ -85,46 +76,18 @@ public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, 
 
     @Override
     public void onBindViewHolder(@NonNull ThumbnailHolder holder, @NonNull Item item) {
-        holder.mImageView.setImageResource(R.drawable.ic_launcher_background);
-        holder.mImageView.setScaleType(ImageView.ScaleType.FIT_XY);
         holder.mInvalidView.setVisibility(isInvalidMedia(item.image.mediaId) ? View.VISIBLE : View.GONE);
         holder.mFavoriteView.setVisibility(isFavoriteMedia(item.image.mediaId) ? View.VISIBLE : View.GONE);
-        setImageViewSize(holder.mImageView, item.image);
-        asyncLoadImage(holder, item.image);
-    }
 
-    private void asyncLoadImage(@NonNull ThumbnailHolder holder, @NonNull Image image) {
-        Activity activity = ViewUtils.getActivity(holder.itemView);
-        final Bitmap[] bitmapWrapper = new Bitmap[] {null};
-        if (activity instanceof ComponentActivity) {
-            holder.loadImageTask = AsyncUtils.runAsync(
-                    ((ComponentActivity) activity).getLifecycle(),
-                    task -> {
-                        InputStream inputStream = null;
-                        try {
-                            URL url = new URL(image.url);
-                            inputStream = url.openConnection().getInputStream();
-                        } catch (IOException e) {
-                            Log.e(TAG, "image " + image.mediaId + " failed to open connection to " + image.url, e);
-                        }
-                        if (task.isCancelled()) return;
-                        if (inputStream == null) {
-                            task.cancel();
-                            return;
-                        }
-                        bitmapWrapper[0] = BitmapFactory.decodeStream(inputStream);
-                    },
-                    task -> {
-                        if (holder.loadImageTask == task) {
-                            holder.loadImageTask = null;
-                        }
-                        if (task.isCancelled()) return;
-                        if (bitmapWrapper[0] != null) {
-                            holder.mImageView.setImageBitmap(bitmapWrapper[0]);
-                            holder.mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                        }
-                    });
-        }
+        holder.mImageView.setImageResource(R.drawable.ic_launcher_background);
+        holder.mImageView.setScaleType(ImageView.ScaleType.FIT_XY);
+        setImageViewSize(holder.mImageView, item.image);
+        Picasso.get()
+                .load(item.image.url)
+                .noPlaceholder()
+                .resize(item.image.width, 0)
+                .centerCrop()
+                .into(holder.mImageView);
     }
 
     @Override

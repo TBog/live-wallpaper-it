@@ -22,7 +22,7 @@ buildscript {
         hilt_ver = "2.43.2"
         ax_hilt_ver = "1.0.0"
 
-        material_ver = '1.10.0'
+        material_ver = '1.11.0'
         desugar_ver = '2.0.3'
 
         ax_core_ver = '1.8.0'
@@ -32,12 +32,15 @@ buildscript {
         ax_work_ver = '2.9.0'
         ax_preference_ver = '1.2.1'
         ax_annot_ver = '1.7.0'
+        ax_collection_ver = '1.3.0'
 
         retrofit_ver = '2.9.0'
-        moshi_ver = '1.13.0'
-        okhttp_ver = '4.11.0'
+        moshi_ver = '1.15.0'
+        okhttp_ver = '4.12.0'
+        picasso_ver = '2.8'
         mdc_ver = '1.6.1'
         epoxy_ver = '4.6.4'
+        guava_ver = '33.0.0'
 
         oauth2_ver = 'a364454d6f' // '1.2.2'
 

@@ -416,8 +416,12 @@ public class DBHelper {
         return null;
     }
 
-    @NonNull
     public static List<SubTopic> getSubTopics(@NonNull Context context, String subreddit) {
+        return getSubTopics(context, subreddit, 0);
+    }
+
+    @NonNull
+    public static List<SubTopic> getSubTopics(@NonNull Context context, String subreddit, int limit) {
         SQLiteDatabase db = getDatabase(context);
         ArrayList<SubTopic> records = null;
 
@@ -442,9 +446,42 @@ public class DBHelper {
                 null,
                 null,
                 "\"" + RedditDatabase.TOPIC_CREATED_UTC + "\" DESC",
-                null)) {
-            if (cursor != null) {
-                cursor.moveToFirst();
+                limit < 1 ? null : Integer.toString(limit))) {
+            if (cursor != null && cursor.moveToFirst()) {
+                records = new ArrayList<>(cursor.getCount());
+                while (!cursor.isAfterLast()) {
+                    SubTopic topic = SubTopic.fromCursor(cursor);
+                    records.add(topic);
+
+                    cursor.moveToNext();
+                }
+            }
+        }
+
+        if (records == null) {
+            return Collections.emptyList();
+        }
+        return records;
+    }
+
+    public static List<SubTopic> getSubTopicsWithFavorites(@NonNull Context context, String subreddit) {
+        SQLiteDatabase db = getDatabase(context);
+        ArrayList<SubTopic> records = null;
+
+        try (Cursor cursor = db.rawQuery(
+                "SELECT "
+                        + "\"" + RedditDatabase.TABLE_TOPICS + "\".* "
+                        + "FROM "
+                        + "\"" + RedditDatabase.TABLE_TOPICS + "\",\"" + RedditDatabase.TABLE_FAVORITE + "\" "
+                        + "WHERE "
+                        + "\"" + RedditDatabase.TABLE_FAVORITE + "\".\"" + RedditDatabase.FAVORITE_TOPIC_ID + "\"="
+                        + "\"" + RedditDatabase.TABLE_TOPICS + "\".\"" + RedditDatabase.TOPIC_ID + "\" "
+                        + "AND "
+                        + "\"" + RedditDatabase.TABLE_TOPICS + "\".\"" + RedditDatabase.TOPIC_SUBREDDIT_NAME + "\"=? "
+                        + "ORDER BY "
+                        + "\"" + RedditDatabase.TABLE_TOPICS + "\".\"" + RedditDatabase.TOPIC_CREATED_UTC + "\" DESC",
+                new String[] {subreddit})) {
+            if (cursor != null && cursor.moveToFirst()) {
                 records = new ArrayList<>(cursor.getCount());
                 while (!cursor.isAfterLast()) {
                     SubTopic topic = SubTopic.fromCursor(cursor);
@@ -592,7 +629,7 @@ public class DBHelper {
         try (Cursor cursor = db.query(
                 RedditDatabase.TABLE_FAVORITE,
                 new String[] {RedditDatabase.FAVORITE_MEDIA_ID, RedditDatabase.FAVORITE_TOPIC_ID},
-                RedditDatabase.FAVORITE_SUBREDDIT + "=?",
+                "\"" + RedditDatabase.FAVORITE_SUBREDDIT + "\"=?",
                 new String[] {subreddit},
                 null,
                 null,
