@@ -189,9 +189,10 @@ public class SubredditActivity extends AppCompatActivity {
                     Log.d(TAG, "adapter has " + topicList.size() + " topic(s)");
                     mAdapter.setIgnoreList(ignoreList);
                     mAdapter.setFavoriteList(favoriteList);
-                    onEndLoadData();
                     if (mAdapter.getItemCount() == 0) {
                         refreshSource();
+                    } else {
+                        onEndLoadData();
                     }
                 });
     }
