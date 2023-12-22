@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -93,6 +94,7 @@ public class FavoriteActivity extends AppCompatActivity {
                 getLifecycle(),
                 task -> {
                     var favoriteImages = DBHelper.getFavoriteImages(getApplicationContext());
+                    Log.d(TAG, "found " + favoriteImages.size() + " favorite images(s)");
                     HashMap<String, ArrayList<Image>> imageById = new HashMap<>(favoriteImages.size());
                     for (var image : favoriteImages) {
                         var mediaList = imageById.get(image.mediaId);
@@ -101,8 +103,8 @@ public class FavoriteActivity extends AppCompatActivity {
                         }
                         mediaList.add(image);
                     }
-                    for (var mediaId : imageById.keySet()) {
-                        var mediaList = imageById.get(mediaId);
+                    Log.d(TAG, "found " + imageById.size() + " unique ID(s)");
+                    for (var mediaList : imageById.values()) {
                         if (mediaList == null || mediaList.isEmpty()) continue;
                         var sourceImage = mediaList.stream()
                                 .filter(i -> i.isSource && !i.isObfuscated)
@@ -115,6 +117,7 @@ public class FavoriteActivity extends AppCompatActivity {
                 task -> {
                     if (task.isCancelled()) return;
                     mAdapter.setItems(list);
+                    Log.d(TAG, "adapter has " + list.size() + " item(s)");
                     updateLoadingText();
                 });
     }

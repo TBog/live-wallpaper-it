@@ -149,9 +149,8 @@ public class ArtLoadWorker extends Worker {
         final ArraySet<String> filteredOutImages = new ArraySet<>();
 
         // add topics with favorite images to `foundTopicIds` to prevent them from being removed
-        final ArraySet<String> foundTopicIds = favoriteList.stream()
-                .map(fav -> fav.topicId)
-                .collect(Collectors.toCollection(ArraySet::new));
+        final ArraySet<String> foundTopicIds =
+                favoriteList.stream().map(fav -> fav.topicId).collect(Collectors.toCollection(ArraySet::new));
 
         SubmissionsFetcher submissionsFetcher = client.getSubredditsClient()
                 .createSubmissionsFetcher(
