@@ -468,7 +468,7 @@ public class DBHelper {
         return getSubTopicsWithFavorites(context, null);
     }
 
-    public static List<SubTopic> getSubTopicsWithFavorites(@NonNull Context context, String subreddit) {
+    public static List<SubTopic> getSubTopicsWithFavorites(@NonNull Context context, @Nullable String subreddit) {
         SQLiteDatabase db = getDatabase(context);
         ArrayList<SubTopic> records = null;
 

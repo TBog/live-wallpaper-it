@@ -138,16 +138,20 @@ public class ArtLoadWorker extends Worker {
         }
         filter.allowNSFW = getInputData().getBoolean(WorkerUtils.DATA_ALLOW_NSFW, false);
         final var ignoreList = DBHelper.getIgnoreMediaList(ctx, source.subreddit);
+        final var favoriteList = DBHelper.getFavoriteMediaList(ctx, source.subreddit);
         filter.ignoreTokenList.addAll(
                 ignoreList.stream().map(info -> info.mediaId).collect(Collectors.toList()));
-        var favoriteList = DBHelper.getFavoriteMediaList(ctx, source.subreddit);
-        for (var info : favoriteList) {
-            filter.favoriteList.add(info.mediaId);
-        }
+        filter.favoriteList.addAll(favoriteList.stream().map(fav -> fav.mediaId).collect(Collectors.toList()));
 
         final int desiredArtworkCount = getInputData().getInt(WorkerUtils.DATA_DESIRED_ARTWORK_COUNT, 10);
-        ArraySet<String> filteredOutImages = new ArraySet<>();
-        ArrayList<String> foundTopicIds = new ArrayList<>();
+
+        // image mediaId for all images that should be removed from Muzei
+        final ArraySet<String> filteredOutImages = new ArraySet<>();
+
+        // add topics with favorite images to `foundTopicIds` to prevent them from being removed
+        final ArraySet<String> foundTopicIds = favoriteList.stream()
+                .map(fav -> fav.topicId)
+                .collect(Collectors.toCollection(ArraySet::new));
 
         SubmissionsFetcher submissionsFetcher = client.getSubredditsClient()
                 .createSubmissionsFetcher(
