@@ -3,7 +3,6 @@ package rocks.tbog.livewallpaperit.preview;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -173,10 +172,8 @@ public class SubredditAdapter extends RecycleAdapterBase<SubTopic, SubmissionHol
             });
         } else {
             menu.add(R.string.set_favorite).setOnMenuItemClickListener(item -> {
-                String byline = topic.linkFlairText;
-                if (TextUtils.isEmpty(byline)) byline = "r/" + mSubreddit;
                 Artwork artwork = ArtLoadWorker.buildArtwork(topic, media.mediaId, thumbnail.link)
-                        .byline(byline)
+                        .byline(new String(Character.toChars(129293))) // 🤍
                         .build();
                 ProviderContract.getProviderClient(ctx, ArtProvider.class).addArtwork(artwork);
                 DBHelper.insertFavorite(ctx, media);

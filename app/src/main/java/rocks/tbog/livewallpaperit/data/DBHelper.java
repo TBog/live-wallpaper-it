@@ -464,9 +464,24 @@ public class DBHelper {
         return records;
     }
 
+    public static List<SubTopic> getSubTopicsWithFavorites(@NonNull Context context) {
+        return getSubTopicsWithFavorites(context, null);
+    }
+
     public static List<SubTopic> getSubTopicsWithFavorites(@NonNull Context context, String subreddit) {
         SQLiteDatabase db = getDatabase(context);
         ArrayList<SubTopic> records = null;
+
+        final String filterSubreddit;
+        final String[] filterArgs;
+        if (subreddit != null) {
+            filterSubreddit =
+                    "AND \"" + RedditDatabase.TABLE_TOPICS + "\".\"" + RedditDatabase.TOPIC_SUBREDDIT_NAME + "\"=? ";
+            filterArgs = new String[] {subreddit};
+        } else {
+            filterSubreddit = "";
+            filterArgs = null;
+        }
 
         try (Cursor cursor = db.rawQuery(
                 "SELECT "
@@ -476,11 +491,10 @@ public class DBHelper {
                         + "WHERE "
                         + "\"" + RedditDatabase.TABLE_FAVORITE + "\".\"" + RedditDatabase.FAVORITE_TOPIC_ID + "\"="
                         + "\"" + RedditDatabase.TABLE_TOPICS + "\".\"" + RedditDatabase.TOPIC_ID + "\" "
-                        + "AND "
-                        + "\"" + RedditDatabase.TABLE_TOPICS + "\".\"" + RedditDatabase.TOPIC_SUBREDDIT_NAME + "\"=? "
+                        + filterSubreddit
                         + "ORDER BY "
                         + "\"" + RedditDatabase.TABLE_TOPICS + "\".\"" + RedditDatabase.TOPIC_CREATED_UTC + "\" DESC",
-                new String[] {subreddit})) {
+                filterArgs)) {
             if (cursor != null && cursor.moveToFirst()) {
                 records = new ArrayList<>(cursor.getCount());
                 while (!cursor.isAfterLast()) {

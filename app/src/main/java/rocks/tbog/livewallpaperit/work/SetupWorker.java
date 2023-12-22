@@ -2,6 +2,7 @@ package rocks.tbog.livewallpaperit.work;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 import androidx.annotation.NonNull;
@@ -9,10 +10,13 @@ import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
+import com.google.android.apps.muzei.api.provider.ProviderContract;
 import com.kirkbushman.araw.RedditClient;
 import com.kirkbushman.araw.helpers.AuthHelper;
 import com.kirkbushman.araw.helpers.AuthUserlessHelper;
 import com.kirkbushman.araw.helpers.NoAuthHelper;
+import rocks.tbog.livewallpaperit.ArtProvider;
+import rocks.tbog.livewallpaperit.data.DBHelper;
 
 public class SetupWorker extends Worker {
     private static final String TAG = SetupWorker.class.getSimpleName();
@@ -56,10 +60,28 @@ public class SetupWorker extends Worker {
         int desiredArtworkCount = pref.getInt("desired-artwork-count", 1);
         boolean allowNSFW = pref.getBoolean("allow-nsfw", false);
 
+        addAllFavorites(ctx);
+
         return Result.success(new Data.Builder()
                 .putAll(getInputData())
                 .putBoolean(WorkerUtils.DATA_ALLOW_NSFW, allowNSFW)
                 .putInt(WorkerUtils.DATA_DESIRED_ARTWORK_COUNT, desiredArtworkCount)
                 .build());
+    }
+
+    private static void addAllFavorites(Context ctx) {
+        var provider = ProviderContract.getProviderClient(ctx, ArtProvider.class);
+        var topics = DBHelper.getSubTopicsWithFavorites(ctx);
+        DBHelper.loadSubTopicImages(ctx, topics);
+        for (var topic : topics) {
+            for (var image : topic.images) {
+                if (!image.isSource) continue;
+                if (image.isObfuscated) continue;
+                var artwork = ArtLoadWorker.buildArtwork(topic, image.mediaId, Uri.parse(image.url))
+                        .byline(new String(Character.toChars(129293))) // 🤍
+                        .build();
+                provider.addArtwork(artwork);
+            }
+        }
     }
 }
