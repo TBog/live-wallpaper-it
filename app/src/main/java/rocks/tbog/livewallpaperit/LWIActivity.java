@@ -163,7 +163,7 @@ public class LWIActivity extends AppCompatActivity {
         });
     }
 
-    private void onClickActivate(View view) {
+    private void onClickActivate(View ignored) {
         var launchIntent = getPackageManager().getLaunchIntentForPackage(BuildConfig.MUZEI_PACKAGE_NAME);
         if (MuzeiContract.Sources.isProviderSelected(this, BuildConfig.LWI_AUTHORITY) && launchIntent != null) {
             // Already selected so just open Muzei
@@ -260,6 +260,8 @@ public class LWIActivity extends AppCompatActivity {
                     if (workInfo.getId() == mVerifyRequestID) {
                         mVerifyRequestID = null;
                     }
+                    break;
+                case BLOCKED:
                     break;
             }
         });

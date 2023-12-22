@@ -39,11 +39,12 @@ public class ViewUtils {
     /**
      * Return a valid activity or null given a context
      *
-     * @param ctx context
-     * @return an activity or null
+     * @param context Android context
+     * @return an activity for the context or null if activity finished
      */
     @Nullable
-    public static Activity getActivity(@Nullable Context ctx) {
+    public static Activity getActivity(@Nullable Context context) {
+        Context ctx = context;
         while (ctx instanceof ContextWrapper) {
             if (ctx instanceof Activity) {
                 Activity act = (Activity) ctx;

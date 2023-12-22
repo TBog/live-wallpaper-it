@@ -37,7 +37,7 @@ import rocks.tbog.livewallpaperit.ArtProvider;
 import rocks.tbog.livewallpaperit.BuildConfig;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.Source;
-import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
+import rocks.tbog.livewallpaperit.asynchronous.AsyncUtils;
 import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.data.MediaInfo;
 import rocks.tbog.livewallpaperit.data.SubTopic;

@@ -13,13 +13,12 @@ import java.util.ArrayList;
 import java.util.Set;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
-import rocks.tbog.livewallpaperit.WorkAsync.RunnableTask;
+import rocks.tbog.livewallpaperit.asynchronous.RunnableTask;
 import rocks.tbog.livewallpaperit.data.Image;
 import rocks.tbog.livewallpaperit.data.MediaInfo;
 import rocks.tbog.livewallpaperit.data.SubTopic;
 
 public class ThumbnailAdapter extends RecycleAdapterBase<ThumbnailAdapter.Item, ThumbnailAdapter.ThumbnailHolder> {
-    private static final String TAG = ThumbnailAdapter.class.getSimpleName();
     private final int mWidth;
     private final Set<String> mInvalidMediaIdSet;
     private final Set<MediaInfo> mFavoriteMediaSet;

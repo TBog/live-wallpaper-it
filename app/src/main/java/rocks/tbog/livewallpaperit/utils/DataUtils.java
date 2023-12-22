@@ -7,7 +7,6 @@ import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 
 public class DataUtils {
-    private static final String TAG = DataUtils.class.getSimpleName();
 
     @NonNull
     public static String loadRedditAuth(@NonNull Context context) {

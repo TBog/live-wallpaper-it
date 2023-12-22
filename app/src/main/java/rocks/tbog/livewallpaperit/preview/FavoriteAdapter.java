@@ -13,11 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.RecycleAdapterBase;
-import rocks.tbog.livewallpaperit.WorkAsync.RunnableTask;
+import rocks.tbog.livewallpaperit.asynchronous.RunnableTask;
 import rocks.tbog.livewallpaperit.data.Image;
 
 public class FavoriteAdapter extends RecycleAdapterBase<FavoriteAdapter.Item, FavoriteAdapter.ItemHolder> {
-    private static final String TAG = FavoriteAdapter.class.getSimpleName();
     private int mWidth = 108;
 
     public FavoriteAdapter() {

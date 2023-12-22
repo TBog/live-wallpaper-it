@@ -14,7 +14,7 @@ import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
+import rocks.tbog.livewallpaperit.asynchronous.AsyncUtils;
 
 public class LWIApplication extends Application implements Configuration.Provider {
     private static final String PICASSO_CACHE = "picasso-cache";
@@ -73,7 +73,7 @@ public class LWIApplication extends Application implements Configuration.Provide
     }
 
     private static long calculateDiskCacheSize(File dir) {
-        long size = MIN_DISK_CACHE_SIZE;
+        long size;
 
         try {
             StatFs statFs = new StatFs(dir.getAbsolutePath());
@@ -83,6 +83,8 @@ public class LWIApplication extends Application implements Configuration.Provide
             // Target 2% of the total space.
             size = available * 2 / 100;
         } catch (IllegalArgumentException ignored) {
+            // if disk size can't be determined, use MIN_DISK_CACHE_SIZE
+            size = MIN_DISK_CACHE_SIZE;
         }
 
         // Bound inside min/max size for disk cache.

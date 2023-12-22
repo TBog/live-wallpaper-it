@@ -1,4 +1,4 @@
-package rocks.tbog.livewallpaperit.WorkAsync;
+package rocks.tbog.livewallpaperit.asynchronous;
 
 import android.os.Handler;
 import android.os.Looper;

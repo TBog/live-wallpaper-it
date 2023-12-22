@@ -35,7 +35,7 @@ import rocks.tbog.livewallpaperit.BuildConfig;
 import rocks.tbog.livewallpaperit.DeleteArtworkReceiver;
 import rocks.tbog.livewallpaperit.R;
 import rocks.tbog.livewallpaperit.Source;
-import rocks.tbog.livewallpaperit.WorkAsync.AsyncUtils;
+import rocks.tbog.livewallpaperit.asynchronous.AsyncUtils;
 import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.dialog.DialogHelper;
 import rocks.tbog.livewallpaperit.preference.SettingsActivity;
