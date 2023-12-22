@@ -235,18 +235,22 @@ public class SourcesActivity extends AppCompatActivity {
         String subreddit = name.trim();
         if (TextUtils.isEmpty(subreddit)) return;
         final Source source = new Source(subreddit);
-        source.minUpvotePercentage = 50;
+        source.minUpvotePercentage = 75;
         source.minScore = 1;
+        final ArrayList<Source> list = new ArrayList<>(mAdapter.getItems());
         AsyncUtils.runAsync(
                 getLifecycle(),
                 task -> {
                     if (!DBHelper.insertSource(getApplicationContext(), source)) {
                         task.cancel();
+                        return;
                     }
+                    list.add(source);
+                    Collections.sort(list, (o1, o2) -> o1.subreddit.compareToIgnoreCase(o2.subreddit));
                 },
                 task -> {
                     if (task.isCancelled()) return;
-                    mAdapter.addItem(source);
+                    mAdapter.setItems(list);
                     updateSourcesText();
                 });
     }
