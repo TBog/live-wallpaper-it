@@ -2,15 +2,20 @@ package rocks.tbog.livewallpaperit;
 
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.icu.util.Calendar;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.RemoteActionCompat;
 import androidx.lifecycle.Observer;
+import androidx.preference.PreferenceManager;
 import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
@@ -24,8 +29,12 @@ import com.google.android.apps.muzei.api.provider.Artwork;
 import com.google.android.apps.muzei.api.provider.MuzeiArtProvider;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.utils.DataUtils;
@@ -62,6 +71,26 @@ public class ArtProvider extends MuzeiArtProvider {
     public void onLoadRequested(boolean initial) {
         Context ctx = getContext();
         if (ctx == null) return;
+
+        long nowInMillis;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            nowInMillis = Calendar.getInstance().getTime().getTime();
+        } else {
+            nowInMillis = new Date().getTime();
+        }
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(ctx);
+        long lastRefresh = pref.getLong("lastRefresh", Long.MIN_VALUE);
+        if ((lastRefresh + DateUtils.HOUR_IN_MILLIS) > nowInMillis) {
+            var displayAgo = DateUtils.getRelativeDateTimeString(
+                    ctx,
+                    lastRefresh,
+                    DateUtils.MINUTE_IN_MILLIS,
+                    DateUtils.DAY_IN_MILLIS,
+                    DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE);
+            Log.i(TAG, "refreshing too soon; lastRefresh = " + displayAgo);
+            return;
+        }
+
         final OneTimeWorkRequest setupWork = buildSetupWorkRequest(ctx);
         final OneTimeWorkRequest removeOldArtwork = buildCleanupWorkRequest();
         final ArrayList<OneTimeWorkRequest> subredditWorkList = new ArrayList<>();
@@ -83,6 +112,10 @@ public class ArtProvider extends MuzeiArtProvider {
                     workManager.getWorkInfoByIdLiveData(work.getId()).observeForever(debugLogWork);
                 }
             });
+        }
+        if (pref.edit().putLong("lastRefresh", nowInMillis).commit()) {
+            DateFormat dateFormat = DateFormat.getDateTimeInstance();
+            Log.i(TAG, "last refresh set to " + dateFormat.format(new Date(nowInMillis)));
         }
     }
 
