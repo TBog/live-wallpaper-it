@@ -1,3 +1,5 @@
+[![main branch badge](https://github.com/TBog/live-wallpaper-it/actions/workflows/android.yml/badge.svg?branch=main "main branch badge")](https://github.com/TBog/live-wallpaper-it/actions/workflows/android.yml "main branch badge") ![GitHub Release](https://img.shields.io/github/v/release/TBog/live-wallpaper-it)
+
 # live-wallpaper-it
 Android live-wallpaper from Reddit.
 This is a plugin for [Muzei](https://github.com/muzei/muzei), which is an Android live wallpaper app, by Roman Nurik and Ian Lake.<br>
