@@ -154,9 +154,7 @@ public class CommandUtils {
         if (webUri != null) {
             List<String> segments = webUri.getPathSegments();
             // segments: ["r", "<subreddit>", "comments", "<topicId>", ...]
-            if (segments.size() >= 4
-                    && "r".equals(segments.get(0))
-                    && "comments".equals(segments.get(2))) {
+            if (segments.size() >= 4 && "r".equals(segments.get(0)) && "comments".equals(segments.get(2))) {
                 intent.putExtra(DeleteArtworkReceiver.MEDIA_ID, artwork.getToken());
                 intent.putExtra(DeleteArtworkReceiver.MEDIA_SUBREDDIT, segments.get(1));
                 intent.putExtra(DeleteArtworkReceiver.MEDIA_TOPIC_ID, segments.get(3));

@@ -204,9 +204,7 @@ public class ArtProvider extends MuzeiArtProvider {
         Uri webUri = artwork.getWebUri();
         if (token == null || webUri == null) return null;
         List<String> segments = webUri.getPathSegments();
-        if (segments.size() >= 4
-                && "r".equals(segments.get(0))
-                && "comments".equals(segments.get(2))) {
+        if (segments.size() >= 4 && "r".equals(segments.get(0)) && "comments".equals(segments.get(2))) {
             return new MediaInfo(token, segments.get(3), segments.get(1));
         }
         return null;
