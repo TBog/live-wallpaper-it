@@ -86,12 +86,16 @@ object Utils {
 
             OkHttpClient
                 .Builder()
+                .addInterceptor(UserAgentInterceptor)
+                .addInterceptor(AnonymousHostInterceptor)
                 .addInterceptor(nullRepliesInterceptor)
                 .addInterceptor(logger)
                 .build()
         } else {
             OkHttpClient
                 .Builder()
+                .addInterceptor(UserAgentInterceptor)
+                .addInterceptor(AnonymousHostInterceptor)
                 .addInterceptor(nullRepliesInterceptor)
                 .build()
         }
