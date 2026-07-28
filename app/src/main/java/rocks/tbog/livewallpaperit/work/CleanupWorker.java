@@ -14,11 +14,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import rocks.tbog.livewallpaperit.ArtProvider;
 import rocks.tbog.livewallpaperit.Source;
 import rocks.tbog.livewallpaperit.data.DBHelper;
-import rocks.tbog.livewallpaperit.data.MediaInfo;
 import rocks.tbog.livewallpaperit.data.SubTopic;
 
 public class CleanupWorker extends Worker {
@@ -35,10 +33,9 @@ public class CleanupWorker extends Worker {
         final List<Source> sources = DBHelper.getSources(ctx);
 
         Set<String> keepImages = getImagesInCache(ctx, sources);
-        Set<MediaInfo> favorites = getImagesInFavorite(ctx, sources);
-        keepImages.addAll(favorites.stream().map(info -> info.mediaId).collect(Collectors.toList()));
+        Set<String> favorites = getImagesInFavorite(ctx, sources);
+        keepImages.addAll(favorites);
 
-        removeFromIgnoreAllExcept(ctx, sources, keepImages);
         removeFromMuzeiAllExcept(ctx, keepImages);
 
         return Result.success();
@@ -59,28 +56,16 @@ public class CleanupWorker extends Worker {
         return cachedImages;
     }
 
-    private Set<MediaInfo> getImagesInFavorite(Context ctx, Collection<Source> sources) {
-        Set<MediaInfo> mediaInFavorite = new ArraySet<>();
+    private Set<String> getImagesInFavorite(Context ctx, Collection<Source> sources) {
+        Set<String> mediaInFavorite = new ArraySet<>();
         for (var source : sources) {
             final var favoriteList = DBHelper.getFavoriteMediaList(ctx, source.subreddit);
-            mediaInFavorite.addAll(favoriteList);
+            for (var info : favoriteList) {
+                mediaInFavorite.add(info.mediaId);
+            }
         }
         Log.v(TAG, "found " + mediaInFavorite.size() + " image(s) in favorite list");
         return mediaInFavorite;
-    }
-
-    private void removeFromIgnoreAllExcept(Context ctx, Collection<Source> sources, Set<String> keepImages) {
-        Set<MediaInfo> mediaToRemove = new ArraySet<>();
-        for (var source : sources) {
-            final var ignoreList = DBHelper.getIgnoreMediaList(ctx, source.subreddit);
-            mediaToRemove.addAll(ignoreList);
-        }
-        Log.v(TAG, "found " + mediaToRemove.size() + " image(s) in ignore list");
-
-        mediaToRemove.removeIf(info -> keepImages.contains(info.mediaId));
-        if (mediaToRemove.isEmpty()) return;
-        int count = DBHelper.removeIgnoreMedia(ctx, mediaToRemove);
-        Log.d(TAG, "deleted " + count + "/" + mediaToRemove.size() + " from ignore list");
     }
 
     private void removeFromMuzeiAllExcept(Context ctx, Set<String> keepImages) {

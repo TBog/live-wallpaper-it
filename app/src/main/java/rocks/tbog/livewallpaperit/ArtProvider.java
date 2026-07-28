@@ -4,6 +4,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.icu.util.Calendar;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -35,6 +36,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import rocks.tbog.livewallpaperit.data.DBHelper;
+import rocks.tbog.livewallpaperit.data.MediaInfo;
 import rocks.tbog.livewallpaperit.utils.DataUtils;
 import rocks.tbog.livewallpaperit.work.ArtLoadWorker;
 import rocks.tbog.livewallpaperit.work.CleanupWorker;
@@ -176,11 +178,14 @@ public class ArtProvider extends MuzeiArtProvider {
     @Override
     public void onInvalidArtwork(@NonNull Artwork artwork) {
         Log.d(TAG, "onInvalidArtwork " + artwork.getToken());
-        // add to ignore list
         Context ctx = getContext();
         String token = artwork.getToken();
         if (ctx != null && token != null) {
-            var mediaInfo = DBHelper.getMediaByToken(ctx, token);
+            MediaInfo mediaInfo = resolveMediaInfo(artwork);
+            if (mediaInfo == null) {
+                // fallback: topic may still be in cache
+                mediaInfo = DBHelper.getMediaByToken(ctx, token);
+            }
             if (mediaInfo != null) {
                 if (DBHelper.insertIgnoreMedia(ctx, mediaInfo)) {
                     Log.d(TAG, "ignored " + mediaInfo.mediaId + " from " + mediaInfo.subreddit);
@@ -189,5 +194,21 @@ public class ArtProvider extends MuzeiArtProvider {
         }
 
         super.onInvalidArtwork(artwork);
+    }
+
+    // Parse topicId and subreddit from the artwork's webUri without a DB lookup.
+    // webUri format: https://www.reddit.com/r/<subreddit>/comments/<topicId>/...
+    @Nullable
+    static MediaInfo resolveMediaInfo(@NonNull Artwork artwork) {
+        String token = artwork.getToken();
+        Uri webUri = artwork.getWebUri();
+        if (token == null || webUri == null) return null;
+        List<String> segments = webUri.getPathSegments();
+        if (segments.size() >= 4
+                && "r".equals(segments.get(0))
+                && "comments".equals(segments.get(2))) {
+            return new MediaInfo(token, segments.get(3), segments.get(1));
+        }
+        return null;
     }
 }

@@ -14,6 +14,7 @@ import androidx.core.graphics.drawable.IconCompat;
 import com.google.android.apps.muzei.api.provider.Artwork;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import rocks.tbog.livewallpaperit.data.DBHelper;
 import rocks.tbog.livewallpaperit.data.MediaInfo;
 
@@ -144,6 +145,23 @@ public class CommandUtils {
                 .putExtra(DeleteArtworkReceiver.ACTION, DeleteArtworkReceiver.ACTION_DELETE)
                 .putExtra(DeleteArtworkReceiver.ARTWORK_ID, String.valueOf(artwork.getId()))
                 .putExtra(DeleteArtworkReceiver.ARTWORK_TOKEN, artwork.getToken());
+
+        // Enrich the intent with topicId and subreddit parsed from the webUri
+        // (format: https://www.reddit.com/r/<subreddit>/comments/<topicId>/...)
+        // so DeleteArtworkReceiver can write the ignore entry even if the topic
+        // has been pruned from the local cache.
+        Uri webUri = artwork.getWebUri();
+        if (webUri != null) {
+            List<String> segments = webUri.getPathSegments();
+            // segments: ["r", "<subreddit>", "comments", "<topicId>", ...]
+            if (segments.size() >= 4
+                    && "r".equals(segments.get(0))
+                    && "comments".equals(segments.get(2))) {
+                intent.putExtra(DeleteArtworkReceiver.MEDIA_ID, artwork.getToken());
+                intent.putExtra(DeleteArtworkReceiver.MEDIA_SUBREDDIT, segments.get(1));
+                intent.putExtra(DeleteArtworkReceiver.MEDIA_TOPIC_ID, segments.get(3));
+            }
+        }
 
         // we need Intent.filterEquals to differentiate between artworks
         int requestCode = 0;
